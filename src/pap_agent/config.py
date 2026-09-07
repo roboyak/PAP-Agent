@@ -6,6 +6,7 @@ from sqlalchemy.exc import ArgumentError
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
+    source_database_dsn: SecretStr = SecretStr("dbname=pubnub_development host=/tmp")
 
     database_url: SecretStr = SecretStr(
         "postgresql+psycopg://pap:pap_local_only@127.0.0.1:55432/pap"

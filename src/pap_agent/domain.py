@@ -4,17 +4,18 @@ from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class TelemetrySnapshot(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
     id: UUID = Field(default_factory=uuid4)
     observed_at: AwareDatetime
     battery_voltage_v: float = Field(gt=0)
     solar_power_kw: float = Field(ge=0)
     load_power_kw: float = Field(ge=0)
     source: str
-    data_mode: Literal["synthetic", "anonymized_replay"] = "synthetic"
+    data_mode: Literal["synthetic", "live"] = "synthetic"
     measurement_time_verified: bool = False
 
 

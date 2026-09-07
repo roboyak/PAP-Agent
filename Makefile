@@ -24,13 +24,13 @@ dev:
 	uv run --locked uvicorn pap_agent.main:app --host 127.0.0.1 --port 8000
 
 format:
-	uv run --locked ruff format src tests migrations
+	uv run --locked ruff format src tests migrations scripts
 
 format-check:
-	uv run --locked ruff format --check src tests migrations
+	uv run --locked ruff format --check src tests migrations scripts
 
 lint:
-	uv run --locked ruff check src tests migrations
+	uv run --locked ruff check src tests migrations scripts
 
 test:
 	uv run --locked pytest tests --ignore=tests/e2e

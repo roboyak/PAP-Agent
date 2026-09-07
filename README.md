@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR02, typed and persisted evidence.** Forecasts and agents arrive later.
+**Current increment: PR03, read-only MCP evidence.** Forecasts and agents arrive later.
 
 ## Run locally
 
@@ -33,9 +33,10 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | --- | --- |
 | `/` | READ ONLY console with Context, Memory, Tools, Subagent, Trace, and Health tabs |
 | `/health` | 200 when PostgreSQL responds and pgvector is enabled; otherwise 503 |
-| `/api/v1/version` | Package version, read-only status, and synthetic mode; no DB dependency |
+| `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
 | `/api/v1/scenarios` | Available local development fixtures |
 | `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
+| `/api/v1/evidence/current?scenario=mysolark` | MCP acquisition, T3 decision, persisted live evidence and calls |
 
 ## Code map
 
@@ -57,11 +58,20 @@ Use `make format` to format code. Missing DB/browser dependencies fail verificat
 
 The console follows the reference's conversation/inspector layout. Check service makes
 real health/version requests and shows their status, timing, and JSON in Trace.
-Reset view clears only the browser view. Context, Memory, Tools, and Subagent have explicit
-empty states until their capabilities are connected in later PRs.
+Reset view clears only the browser view. Context shows loaded evidence and Tools shows MCP
+activity. Memory and Subagent have empty states until their capabilities are connected.
 Load sunny fixture reads PostgreSQL and displays its evidence in Context. Fixture values
 and the voltage-floor/power-cap policy are synthetic examples, not DragonWings ratings.
 The fixture uses a fixed UTC replay clock. Repeated `make seed` preserves existing rows.
+
+Read MySolArk now starts one local MCP process with two read-only tools, following the
+reference's discover-tools/call-tool pattern using the [official MCP SDK](https://github.com/modelcontextprotocol/python-sdk).
+Tools shows schemas, arguments, results, and timing. T3 checks required values and a five-minute
+freshness limit. MySolArk is read directly from the local source database with its real scrape
+timestamp (Rails UTC convention). The UI shows age in seconds. Scrape time is not verified device
+measurement time. Weather and reserve policy are still synthetic. `SOURCE_DATABASE_DSN` configures
+the source; no device IDs, raw JSON, or credentials appear in evidence. Tests use an isolated
+source-shaped database; normal MySolArk runs use the actual local source. See [PR03's notes](docs/pr/PR-03.md).
 
 Migration `0001_enable_pgvector` leaves the shared vector extension installed on downgrade.
 Downgrading `0002_domain_evidence` drops its four evidence tables; retain those tables
@@ -71,7 +81,7 @@ when rolling back an application version that has stored evidence.
 
 The [PR prompts](docs/build-prompts/README.md) define the sequence. The
 [capstone review](docs/CAPSTONE_NOTES.md) records the source comparison and accepted adjustments.
-Lessons stay as one-line PR/commit notes. [PR02's notes](docs/pr/PR-02.md) have local review commands.
+Lessons stay as one-line PR/commit notes in [docs/pr](docs/pr).
 
 The planned architecture uses LangGraph for workflow control, PostgreSQL/pgvector for
 storage and memory, read-only MCP sources, and deterministic calculations and validation.

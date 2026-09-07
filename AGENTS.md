@@ -13,7 +13,7 @@ Keep code to the smallest working vertical slice, with minimal error handling an
 exhaustive edge-case work. Work one PR lesson at a time. Lessons are one terse line in the
 PR body and commit message rather than a separate essay. Use native PostgreSQL commands,
 not Docker. Build the reference-style monitoring UI from scratch, without Gradio.
-Use DW 1.24's persisted MySolArk scrape data through read-only adapters; battery voltage
+Use DW 1.24's latest persisted MySolArk scrape with real timestamps through read-only adapters; battery voltage
 is the battery-state input and SOC is not an MVP requirement. In PR09, make the third
 interpretation agent opt-in with `ENABLE_INTERPRETATION_AGENT=false` for A/B comparison.
 
@@ -21,7 +21,7 @@ interpretation agent opt-in with `ENABLE_INTERPRETATION_AGENT=false` for A/B com
 
 - The PAP service is **read-only decision support**.
 - Never add a tool or path that commands batteries, inverters, generators, relays, contactors, or connected loads.
-- Use only public, synthetic, or anonymized baseline data.
+- Use public/synthetic baseline data or the user-authorized local MySolArk data with real timestamps. Exclude source credentials, raw JSON, and device identifiers from PAP responses.
 - **LangGraph is the core harness and workflow/state-machine runtime.**
 - **LangChain `create_agent` is used only inside selected model-driven graph nodes.**
 - **Deep Agents is not part of the PAP MVP runtime.** Do not introduce it without a new architecture decision.

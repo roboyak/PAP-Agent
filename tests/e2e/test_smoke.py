@@ -7,6 +7,24 @@ from pap_agent.seed import sunny_fixture
 from pap_agent.store import save_scenario
 
 
+def test_live_mysolark_mcp(browser, live_service, database_url, source_database):
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Read MySolArk now").click()
+            expect(page.locator("#evidence-note")).to_have_text(
+                "MySolArk live scrape + synthetic weather", timeout=15000
+            )
+            expect(page.locator("#tool-calls")).to_contain_text("get_current_telemetry")
+            expect(page.locator("#tool-calls")).to_contain_text("get_solar_forecast")
+            page.get_by_role("tab", name="Context", exact=True).click()
+            expect(page.locator("#evidence-context")).to_contain_text('"data_mode": "live"')
+            expect(page.locator("#messages")).to_contain_text("seconds ago")
+        finally:
+            page.close()
+
+
 def test_live_persisted_fixture(browser, live_service, database, database_url):
     save_scenario(database, sunny_fixture())
     with live_service(database_url) as url:
@@ -37,7 +55,9 @@ def test_live_home_health_and_version(browser, live_service, database_url):
             expect(page).to_have_title("DragonWings PAP Forecaster")
             expect(page.get_by_role("heading", name="DragonWings PAP Forecaster")).to_be_visible()
             expect(page.get_by_text("READ ONLY", exact=True)).to_be_visible()
-            expect(page.get_by_text("Synthetic/local mode", exact=True)).to_be_visible()
+            expect(
+                page.get_by_text("Local telemetry · synthetic weather", exact=True)
+            ).to_be_visible()
             page.get_by_role("button", name="Check service", exact=True).click()
             expect(page.get_by_role("status")).to_have_text("Service healthy")
             panels = {
@@ -81,7 +101,7 @@ def test_live_home_health_and_version(browser, live_service, database_url):
             assert version.json() == {
                 "version": __version__,
                 "read_only": True,
-                "mode": "synthetic",
+                "mode": "local",
             }
         finally:
             page.close()

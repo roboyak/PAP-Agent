@@ -3,10 +3,42 @@ from uuid import uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
+from psycopg.conninfo import make_conninfo
 from sqlalchemy import text
 
 from pap_agent.config import Settings
 from pap_agent.database import Database
+
+
+@pytest.fixture
+def source_database(database, monkeypatch):
+    """Small source-shaped schema, isolated from PAP and the real source database."""
+    with database.session() as session:
+        session.execute(text("CREATE SCHEMA source_fixture"))
+        session.execute(text("CREATE TABLE source_fixture.sites (name text, device_id text)"))
+        session.execute(
+            text("""CREATE TABLE source_fixture.telemetry_snapshots (
+            device_id text, message_type text, timestamp timestamp,
+            battery1_voltage float, solar_power_w float, load_power_w float)""")
+        )
+        session.execute(text("INSERT INTO source_fixture.sites VALUES ('DW 1.24', 'test-device')"))
+        session.execute(
+            text("""INSERT INTO source_fixture.telemetry_snapshots VALUES
+            ('test-device', 'solark_cloud', CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 393, 1560, 697)
+        """)
+        )
+    url = database.engine.url
+    monkeypatch.setenv(
+        "SOURCE_DATABASE_DSN",
+        make_conninfo(
+            host=url.host,
+            port=url.port,
+            user=url.username,
+            password=url.password,
+            dbname=url.database,
+            options="-c search_path=source_fixture",
+        ),
+    )
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse
@@ -10,6 +11,7 @@ from pap_agent import __version__
 from pap_agent.config import Settings
 from pap_agent.database import Database
 from pap_agent.domain import Scenario
+from pap_agent.evidence import Evidence, acquire
 from pap_agent.store import get_scenario, list_scenarios
 
 STATIC_DIR = Path(__file__).with_name("static")
@@ -52,11 +54,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/v1/version")
     def version() -> dict[str, str | bool]:
-        return {"version": __version__, "read_only": True, "mode": "synthetic"}
+        return {"version": __version__, "read_only": True, "mode": "local"}
 
     @app.get("/api/v1/scenarios")
     def scenarios() -> list[dict]:
         return list_scenarios(app.state.database)
+
+    @app.get("/api/v1/evidence/current")
+    async def current_evidence(scenario: Literal["sunny", "mysolark"] = "sunny") -> Evidence:
+        return await acquire(app.state.database, scenario)
 
     @app.get("/api/v1/scenarios/{name}")
     def scenario(name: str) -> Scenario:
