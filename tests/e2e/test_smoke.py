@@ -1,11 +1,36 @@
 from pathlib import Path
 
+import pytest
 from playwright.sync_api import expect
 from sqlalchemy import text
 
 from pap_agent import __version__
 from pap_agent.seed import sunny_fixture
 from pap_agent.store import save_scenario
+
+
+@pytest.mark.parametrize("provider", ["openai", "anthropic"])
+def test_live_cloud_provider_configuration(
+    browser, live_service, database_url, monkeypatch, provider
+):
+    monkeypatch.setenv("AGENT_BACKEND", provider)
+    monkeypatch.setenv("AGENT_MODEL", "selected-cloud-model")
+    monkeypatch.setenv(f"{provider.upper()}_API_KEY", "local-test-key")
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Check service", exact=True).click()
+            expect(page.get_by_role("status")).to_have_text("Service healthy")
+            page.get_by_role("tab", name="Health", exact=True).click()
+            expect(page.locator("#readiness-result")).to_contain_text(
+                f'"model_backend": "{provider}"'
+            )
+            expect(page.locator("#readiness-result")).to_contain_text("selected-cloud-model")
+            expect(page.locator("#readiness-result")).to_contain_text("Configuration only")
+            assert "local-test-key" not in page.content()
+        finally:
+            page.close()
 
 
 def test_live_memory_search(browser, live_service, database_url):

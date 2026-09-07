@@ -72,6 +72,13 @@ async def readiness(database: Database, settings: Settings) -> dict:
         for tool in evidence.tools
     )
     checks["models"] = True
+    if settings.agent_backend in {"openai", "anthropic"}:
+        key = (
+            settings.openai_api_key
+            if settings.agent_backend == "openai"
+            else settings.anthropic_api_key
+        )
+        checks["cloud_api_key_configured"] = bool(key)
     if settings.agent_backend == "ollama" or settings.embedding_backend == "ollama":
         try:
             response = httpx.get(f"{settings.ollama_base_url}/api/tags", timeout=3, trust_env=False)
@@ -90,6 +97,10 @@ async def readiness(database: Database, settings: Settings) -> dict:
         "source": scenario,
         "interpretation_enabled": settings.enable_interpretation_agent,
         "model_backend": settings.agent_backend,
+        "agent_model": settings.agent_model if settings.agent_backend != "test" else "test-double",
+        "model_check": "Configuration only; cloud access is checked on a model call."
+        if settings.agent_backend in {"openai", "anthropic"}
+        else "Local model availability",
         "embedding_backend": settings.embedding_backend,
         "evidence_age_seconds": evidence.observed_age_seconds,
     }

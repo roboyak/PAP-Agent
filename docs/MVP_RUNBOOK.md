@@ -26,13 +26,18 @@ only the service port. The bundled PAP password is for this local development cl
 
 | Profile | Default source | Models |
 | --- | --- | --- |
-| development | Latest persisted DW 1.24 MySolArk scrape | Local Ollama |
-| macmini-replay | Sunny synthetic fixture | Local Ollama |
+| development | Latest persisted DW 1.24 MySolArk scrape | Configured provider; Ollama by default |
+| macmini-replay | Sunny synthetic fixture | Configured provider; Ollama by default |
 | test | Sunny fixture | Tests explicitly select deterministic doubles |
 
 Set `PAP_PROFILE` before starting. The UI's source buttons can explicitly select another
 source. Tests set `AGENT_BACKEND=test` and `EMBEDDING_BACKEND=test`; those results are labeled
 test doubles, never real model measurements.
+
+Set `AGENT_BACKEND` and `AGENT_MODEL` together to switch between local Ollama, OpenAI,
+and Claude; see the [provider commands](../README.md#switch-the-model-provider). Cloud keys
+are `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`, configured locally. Restart after changing them.
+Embeddings still require Ollama. Cloud readiness checks configuration, not account access.
 
 MySolArk is read from `pubnub_development` through `/tmp` by default. Configure its existing
 connection using `SOURCE_DATABASE_DSN`, independently of PAP's `DATABASE_URL`. Source reads
@@ -67,7 +72,7 @@ make demo
 
 `make verify` runs deterministic model doubles with real local PostgreSQL/MCP/HTTP/Chromium.
 `make verify-mac` adds the CLI demo with those doubles. `make demo` uses synthetic source
-inputs and configured local models. All demo outcomes remain labeled synthetic.
+inputs and the configured model provider. All demo outcomes remain labeled synthetic.
 The demo prints IDs and exits; inspect persistent records via API or the console.
 
 `make run` is the foreground process strategy for this small CLI MVP. Ctrl-C stops FastAPI;

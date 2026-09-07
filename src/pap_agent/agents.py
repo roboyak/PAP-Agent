@@ -6,11 +6,16 @@ from time import perf_counter
 from typing import Literal
 
 import httpx
+from anthropic import APIError as AnthropicAPIError
 from langchain.agents import create_agent
+from langchain.agents.structured_output import ProviderStrategy, StructuredOutputError
+from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from langsmith import tracing_context
 from ollama import ResponseError
+from openai import OpenAIError
 from pydantic import BaseModel, ConfigDict, Field
 
 from pap_agent.config import Settings
@@ -37,6 +42,43 @@ class Advice(BaseModel):
     insufficient: bool
 
 
+def build_model(settings: Settings, schema: type[BaseModel], fixture: dict):
+    if settings.agent_backend == "test":
+        return GenericFakeChatModel(messages=iter([json.dumps(fixture)]))
+    if settings.agent_backend == "openai":
+        if not settings.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is not configured")
+        return ChatOpenAI(
+            model=settings.agent_model,
+            api_key=settings.openai_api_key,
+            base_url="https://api.openai.com/v1",
+            timeout=MODEL_TIMEOUT_SECONDS,
+            max_retries=0,
+            max_tokens=768,
+            use_responses_api=True,
+            store=False,
+        )
+    if settings.agent_backend == "anthropic":
+        if not settings.anthropic_api_key:
+            raise ValueError("ANTHROPIC_API_KEY is not configured")
+        return ChatAnthropic(
+            model=settings.agent_model,
+            api_key=settings.anthropic_api_key,
+            base_url="https://api.anthropic.com",
+            timeout=MODEL_TIMEOUT_SECONDS,
+            max_retries=0,
+            max_tokens=768,
+        )
+    return ChatOllama(
+        model=settings.agent_model,
+        base_url=settings.ollama_base_url,
+        temperature=0,
+        format=schema.model_json_schema(),
+        num_predict=768,
+        client_kwargs={"timeout": MODEL_TIMEOUT_SECONDS, "trust_env": False},
+    )
+
+
 async def call_agent(
     database: Database,
     record_id,
@@ -58,7 +100,8 @@ async def call_agent(
         "kind": role,
         "status": "interrupted",
         "reason": "Attempt reserved; no automatic retry",
-        "model": settings.agent_model if settings.agent_backend == "ollama" else "test-double",
+        "provider": settings.agent_backend,
+        "model": "test-double" if settings.agent_backend == "test" else settings.agent_model,
         "system": SYSTEM,
         "input": context,
         "output": None,
@@ -76,19 +119,15 @@ async def call_agent(
         return record
     started = perf_counter()
     try:
-        model = (
-            GenericFakeChatModel(messages=iter([json.dumps(fixture)]))
-            if settings.agent_backend == "test"
-            else ChatOllama(
-                model=settings.agent_model,
-                base_url=settings.ollama_base_url,
-                temperature=0,
-                format=schema.model_json_schema(),
-                num_predict=768,
-                client_kwargs={"timeout": MODEL_TIMEOUT_SECONDS, "trust_env": False},
-            )
+        model = build_model(settings, schema, fixture)
+        cloud = settings.agent_backend in {"openai", "anthropic"}
+        agent = create_agent(
+            model,
+            tools=[],
+            system_prompt=SYSTEM,
+            name=role,
+            response_format=ProviderStrategy(schema, strict=True) if cloud else None,
         )
-        agent = create_agent(model, tools=[], system_prompt=SYSTEM, name=role)
         with tracing_context(enabled=False):
             async with asyncio.timeout(MODEL_TIMEOUT_SECONDS):
                 result = await agent.ainvoke(
@@ -96,14 +135,27 @@ async def call_agent(
                     {"recursion_limit": 3},
                 )
         message = result["messages"][-1]
-        output = schema.model_validate_json(message.content)
+        output = (
+            schema.model_validate(result["structured_response"])
+            if cloud
+            else schema.model_validate_json(message.content)
+        )
         record.update(
             status="ok",
             reason="Structured output received",
             output=output.model_dump(mode="json"),
             usage=message.usage_metadata,
         )
-    except (TimeoutError, ConnectionError, ValueError, httpx.HTTPError, ResponseError):
+    except (
+        TimeoutError,
+        ConnectionError,
+        ValueError,
+        httpx.HTTPError,
+        ResponseError,
+        OpenAIError,
+        AnthropicAPIError,
+        StructuredOutputError,
+    ):
         record.update(status="unavailable", reason="Model unavailable or invalid structured output")
     record["duration_ms"] = round((perf_counter() - started) * 1000)
     save_record(database, record, finish=True)

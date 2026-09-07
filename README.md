@@ -63,7 +63,7 @@ The sunny fixture has its own synthetic 48 V floor / 5 kW cap and 10.600 kWh bas
 
 Ordinary runs remain linear and need no model generation. Recorded solar overestimation
 above the demo threshold of 0.25 kW triggers selective search over baseline/refresh/withhold
-guidance. Local LangChain `create_agent` generator and critic roles receive bounded evidence
+guidance. LangChain `create_agent` generator and critic roles receive bounded evidence
 and no tools. Python prunes invalid branches and owns all numerical/voltage constraints.
 
 ```bash
@@ -82,6 +82,38 @@ at depth three, and eight total model attempts per episode including the optiona
 Each call has a 45-second / 768-output-token limit and no retry. Interrupted attempts count;
 checkpoint resume reuses their stored records. Missing or malformed search output can withhold.
 
+### Switch the model provider
+
+Set the API key in the ignored `.env` file or your shell, then choose both `AGENT_BACKEND`
+and `AGENT_MODEL` before starting the service. Stop the previous service with Ctrl-C first.
+
+```bash
+AGENT_BACKEND=ollama AGENT_MODEL=gemma3:4b make run
+AGENT_BACKEND=openai AGENT_MODEL=gpt-4.1-mini make run
+AGENT_BACKEND=anthropic AGENT_MODEL=claude-haiku-4-5-20251001 make run
+```
+
+OpenAI uses `OPENAI_API_KEY`; Claude uses `ANTHROPIC_API_KEY`. Local Ollama stays the default.
+Cloud models receive the same bounded evidence and retrieved context used by local agents.
+Embeddings and PostgreSQL stay local. Every model record and off/on comparison identifies
+the selected provider and model, with elapsed time and call counts. Individual model records
+also include token usage when the provider returns it.
+Cloud calls request native JSON output and apply the same local validation, zero-tool boundary,
+45-second timeout, 768-output-token cap and zero retries.
+
+Use **Load sunny fixture**, then **Compare agent off / on** for each provider. Avoid evaluating
+or indexing new outcomes between trials so the stored guidance stays comparable. Each off/on
+pair shares one evidence snapshot; separate provider runs are separate snapshots of the fixed
+synthetic fixture. This is a manual comparison, not a controlled model-quality benchmark.
+Inspect Context and Subagent for the results. Set `ENABLE_INTERPRETATION_AGENT=true` if you
+want an ordinary Run PAP request to make a model call even without recorded ambiguity.
+
+The example models support native structured output: [OpenAI model documentation](https://developers.openai.com/api/docs/models/gpt-4.1-mini)
+and [Claude structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs).
+Choose another supported model through `AGENT_MODEL`. Required tests use fake HTTP responses
+through the real cloud SDKs; no live cloud comparison has been measured yet.
+Readiness checks cloud key presence only; account access is checked on an actual call.
+
 `make memory-index` embeds project guidance and up to 100 validated outcome records using
 local nomic-embed-text (768 dimensions). Exact pgvector cosine retrieval selects up to five;
 version, source, expiry, score and duplicate checks reduce model context to at most three.
@@ -92,7 +124,7 @@ Scores are ranking aids, not probabilities. Real and synthetic outcomes remain s
 ```bash
 make verify       # format/lint, migrations, integration checks, Chromium Playwright
 make verify-mac   # same gate plus a command-line demo using explicit model doubles
-make demo         # synthetic-source demo using configured local models
+make demo         # synthetic-source demo using the configured model provider
 ```
 
 Tests own disposable `pap_test_*` databases and never alter the MySolArk source.
@@ -106,7 +138,8 @@ probe evidence. `/health` retains the simple DB/vector check. `/docs` lists the 
 `GET /api/v1/pap/latest`, `/api/v1/episodes/{id}` and `/api/v1/episodes/{id}/inspection`
 provide publication, workflow and local audit records.
 
-Full prompts, tools and decisions stay local. `ENABLE_LANGSMITH=true` optionally exports
+Full audit records stay in local PostgreSQL. Selecting a cloud model sends its bounded
+prompt/context to that provider. `ENABLE_LANGSMITH=true` optionally exports
 only an allowlisted run summary using locally configured LangSmith credentials. Automatic
 SDK tracing stays disabled; export failure cannot change a PAP decision.
 

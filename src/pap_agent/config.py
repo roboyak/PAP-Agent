@@ -15,7 +15,9 @@ class Settings(BaseSettings):
     embedding_backend: Literal["ollama", "test"] = "ollama"
     enable_interpretation_agent: bool = False
     agent_model: str = "gemma3:4b"
-    agent_backend: Literal["ollama", "test"] = "ollama"
+    agent_backend: Literal["ollama", "openai", "anthropic", "test"] = "ollama"
+    openai_api_key: SecretStr | None = None
+    anthropic_api_key: SecretStr | None = None
     retrieval_min_score: float = Field(default=0.3, ge=-1, le=1)
     pap_profile: Literal["test", "development", "macmini-replay"] = "development"
     enable_langsmith: bool = False

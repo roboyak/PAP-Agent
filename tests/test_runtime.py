@@ -1,11 +1,37 @@
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 from sqlalchemy import text
 
 from pap_agent import observability
 from pap_agent.config import Settings
 from pap_agent.main import create_app
+
+
+@pytest.mark.parametrize("provider", ["openai", "anthropic"])
+def test_cloud_readiness_checks_configuration_only(database_url, provider):
+    settings = Settings(
+        _env_file=None,
+        database_url=database_url,
+        agent_backend=provider,
+        agent_model="configured-model",
+        openai_api_key=None,
+        anthropic_api_key=None,
+    )
+    with TestClient(create_app(settings)) as client:
+        result = client.get("/health/ready")
+        assert result.status_code == 503
+        assert result.json()["checks"]["cloud_api_key_configured"] is False
+    setattr(settings, f"{provider}_api_key", SecretStr("local-test-key"))
+    with TestClient(create_app(settings)) as client:
+        result = client.get("/health/ready")
+        assert result.status_code == 200
+        assert result.json()["agent_model"] == "configured-model"
+        assert result.json()["model_backend"] == provider
+        assert "Configuration only" in result.json()["model_check"]
+        assert "local-test-key" not in result.text
 
 
 def test_ready_checks_dependencies_without_persisting_probe_evidence(database, database_url):
