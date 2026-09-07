@@ -17,11 +17,13 @@ from pap_agent.domain import Scenario
 from pap_agent.evidence import Evidence, acquire
 from pap_agent.store import (
     get_calculation,
+    get_episode,
     get_evidence,
     get_scenario,
     list_scenarios,
     save_calculation,
 )
+from pap_agent.workflow import PAPGraphState, run_episode
 
 STATIC_DIR = Path(__file__).with_name("static")
 
@@ -104,6 +106,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if result is None:
             raise HTTPException(404, "Calculation not found")
         return Calculation.model_validate(result)
+
+    @app.post("/api/v1/pap/run")
+    async def run_pap(request: RunRequest) -> PAPGraphState:
+        return await run_episode(app.state.database, request.scenario)
+
+    @app.get("/api/v1/episodes/{episode_id}")
+    def episode(episode_id: UUID) -> PAPGraphState:
+        result = get_episode(app.state.database, episode_id)
+        if result is None:
+            raise HTTPException(404, "Completed episode not found")
+        return result
+
+    @app.post("/api/v1/episodes/{episode_id}/resume")
+    async def resume_episode(episode_id: UUID) -> PAPGraphState:
+        return await run_episode(app.state.database, episode_id=episode_id)
 
     return app
 

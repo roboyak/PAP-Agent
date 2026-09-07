@@ -8,6 +8,25 @@ from pap_agent.seed import sunny_fixture
 from pap_agent.store import save_scenario
 
 
+def test_live_durable_workflow(browser, live_service, database_url, source_database):
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            with page.expect_response("**/api/v1/pap/run") as response:
+                page.get_by_role("button", name="Run workflow").click()
+            episode = response.value.json()
+            expect(page.locator("#graph-trace")).to_contain_text("finalize_episode")
+            assert episode["status"] == "valid"
+            assert (
+                page.request.get(f"{url}/api/v1/episodes/{episode['episode_id']}").json() == episode
+            )
+            resumed = page.request.post(f"{url}/api/v1/episodes/{episode['episode_id']}/resume")
+            assert resumed.json() == episode
+        finally:
+            page.close()
+
+
 def test_live_calculation_repeatable(
     browser, live_service, database, database_url, source_database
 ):

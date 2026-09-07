@@ -79,6 +79,7 @@ byId("check-service").addEventListener("click", async () => {
 byId("reset-view").addEventListener("click", () => {
   currentScenario = "mysolark";
   byId("calculation-result").textContent = "No calculation yet.";
+  byId("graph-trace").textContent = "No workflow run yet.";
   byId("tool-calls").textContent = "No MCP tool calls have run.";
   byId("evidence-context").textContent = "No evidence loaded.";
   byId("evidence-note").textContent = "No telemetry loaded. Load a fixture to inspect stored evidence.";
@@ -142,4 +143,25 @@ byId("calculate-pap").addEventListener("click", async () => {
     selectTab(byId("tab-context"));
   } else appendMessage("Service", "Calculation unavailable; inspect Trace.");
   byId("calculate-pap").disabled = false;
+});
+
+byId("run-workflow").addEventListener("click", async () => {
+  byId("run-workflow").disabled = true;
+  const response = await readApi("/api/v1/pap/run", { scenario: currentScenario });
+  if (response.status === 200) {
+    const episode = response.body;
+    byId("graph-trace").textContent = JSON.stringify(episode, null, 2);
+    const evidence = (await readApi(`/api/v1/evidence/${episode.evidence_id}`)).body;
+    byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
+    byId("tool-calls").textContent = JSON.stringify({ available: evidence.tools, calls: evidence.calls }, null, 2);
+    byId("evidence-note").textContent = evidence.scenario?.label ?? evidence.reason;
+    byId("calculation-result").textContent = "No calculation: evidence withheld.";
+    if (episode.calculation_id) {
+      const calculation = await readApi(`/api/v1/calculations/${episode.calculation_id}`);
+      byId("calculation-result").textContent = JSON.stringify(calculation.body, null, 2);
+    }
+    appendMessage("Workflow", `${episode.status} · ${episode.stop_reason}. Episode ${episode.episode_id}`);
+    selectTab(byId("tab-trace"));
+  } else appendMessage("Workflow", "Run unavailable; inspect Trace.");
+  byId("run-workflow").disabled = false;
 });
