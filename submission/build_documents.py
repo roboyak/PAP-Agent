@@ -165,7 +165,8 @@ def report():
     doc.add_heading("Evidence sources", 1)
     for source in content["sources"]:
         p = doc.add_paragraph()
-        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = 1.0
         p.add_run(f"{source['id']}  ")
         url = f"{content['repository']}/blob/{content['evidence_commit']}/{source['path']}"
         link(p, source["label"], url)
