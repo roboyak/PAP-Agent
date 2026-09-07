@@ -8,6 +8,25 @@ from pap_agent.seed import sunny_fixture
 from pap_agent.store import save_scenario
 
 
+def test_live_outcome_feedback(browser, live_service, database, database_url):
+    save_scenario(database, sunny_fixture())
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Load sunny fixture").click()
+            expect(page.locator("#evidence-note")).to_contain_text("Sunny demo")
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#profile-summary")).to_contain_text("reduced confidence")
+            page.get_by_role("button", name="Evaluate cloudy demo").click()
+            expect(page.locator("#outcome-feedback")).to_contain_text('"solar_bias_kw": 2')
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#profile-summary")).to_contain_text("low confidence")
+            expect(page.locator("#profile-summary")).to_contain_text("10.600 kWh")
+        finally:
+            page.close()
+
+
 def test_live_durable_workflow(browser, live_service, database_url, source_database):
     with live_service(database_url) as url:
         page = browser.new_page()

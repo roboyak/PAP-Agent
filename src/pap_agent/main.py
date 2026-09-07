@@ -15,6 +15,7 @@ from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.domain import Scenario
 from pap_agent.evidence import Evidence, acquire
+from pap_agent.outcomes import evaluate_publication
 from pap_agent.publisher import PublishedPAP
 from pap_agent.store import (
     get_calculation,
@@ -116,6 +117,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/pap/latest")
     def latest_pap() -> PublishedPAP | None:
         return get_publication(app.state.database)
+
+    @app.post("/api/v1/pap/{publication_id}/evaluate")
+    async def evaluate_pap(publication_id: UUID) -> dict:
+        try:
+            return await evaluate_publication(app.state.database, publication_id)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @app.get("/api/v1/pap/{publication_id}")
     def published_pap(publication_id: UUID) -> PublishedPAP:

@@ -61,7 +61,7 @@ class PAP(BaseModel):
     policy_id: str
     status: Literal["valid", "withheld"]
     intervals: list[PowerAvailabilityInterval] = Field(default_factory=list)
-    confidence: Literal["baseline", "reduced"] = "baseline"
+    confidence: Literal["baseline", "reduced", "low"] = "baseline"
     explanation: str = ""
 
 

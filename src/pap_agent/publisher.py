@@ -10,6 +10,7 @@ from pap_agent.core import Calculation, validate_candidate
 from pap_agent.database import Database
 from pap_agent.domain import PAP, Scenario
 from pap_agent.evidence import Evidence
+from pap_agent.outcomes import calibration
 from pap_agent.store import get_calculation, get_evidence, get_publication, save_publication
 
 
@@ -25,6 +26,7 @@ class PublishedPAP(BaseModel):
     observed_age_seconds: float | None = None
     reason: str
     evaluation_only: Literal[True] = True
+    feedback: dict | None = None
 
 
 def publish(
@@ -64,5 +66,10 @@ def publish(
                 result.reason = "; ".join(errors)
             else:
                 result.status, result.profile = "valid", calculation.pap
+                result.feedback = calibration(
+                    database, scenario.telemetry.data_mode, calculation.forecast_version
+                )
+                if result.feedback:
+                    result.profile.confidence = result.feedback["confidence"]
     save_publication(database, result.model_dump(mode="json"))
     return PublishedPAP.model_validate(get_publication(database, publication_id))
