@@ -1,0 +1,64 @@
+{
+  "episode_id": "976a617d-799f-464d-ae8f-224643488af2",
+  "chapters": [
+    {
+      "seconds": 0.0,
+      "caption": "1. Choose MySolArk. Run PAP will read real solar power, load and battery voltage."
+    },
+    {
+      "seconds": 5.01,
+      "caption": "2. Run PAP. This is a new request. The waiting time is shown in real time."
+    },
+    {
+      "seconds": 85.44,
+      "caption": "3. The output: 0.622 kW additional in the first interval, 2.222 kWh across 12 hours, low confidence."
+    },
+    {
+      "seconds": 103.62,
+      "caption": "4. Each bar covers one hour. kW is modeled power headroom. The kWh total adds the energy available across all twelve hours."
+    },
+    {
+      "seconds": 121.65,
+      "caption": "5. Zero means the model allocates no extra solar power in that interval. The total is spread across the forecast, not available all at once."
+    },
+    {
+      "seconds": 137.74,
+      "caption": "6. Read the agent guidance and calculation assumptions. Weather is synthetic and battery discharge is zero. The operator decides what to do."
+    },
+    {
+      "seconds": 155.75,
+      "caption": "7. Valid means publication checks passed. Confidence is a qualitative label. PAP never switches equipment on or off."
+    },
+    {
+      "seconds": 167.97,
+      "caption": "8. Inspector follows this run. Trace shows workflow order. Health checks the current service."
+    },
+    {
+      "seconds": 183.03,
+      "caption": "9. Subagent shows the actual local model calls. Use Forecast in the navigation to return to the same output."
+    }
+  ],
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1440,
+        "height": 1080
+      }
+    ],
+    "format": {
+      "duration": "195.033333"
+    }
+  },
+  "audio": "Silent. Captions explain the output; add your narration if desired.",
+  "presentation": "Actual browser use: fresh MySolArk run, published forecast, and the matching Inspector episode.",
+  "video_sha256": "78e27823bce4b6b76bec0ad3008aec837eaa60229051e45c8d5e6915f8f03c5f",
+  "caption_edit": "Chapter 8 annotation clarified at 167.97\u2013183.03 seconds; browser footage and original model waiting time preserved.",
+  "verification": {
+    "complete_ffmpeg_decode": "passed",
+    "chromium_playback_and_seek": "passed at 1, 80, 140, 171, 184 and 190 seconds",
+    "all_chapter_frames": "visually reviewed; corrected chapter 8 rechecked"
+  }
+}

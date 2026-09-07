@@ -16,3 +16,4 @@ test-results/
 output/capstone/
 output/recordings/
 .DS_Store
+.chart-data-*/

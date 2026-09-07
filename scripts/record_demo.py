@@ -103,7 +103,7 @@ async def record(browser, args, output, version, seconds):
     }, "These narration cues require successful generator and critic records"
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
-    await page.goto(f"{args.url}/?episode={args.episode}")
+    await page.goto(f"{args.url}/inspector?episode={args.episode}")
     await expect(page.get_by_role("button", name="Run PAP", exact=True)).to_be_enabled()
     await expect(page.locator("#run-meta")).to_contain_text(args.episode)
     await page.evaluate("""() => {

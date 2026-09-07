@@ -106,3 +106,37 @@ Use `--url` for another local service port or `--version short` / `--version ful
 After inspecting playback and chapter screenshots, copy the selected MP4s and narration guide
 into `submission/artifacts/` and commit them. Add narration, host the video, and update the
 submission document's real URL before Canvas submission.
+
+## Output walkthrough
+
+`DragonWings_Output_Walkthrough.pptx` / `.pdf` explain one actual output in three slides:
+what the operator sees, how the hourly values add up, and how to interpret the guidance.
+The chart is editable in PowerPoint. `DragonWings_Output_Demo.mp4` shows a fresh MySolArk
+request, its result and the matching Inspector. It is a 3:15 silent, captioned companion
+for explaining the output; add your narration for a presentation recording.
+
+The recorded example is episode `976a617d-799f-464d-ae8f-224643488af2`:
+0.622 kW in the first hour, 2.222 kWh over twelve hours, low confidence and five successful
+Ollama/Gemma calls. These are evaluation outputs, not forecast-accuracy measurements.
+The real scrape was recorded at 2026-09-07 23:46 UTC with synthetic weather factors.
+`examples/output/` keeps the source JSON, exact UI capture and caption timings together.
+The capture identifies its backend commit and that the PR17 UI working tree was uncommitted.
+`artifacts/Output_Recording_Verification.json` records the MP4 hash and playback checks.
+
+With the local app running on port 8000:
+
+```bash
+# Run this once to record a NEW live request. It writes to output/recordings/.
+uv run --locked python scripts/record_output_demo.py
+PAP_CAPTURE="$(cat .cache/output-demo-latest.txt)"
+bash submission/build_output.sh "$PAP_CAPTURE"
+
+# Or regenerate the slides from the versioned example without running PAP:
+bash submission/build_output.sh
+```
+
+The recorder needs a valid published result. A withheld result stops the output lesson
+instead of substituting invented numbers. New live readings can change values and duration.
+Slides and video use the same episode. Review each regenerated artifact before copying it
+into `submission/artifacts/`. The existing full submission files and 2:30/9:00 videos are
+versioned PR16 snapshots; this companion demonstrates the current two-page UI.

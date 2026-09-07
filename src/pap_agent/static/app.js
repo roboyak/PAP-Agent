@@ -58,6 +58,8 @@ function clearSelection(title = "No run selected. Run PAP to begin.") {
   currentPublication = null;
   history.replaceState(null, "", location.pathname);
   byId("published-profile").hidden = true;
+  byId("view-output").hidden = true;
+  byId("forecast-link").href = "/";
   byId("run-status").textContent = title;
   byId("run-meta").replaceChildren();
   byId("next-step").textContent = "Run PAP to create a result and inspect its complete workflow.";
@@ -142,6 +144,8 @@ function renderPublication(publication) {
     ? "Evaluate cloudy demo" : "Evaluate latest reading";
   if (publication.feedback) byId("outcome-feedback").textContent = JSON.stringify(publication.feedback, null, 2);
   byId("published-profile").hidden = false;
+  byId("view-output").hidden = false;
+  byId("view-output").href = byId("forecast-link").href = `/?episode=${encodeURIComponent(publication.episode_id)}`;
   byId("publication-status").textContent = publication.status;
   const intervals = publication.profile?.intervals ?? [];
   const energy = intervals.reduce((sum, row) => sum + row.energy_kwh, 0);

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DragonWings PAP Inspector</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body data-default-source="__DEFAULT_SOURCE__">
+<nav class="site-nav" aria-label="Main navigation">
+  <a class="brand" href="/">DragonWings <span>PAP / power availability</span></a>
+  <div><a id="forecast-link" href="/">Forecast</a><a href="/inspector" aria-current="page">Inspector</a></div>
+</nav>
+<main>
+  <header>
+    <div class="title-row"><h1>Run inspector</h1><span class="badge">READ ONLY</span></div>
+    <p>Follow one result through its evidence, memory, tools and model decisions.</p>
+    <div class="status-row"><span>Local telemetry · synthetic weather</span><span id="service-status" role="status">Service not checked</span></div>
+  </header>
+
+  <section class="run-overview" aria-labelledby="run-heading">
+    <h2 id="run-heading">Selected run</h2>
+    <p id="run-status">No run selected. Run PAP to begin.</p>
+    <p id="run-meta" class="muted session-note"></p>
+    <a id="view-output" href="/" hidden>View forecast</a>
+    <p id="next-step" class="session-note">Choose a source, then inspect one completed run across all six tabs.</p>
+    <p id="run-progress" aria-live="polite" hidden></p>
+  </section>
+
+  <div class="workspace">
+    <section class="session" aria-labelledby="session-heading">
+      <h2 id="session-heading">PAP session</h2>
+      <div class="conversation" role="log" aria-label="Session activity" aria-live="polite">
+        <div id="empty-session" class="empty-session">
+          <h3>Ready to calculate availability</h3>
+          <p>Run PAP to read the source and calculate solar surplus.</p>
+          <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
+        </div>
+        <div id="messages"></div>
+      </div>
+      <div class="controls">
+        <button id="run-workflow" class="primary">Run PAP</button>
+        <button id="compare-agents">Compare agent off / on</button>
+        <button id="check-service">Check service</button>
+        <button id="load-fixture">Load sunny fixture</button>
+        <button id="load-mysolark">Read MySolArk now</button>
+        <button id="calculate-pap">Calculate PAP</button>
+        <button id="reset-view">Reset view</button>
+      </div>
+      <p id="evidence-note" class="muted session-note">Run PAP or select a source to inspect its evidence.</p>
+      <section id="published-profile" hidden>
+        <h2>Power availability <span id="publication-status" class="badge"></span></h2>
+        <p id="profile-summary"></p>
+        <p id="profile-provenance" class="muted session-note"></p>
+        <details><summary>Hourly result and assumptions</summary><table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead>
+          <tbody id="profile-intervals"></tbody></table>
+        <p id="profile-explanation" class="muted session-note"></p></details>
+        <button id="evaluate-outcome">Evaluate latest reading</button>
+      </section>
+    </section>
+
+    <section class="inspector" aria-label="Run inspector">
+      <div role="tablist" aria-label="Monitoring panels">
+        <button id="tab-context" role="tab" aria-selected="true" aria-controls="context">Context</button>
+        <button id="tab-memory" role="tab" aria-selected="false" aria-controls="memory" tabindex="-1">Memory</button>
+        <button id="tab-tools" role="tab" aria-selected="false" aria-controls="tools" tabindex="-1">Tools</button>
+        <button id="tab-subagent" role="tab" aria-selected="false" aria-controls="subagent" tabindex="-1">Subagent</button>
+        <button id="tab-trace" role="tab" aria-selected="false" aria-controls="trace" tabindex="-1">Trace</button>
+        <button id="tab-health" role="tab" aria-selected="false" aria-controls="health" tabindex="-1">Health</button>
+      </div>
+
+      <section id="context" role="tabpanel" aria-labelledby="tab-context" tabindex="0">
+        <h2>Model context</h2>
+        <p class="muted">The messages and evidence actually sent to a model.</p>
+        <p id="model-summary">No model call to inspect.</p>
+        <dl><dt>Input messages</dt><dd id="model-messages">0</dd><dt>Model attempts</dt><dd id="model-calls">0</dd></dl>
+        <pre id="model-context">No model context yet. Service checks do not call a model.</pre>
+        <h3>Agent comparison</h3><p id="comparison-summary">No comparison yet.</p><pre id="agent-comparison">No comparison yet.</pre>
+        <h3>Loaded evidence</h3><div id="evidence-summary"></div><pre id="evidence-context">No evidence loaded.</pre>
+        <h3>Deterministic calculation</h3><p id="calculation-summary">No calculation yet.</p><pre id="calculation-result">No calculation yet.</pre>
+      </section>
+      <section id="memory" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
+        <h2>Long-term memory</h2>
+        <p class="muted">Stored knowledge and the records selected for a run.</p>
+        <h3>Memory used by this run</h3>
+        <ul id="run-memory-summary" class="inspection-list"><li>No retrieval for this run.</li></ul>
+        <pre id="run-memory-results">No retrieval for this run.</pre>
+        <h3>Manual memory search</h3>
+        <p class="muted session-note">A separate search; it does not change the selected run's recorded context.</p>
+        <label for="memory-query">Retrieval query</label>
+        <input id="memory-query" value="battery voltage reserve and solar uncertainty" maxlength="500">
+        <div class="controls"><button id="index-memory">Index memory</button><button id="search-memory">Search memory</button></div>
+        <p id="memory-search-summary">Search stored guidance or index newly evaluated outcomes.</p>
+        <pre id="memory-results">No retrieval yet.</pre>
+        <h3>Outcome feedback</h3><pre id="outcome-feedback">No outcome evaluated yet.</pre>
+      </section>
+      <section id="tools" role="tabpanel" aria-labelledby="tab-tools" tabindex="0" hidden>
+        <h2>Tools and calls</h2>
+        <p class="muted">Available tools, their inputs, results, and elapsed time.</p>
+        <ul id="tool-summary" class="inspection-list"><li>No calls to inspect.</li></ul>
+        <pre id="tool-calls">No MCP tool calls have run.</pre>
+        <p>Service HTTP requests are visible in Trace.</p>
+      </section>
+      <section id="subagent" role="tabpanel" aria-labelledby="tab-subagent" tabindex="0" hidden>
+        <h2>Subagent activity</h2>
+        <p class="muted">Model records grouped by role. Trace shows workflow order. Expand details for inputs, schemas and outputs.</p>
+        <ul id="agent-summary" class="inspection-list"><li>No model call for this run.</li></ul>
+        <pre id="agent-activity">No subagent has run.</pre>
+      </section>
+      <section id="trace" role="tabpanel" aria-labelledby="tab-trace" tabindex="0" hidden>
+        <h2>Execution trace</h2>
+        <p>Reasoning mode: <strong id="reasoning-mode">Not run</strong></p>
+        <p id="reasoning-summary">No workflow run yet.</p>
+        <ol id="node-summary" class="inspection-list"></ol>
+        <details><summary>Search branches and selection</summary><pre id="search-trace">No selective search.</pre></details>
+        <pre id="graph-trace">No workflow run yet.</pre>
+        <p class="muted">Requests and results from this browser session. Most recent 20 events.</p>
+        <p id="empty-trace" class="empty">Run a service check to see its requests.</p>
+        <ol id="trace-events"></ol>
+      </section>
+      <section id="health" role="tabpanel" aria-labelledby="tab-health" tabindex="0" hidden>
+        <h2>Service health</h2>
+        <p class="muted">Live PostgreSQL query and installed pgvector extension.</p>
+        <dl>
+          <dt>PostgreSQL</dt><dd id="database-status">Not checked</dd>
+          <dt>pgvector</dt><dd id="pgvector-status">Not checked</dd>
+          <dt>Version</dt><dd id="app-version">Not checked</dd>
+        </dl>
+        <p id="health-note">Use Check service to refresh.</p>
+        <p id="readiness-summary">Current service configuration has not been checked.</p>
+        <h3>Runtime readiness</h3><pre id="readiness-result">Not checked.</pre>
+      </section>
+    </section>
+  </div>
+  <footer><span>Local diagnostic console</span><nav aria-label="Service information">
+    <a href="/health">Health</a><a href="/health/ready">Readiness</a><a href="/api/v1/version">Version</a><a href="/docs">API documentation</a>
+  </nav></footer>
+</main>
+</body>
+</html>
