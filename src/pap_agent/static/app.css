@@ -35,7 +35,7 @@ button:disabled { cursor: wait; opacity: .6; }
 [role="tablist"] { display: flex; flex-wrap: wrap; border-bottom: 1px solid #d1d5db; padding: 0 6px; background: #f9fafb; }
 [role="tab"] { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 12px 10px; font-size: 13px; }
 [role="tab"][aria-selected="true"] { color: #9a3412; border-bottom-color: #f97316; font-weight: 650; background: #fff; }
-[role="tabpanel"] { min-height: 385px; padding: 24px; overflow-wrap: anywhere; }
+[role="tabpanel"] { min-height: 385px; max-height: 520px; padding: 24px; overflow: auto; overflow-wrap: anywhere; }
 [hidden] { display: none !important; }
 dl { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 16px 0; border-block: 1px solid #e5e7eb; }
 dt { color: #6b7280; }

@@ -2,7 +2,7 @@ export UV_CACHE_DIR := $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH := $(CURDIR)/.cache/playwright
 
 .NOTPARALLEL: verify
-.PHONY: setup db-up db-down migrate dev format format-check lint test e2e verify
+.PHONY: setup db-up db-down migrate seed dev format format-check lint test e2e verify
 
 setup:
 	uv sync --locked
@@ -16,6 +16,9 @@ db-down:
 
 migrate:
 	uv run --locked alembic upgrade head
+
+seed:
+	uv run --locked python -m pap_agent.seed
 
 dev:
 	uv run --locked uvicorn pap_agent.main:app --host 127.0.0.1 --port 8000
@@ -39,5 +42,6 @@ verify:
 	$(MAKE) format-check lint
 	$(MAKE) db-up
 	$(MAKE) migrate
+	$(MAKE) seed
 	$(MAKE) test
 	$(MAKE) e2e

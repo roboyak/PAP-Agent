@@ -14,6 +14,8 @@ The starting directory contained planning materials, with no application impleme
   current context, eligible/selected memory, calls/results, isolated agent input/output,
   and concise execution events as those capabilities arrive. The PAP implementation
   follows the report's LangGraph and PostgreSQL architecture for orchestration/storage.
+  The user explicitly permits adapting the reference's agentic Python as a baseline,
+  incrementally; the UI remains our own implementation.
 - The report's prior PR11 progress and example traces are reported history, not evidence
   that this new repository is implemented or benchmarked.
 - PR01 builds only the service, database, and verification foundation. Keep one PR per lesson;
@@ -31,7 +33,7 @@ The starting directory contained planning materials, with no application impleme
   depth 3, and eight total LLM calls, including retries and nested calls.
 - Authorized future source: DW 1.24 **persisted MySolArk scrape data** in
   `/Users/roboyak/0_DragonWings/src/pubnub` and its local database (not CAN/Tesla records).
-  Inspect read-only and use anonymized replay samples for PR02/03. Battery voltage is the
+  PR02 uses synthetic evidence; PR03 adds read-only, anonymized source replay. Battery voltage is the
   MVP battery-state input, per the user; SOC is not required. Keep voltage thresholds and
   any energy model explicit in configuration. Never infer equipment limits from measurements
   or copy source credentials into PAP.

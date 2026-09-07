@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR01, service and database foundation.** Forecasts and agents arrive later.
+**Current increment: PR02, typed and persisted evidence.** Forecasts and agents arrive later.
 
 ## Run locally
 
@@ -14,6 +14,7 @@ set `PG_BIN` to use another installation. No Docker is needed.
 make setup
 make db-up
 make migrate
+make seed
 make verify
 make dev
 ```
@@ -33,17 +34,20 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | `/` | READ ONLY console with Context, Memory, Tools, Subagent, Trace, and Health tabs |
 | `/health` | 200 when PostgreSQL responds and pgvector is enabled; otherwise 503 |
 | `/api/v1/version` | Package version, read-only status, and synthetic mode; no DB dependency |
+| `/api/v1/scenarios` | Available local development fixtures |
+| `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
 
 ## Code map
 
 - `src/pap_agent/config.py`: typed local settings.
 - `src/pap_agent/database.py`: connection pool and commit/rollback sessions.
-- `src/pap_agent/main.py`: page and three HTTP routes.
+- `src/pap_agent/main.py`: local page and API routes.
+- `src/pap_agent/domain.py`, `store.py`, `seed.py`: typed records, explicit SQL, one sunny fixture.
 - `src/pap_agent/static/`: plain HTML/CSS/JavaScript console; no Gradio or frontend build step.
-- `migrations/`: Alembic enables pgvector; domain tables begin in PR02.
+- `migrations/`: pgvector and normalized telemetry, policy, scenario, and weather tables.
 - `tests/`: configuration, API, real PostgreSQL, and live Playwright checks.
 
-`make verify` checks formatting/lint, starts the DB, migrates it, and runs all tests.
+`make verify` checks formatting/lint, starts/migrates/seeds the DB, and runs all tests.
 Tests create uniquely named `pap_test_*` databases and remove only those databases.
 The test role needs database-creation privileges; the local setup creates a role with them.
 `make test` runs API/config/DB checks; `make e2e` launches Uvicorn and Chromium itself,
@@ -55,15 +59,19 @@ The console follows the reference's conversation/inspector layout. Check service
 real health/version requests and shows their status, timing, and JSON in Trace.
 Reset view clears only the browser view. Context, Memory, Tools, and Subagent have explicit
 empty states until their capabilities are connected in later PRs.
+Load sunny fixture reads PostgreSQL and displays its evidence in Context. Fixture values
+and the voltage-floor/power-cap policy are synthetic examples, not DragonWings ratings.
+The fixture uses a fixed UTC replay clock. Repeated `make seed` preserves existing rows.
 
-Migration `0001_enable_pgvector` is additive. Downgrading to `base` deliberately leaves
-the shared vector extension installed to protect data; upgrading again is supported.
+Migration `0001_enable_pgvector` leaves the shared vector extension installed on downgrade.
+Downgrading `0002_domain_evidence` drops its four evidence tables; retain those tables
+when rolling back an application version that has stored evidence.
 
 ## Build plan
 
 The [PR prompts](docs/build-prompts/README.md) define the sequence. The
 [capstone review](docs/CAPSTONE_NOTES.md) records the source comparison and accepted adjustments.
-Lessons stay as one-line PR/commit notes. [PR01's draft](docs/pr/PR-01.md) has local review commands.
+Lessons stay as one-line PR/commit notes. [PR02's notes](docs/pr/PR-02.md) have local review commands.
 
 The planned architecture uses LangGraph for workflow control, PostgreSQL/pgvector for
 storage and memory, read-only MCP sources, and deterministic calculations and validation.
