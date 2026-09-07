@@ -60,3 +60,7 @@ minimum is the battery floor. The read-only scan of 6,527 MySolArk rows on 2026-
 305.2 V minimum and 394.3 V maximum. Treat this as a user-approved inferred floor, not a
 manufacturer rating. The first calculation uses solar surplus only; no battery capacity or
 SOC is inferred from voltage.
+
+User clarified that the observed 305.2 V floor corresponds to their ~30% SOC reserve and
+batteries must stay above it. Configure 305.2 V as a fixed hard floor; do not automatically
+lower it from future minima. Continue calculations in voltage; do not derive an SOC curve.

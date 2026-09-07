@@ -107,7 +107,7 @@ async def acquire(database: Database, scenario: str = "sunny") -> Evidence:
             tools=tools,
             calls=calls,
         )
-    except (ValueError, ValidationError, TimeoutError, KeyError, MCPError):
+    except* (ValueError, ValidationError, TimeoutError, KeyError, MCPError):
         evidence = Evidence(
             status="withheld",
             reason="Source unavailable or T3 validation failed",

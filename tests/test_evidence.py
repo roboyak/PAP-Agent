@@ -10,10 +10,12 @@ from pap_agent.evidence import acquire, validate_sources
 from pap_agent.sources import telemetry_source, weather_source
 
 
-def test_mcp_connection_failure_is_persisted_as_withheld(database, monkeypatch):
+@pytest.mark.parametrize("grouped", [False, True])
+def test_mcp_connection_failure_is_persisted_as_withheld(database, monkeypatch, grouped):
     @asynccontextmanager
     async def disconnected(*args, **kwargs):
-        raise MCPError(-32000, "transport detail must stay private")
+        error = MCPError(-32000, "transport detail must stay private")
+        raise ExceptionGroup("SDK task group", [error]) if grouped else error
         yield  # pragma: no cover
 
     monkeypatch.setattr("pap_agent.evidence.Client", disconnected)
