@@ -20,6 +20,7 @@ def test_checkpoint_resume_preserves_domain_ids(database):
         assert [item["node"] for item in resumed["trace"]] == [
             "acquire_evidence (T1/T2/T3)",
             "calculate_profile (T4/T5/T6)",
+            "assess_ambiguity",
             "publish_profile (T7)",
             "finalize_episode",
         ]

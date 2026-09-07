@@ -250,3 +250,26 @@ def test_live_agent_comparison(browser, live_service, database, database_url):
             expect(page.locator("#memory-results")).to_contain_text("selection_reason")
         finally:
             page.close()
+
+
+def test_live_selective_search_trace(browser, live_service, database, database_url):
+    save_scenario(database, sunny_fixture())
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Load sunny fixture").click()
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#reasoning-mode")).to_have_text("linear", timeout=15000)
+            page.get_by_role("button", name="Evaluate cloudy demo").click()
+            expect(page.locator("#outcome-feedback")).to_contain_text("mean_solar_bias_kw")
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#reasoning-mode")).to_have_text("selective_tot", timeout=15000)
+            page.get_by_role("tab", name="Trace", exact=True).click()
+            page.get_by_text("Search branches and selection", exact=True).click()
+            expect(page.locator("#search-trace")).to_contain_text('"beam_width": 2')
+            expect(page.locator("#search-trace")).to_contain_text("prune_reason")
+            expect(page.locator("#search-trace")).to_contain_text("selected_id")
+            expect(page.locator("#profile-summary")).to_contain_text("10.600 kWh")
+        finally:
+            page.close()

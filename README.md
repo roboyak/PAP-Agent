@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR09, optional grounded interpretation and paired A/B runs.**
+**Current increment: PR10, selective bounded search over guidance.**
 
 ## Run locally
 
@@ -57,9 +57,9 @@ The sunny fixture still uses its own synthetic 48 V / 5 kW policy. Live equipmen
 is unconfigured, and future voltage is not predicted. All results are an evaluation baseline.
 
 Run PAP uses [LangGraph with its official PostgreSQL checkpointer](https://docs.langchain.com/oss/python/langgraph/add-memory).
-Four default nodes acquire validated evidence, calculate, publish, and finalize. Enabling
+Five default nodes acquire validated evidence, calculate, assess ambiguity, publish, and finalize. Enabling
 interpretation adds retrieve, interpret, and validate nodes. Invalid evidence goes directly
-to withheld publication. There are no automatic retries; the graph has a twelve-step limit. The Trace
+to withheld publication. There are no automatic retries; the graph has a 24-step limit. The Trace
 panel shows node results, IDs, and timing. PostgreSQL domain records remain canonical;
 checkpoints hold IDs/statuses for resume. Cloud tracing is disabled. [PR06](docs/pr/PR-06.md)
 includes inspection commands.
@@ -151,3 +151,17 @@ Use **Compare agent off / on** to run both modes on one telemetry/weather snapsh
 of the environment default. Context shows sent inputs, Memory shows selection reasons,
 Subagent shows returned JSON and call limits, and Trace shows the graph. Times are a single
 paired observation, affected by model warm-up; they do not measure answer quality.
+
+## Selective search
+
+A recorded mean solar overestimation above the demo threshold of 0.25 kW triggers a
+LangGraph search subgraph. It compares baseline, refresh and withhold guidance using
+three branches, beam two, at most one refinement and a final depth-three hard check. Ordinary
+runs remain linear. PR10 uses deterministic generator/critic fixtures (zero LLM calls);
+PR11 connects models through those interfaces. Trace shows branch IDs, citations,
+pruning, scores and selection. All arithmetic and voltage policy remain deterministic.
+
+To demonstrate: Load sunny fixture → Run PAP → Evaluate cloudy demo → Run PAP.
+The second run shows selective_tot while preserving the 10.600 kWh calculation.
+
+Existing sunny outcome feedback can make the first displayed run selective already.

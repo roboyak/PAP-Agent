@@ -31,7 +31,7 @@ def test_paired_runs_preserve_power_and_agent_resume(database):
     )
     resumed = asyncio.run(run_episode(database, episode_id=UUID(paused["episode_id"])))
     assert resumed["model_calls"] == 1
-    assert len(episode_records(database, resumed["episode_id"])) == 2
+    assert len(episode_records(database, resumed["episode_id"])) == 3
 
 
 def test_malformed_authority_and_unknown_citations_are_rejected(database):
