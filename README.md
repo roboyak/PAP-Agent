@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR08, local pgvector semantic memory.** Chat-agent nodes arrive later.
+**Current increment: PR09, optional grounded interpretation and paired A/B runs.**
 
 ## Run locally
 
@@ -57,8 +57,9 @@ The sunny fixture still uses its own synthetic 48 V / 5 kW policy. Live equipmen
 is unconfigured, and future voltage is not predicted. All results are an evaluation baseline.
 
 Run PAP uses [LangGraph with its official PostgreSQL checkpointer](https://docs.langchain.com/oss/python/langgraph/add-memory).
-Four nodes acquire validated evidence, calculate, publish, and finalize. Invalid evidence goes directly
-to withheld publication. There are no automatic retries; the graph has an eight-step limit. The Trace
+Four default nodes acquire validated evidence, calculate, publish, and finalize. Enabling
+interpretation adds retrieve, interpret, and validate nodes. Invalid evidence goes directly
+to withheld publication. There are no automatic retries; the graph has a twelve-step limit. The Trace
 panel shows node results, IDs, and timing. PostgreSQL domain records remain canonical;
 checkpoints hold IDs/statuses for resume. Cloud tracing is disabled. [PR06](docs/pr/PR-06.md)
 includes inspection commands.
@@ -109,7 +110,7 @@ Use `make format` to format code. Missing DB/browser dependencies fail verificat
 The console follows the reference's conversation/inspector layout. Check service makes
 real health/version requests and shows their status, timing, and JSON in Trace.
 Reset view clears only the browser view. Context shows loaded evidence and Tools shows MCP
-activity. Memory shows retrieval and outcome feedback. Subagent remains unconnected until its lesson.
+activity. Memory shows retrieval and outcome feedback. Subagent shows each bounded agent call.
 Load sunny fixture reads PostgreSQL and displays its evidence in Context. Fixture values
 and the voltage-floor/power-cap policy are synthetic examples, not DragonWings ratings.
 The fixture uses a fixed UTC replay clock. Repeated `make seed` preserves existing rows.
@@ -137,3 +138,16 @@ The planned architecture uses LangGraph for workflow control, PostgreSQL/pgvecto
 storage and memory, read-only MCP sources, and deterministic calculations and validation.
 LangChain agents are added only in their lessons. Deep Agents is outside this MVP;
 LangSmith is optional. No hardware-control functionality is part of this project.
+
+## Optional interpretation and A/B
+
+`ENABLE_INTERPRETATION_AGENT=false` is the default. Set it to `true` before starting the
+service to add a local `gemma3:4b` interpretation call using LangChain `create_agent`.
+Run `make memory-index` first. The agent receives up to three selected records, current
+voltage/policy and a forecast summary. Its structured recommendation can lower confidence
+or request fresh evidence; Python keeps all power calculations and publish authority.
+
+Use **Compare agent off / on** to run both modes on one telemetry/weather snapshot, regardless
+of the environment default. Context shows sent inputs, Memory shows selection reasons,
+Subagent shows returned JSON and call limits, and Trace shows the graph. Times are a single
+paired observation, affected by model warm-up; they do not measure answer quality.

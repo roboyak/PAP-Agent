@@ -6,11 +6,13 @@ from uuid import UUID, uuid5
 
 from pydantic import AwareDatetime, BaseModel, Field
 
+from pap_agent.agents import validated_advice
 from pap_agent.core import Calculation, validate_candidate
 from pap_agent.database import Database
 from pap_agent.domain import PAP, Scenario
 from pap_agent.evidence import Evidence
 from pap_agent.outcomes import calibration
+from pap_agent.reasoning import get_record
 from pap_agent.store import get_calculation, get_evidence, get_publication, save_publication
 
 
@@ -27,10 +29,17 @@ class PublishedPAP(BaseModel):
     reason: str
     evaluation_only: Literal[True] = True
     feedback: dict | None = None
+    interpretation: dict | None = None
 
 
 def publish(
-    database: Database, episode_id: UUID, evidence_id: UUID, calculation_id: UUID | None
+    database: Database,
+    episode_id: UUID,
+    evidence_id: UUID,
+    calculation_id: UUID | None,
+    *,
+    interpretation_id=None,
+    retrieval_id=None,
 ) -> PublishedPAP:
     publication_id = uuid5(episode_id, "publication")
     stored = get_publication(database, publication_id)
@@ -71,5 +80,16 @@ def publish(
                 )
                 if result.feedback:
                     result.profile.confidence = result.feedback["confidence"]
+                if interpretation_id:
+                    record = get_record(database, interpretation_id)
+                    selected = get_record(database, retrieval_id)["selected"]
+                    advice = validated_advice(record, str(evidence_id), selected)
+                    result.interpretation = {
+                        "record_id": interpretation_id,
+                        "accepted": advice is not None,
+                        "advice": advice.model_dump() if advice else None,
+                    }
+                    if advice is None or advice.confidence == "lower" or advice.insufficient:
+                        result.profile.confidence = "low"
     save_publication(database, result.model_dump(mode="json"))
     return PublishedPAP.model_validate(get_publication(database, publication_id))

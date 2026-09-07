@@ -225,3 +225,28 @@ def test_live_database_failure_is_visible(browser, live_service):
             assert page.request.get(f"{url}/api/v1/version").status == 200
         finally:
             page.close()
+
+
+def test_live_agent_comparison(browser, live_service, database, database_url):
+    from pap_agent.memory import index_memory
+
+    save_scenario(database, sunny_fixture())
+    index_memory(database)
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Load sunny fixture").click()
+            page.get_by_role("button", name="Compare agent off / on").click()
+            expect(page.locator("#agent-comparison")).to_contain_text(
+                '"same_available_power": true', timeout=30000
+            )
+            expect(page.locator("#model-calls")).to_have_text("1")
+            expect(page.locator("#model-context")).to_contain_text("evidence_id")
+            page.get_by_role("tab", name="Subagent", exact=True).click()
+            expect(page.locator("#agent-activity")).to_contain_text('"tools": []')
+            expect(page.locator("#agent-activity")).to_contain_text('"status": "ok"')
+            page.get_by_role("tab", name="Memory", exact=True).click()
+            expect(page.locator("#memory-results")).to_contain_text("selection_reason")
+        finally:
+            page.close()
