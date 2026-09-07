@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from pap_agent.config import Settings
 from pap_agent.database import Database
-from pap_agent.reasoning import get_record, save_record
+from pap_agent.reasoning import get_record, model_call_count, save_record
 
 MAX_MODEL_CALLS = 8
 MODEL_TIMEOUT_SECONDS = 45
@@ -51,6 +51,7 @@ async def call_agent(
     if existing:
         return existing
     settings = Settings()
+    remaining = min(remaining, MAX_MODEL_CALLS - model_call_count(database, episode_id))
     record = {
         "id": str(record_id),
         "episode_id": str(episode_id),
@@ -62,6 +63,7 @@ async def call_agent(
         "input": context,
         "output": None,
         "tools": [],
+        "response_schema": schema.model_json_schema(),
         "calls": int(remaining > 0),
         "duration_ms": 0,
         "limits": {"timeout_seconds": MODEL_TIMEOUT_SECONDS, "output_tokens": 768, "retries": 0},

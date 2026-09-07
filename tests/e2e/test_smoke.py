@@ -271,5 +271,13 @@ def test_live_selective_search_trace(browser, live_service, database, database_u
             expect(page.locator("#search-trace")).to_contain_text("prune_reason")
             expect(page.locator("#search-trace")).to_contain_text("selected_id")
             expect(page.locator("#profile-summary")).to_contain_text("10.600 kWh")
+            page.get_by_role("button", name="Compare agent off / on").click()
+            expect(page.locator("#model-calls")).to_have_text("3", timeout=30000)
+            page.get_by_role("tab", name="Subagent", exact=True).click()
+            for role in ("generator", "critic", "interpretation"):
+                expect(page.locator("#agent-activity")).to_contain_text(f'"kind": "{role}"')
+            expect(page.locator("#agent-comparison")).to_contain_text(
+                '"same_available_power": true'
+            )
         finally:
             page.close()
