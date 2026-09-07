@@ -33,7 +33,7 @@ The starting directory contained planning materials, with no application impleme
   depth 3, and eight total LLM calls, including retries and nested calls.
 - Authorized future source: DW 1.24 **persisted MySolArk scrape data** in
   `/Users/roboyak/0_DragonWings/src/pubnub` and its local database (not CAN/Tesla records).
-  PR02 uses synthetic evidence; PR03 adds read-only, anonymized source replay. Battery voltage is the
+  PR02 uses synthetic evidence; PR03 adds read-only live source data and real timestamps. Battery voltage is the
   MVP battery-state input, per the user; SOC is not required. Keep voltage thresholds and
   any energy model explicit in configuration. Never infer equipment limits from measurements
   or copy source credentials into PAP.
@@ -50,8 +50,17 @@ the read-only query. The review found 6,509 rows, with PV/load present in 6,359.
 time; make the source Rails UTC convention explicit. SOC fields are excluded from the MVP
 by user decision. Battery power sign and capacity units still need validation if used later.
 
-For replay, select a bounded window under `BEGIN READ ONLY`; export only an anonymous
-site alias, relative time, voltage, PV/load, and missing-data flags. Omit raw JSON,
-source identifiers, locations, and original timestamps. Keep original scraped observations
-distinct from synthetic happy-path fixtures and any explicit simulation assumptions.
-No source data was exported or changed during this review.
+PR03 user update: use real data and real time to simplify evaluation. MySolArk is now read
+directly from the source DB; retain the real scrape UTC timestamp and display its age.
+No source data is modified. Keep device identifiers, raw JSON, and source credentials out
+of PAP responses. Weather remains an explicit synthetic fixture for this increment.
+
+PR04 policy direction: user explicitly asked to scan voltage history and assume its observed
+minimum is the battery floor. The read-only scan of 6,527 MySolArk rows on 2026-09-07 found
+305.2 V minimum and 394.3 V maximum. Treat this as a user-approved inferred floor, not a
+manufacturer rating. The first calculation uses solar surplus only; no battery capacity or
+SOC is inferred from voltage.
+
+User clarified that the observed 305.2 V floor corresponds to their ~30% SOC reserve and
+batteries must stay above it. Configure 305.2 V as a fixed hard floor; do not automatically
+lower it from future minima. Continue calculations in voltage; do not derive an SOC curve.

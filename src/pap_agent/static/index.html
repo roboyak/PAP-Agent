@@ -12,7 +12,7 @@
   <header>
     <div class="title-row"><h1>DragonWings PAP Forecaster</h1><span class="badge">READ ONLY</span></div>
     <p>Local power availability, with the evidence and activity behind each result.</p>
-    <div class="status-row"><span>Synthetic/local mode</span><span id="service-status" role="status">Service not checked</span></div>
+    <div class="status-row"><span>Local telemetry · synthetic weather</span><span id="service-status" role="status">Service not checked</span></div>
   </header>
 
   <div class="workspace">
@@ -29,6 +29,7 @@
       <div class="controls">
         <button id="check-service" class="primary">Check service</button>
         <button id="load-fixture">Load sunny fixture</button>
+        <button id="load-mysolark">Read MySolArk now</button>
         <button id="reset-view">Reset view</button>
       </div>
       <p id="evidence-note" class="muted session-note">No telemetry loaded. Load a fixture to inspect stored evidence.</p>
@@ -59,7 +60,7 @@
       <section id="tools" role="tabpanel" aria-labelledby="tab-tools" tabindex="0" hidden>
         <h2>Tools and calls</h2>
         <p class="muted">Available tools, their inputs, results, and elapsed time.</p>
-        <p class="empty">No agent tools connected. No MCP tool calls have run.</p>
+        <pre id="tool-calls">No MCP tool calls have run.</pre>
         <p>Service HTTP requests are visible in Trace.</p>
       </section>
       <section id="subagent" role="tabpanel" aria-labelledby="tab-subagent" tabindex="0" hidden>

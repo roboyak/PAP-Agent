@@ -32,5 +32,5 @@ def test_unreachable_database_and_independent_version():
         assert "test-secret" not in response.text
         version = client.get("/api/v1/version")
         assert version.status_code == 200
-        assert version.json() == {"version": __version__, "read_only": True, "mode": "synthetic"}
+        assert version.json() == {"version": __version__, "read_only": True, "mode": "local"}
         assert client.post("/health").status_code == 405

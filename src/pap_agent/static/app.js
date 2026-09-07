@@ -39,7 +39,7 @@ async function readApi(path) {
   const started = performance.now();
   let result;
   try {
-    const response = await fetch(path, { signal: AbortSignal.timeout(5000), cache: "no-store" });
+    const response = await fetch(path, { signal: AbortSignal.timeout(15000), cache: "no-store" });
     result = { status: response.status, body: await response.json() };
   } catch {
     result = { status: "network error", body: { status: "unavailable", error: "Local service did not respond." } };
@@ -76,6 +76,7 @@ byId("check-service").addEventListener("click", async () => {
 
 byId("reset-view").addEventListener("click", () => {
   currentScenario = null;
+  byId("tool-calls").textContent = "No MCP tool calls have run.";
   byId("evidence-context").textContent = "No evidence loaded.";
   byId("evidence-note").textContent = "No telemetry loaded. Load a fixture to inspect stored evidence.";
   byId("messages").replaceChildren();
@@ -85,6 +86,22 @@ byId("reset-view").addEventListener("click", () => {
   delete byId("service-status").dataset.status;
   for (const id of ["database-status", "pgvector-status", "app-version"]) byId(id).textContent = "Not checked";
   byId("health-note").textContent = "Use Check service to refresh.";
+});
+
+byId("load-mysolark").addEventListener("click", async () => {
+  byId("load-mysolark").disabled = true;
+  const result = await readApi("/api/v1/evidence/current?scenario=mysolark");
+  const evidence = result.body;
+  if (evidence.status === "valid") {
+    currentScenario = evidence.scenario.name;
+    byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
+    byId("evidence-note").textContent = evidence.scenario.label;
+    byId("tool-calls").textContent = JSON.stringify({ available: evidence.tools, calls: evidence.calls }, null, 2);
+    const telemetry = evidence.scenario.telemetry;
+    appendMessage("MCP evidence", `${telemetry.battery_voltage_v} V battery · ${telemetry.solar_power_kw} kW solar · ${telemetry.load_power_kw} kW load. Scraped ${evidence.observed_age_seconds} seconds ago at ${telemetry.observed_at}; weather is synthetic.`);
+    selectTab(byId("tab-tools"));
+  } else appendMessage("Evidence withheld", evidence.reason ?? "Source unavailable.");
+  byId("load-mysolark").disabled = false;
 });
 
 byId("load-fixture").addEventListener("click", async () => {

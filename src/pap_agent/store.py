@@ -1,9 +1,20 @@
 """Explicit SQL keeps this small repository layer easy to follow."""
 
+import json
+
 from sqlalchemy import text
 
 from pap_agent.database import Database
 from pap_agent.domain import Scenario
+
+
+def save_evidence(database: Database, payload: dict) -> None:
+    with database.session() as session:
+        session.execute(
+            text("""INSERT INTO evidence_records (id, payload)
+            VALUES (:id, CAST(:payload AS jsonb))"""),
+            {"id": payload["id"], "payload": json.dumps(payload)},
+        )
 
 
 def save_scenario(database: Database, scenario: Scenario) -> None:
