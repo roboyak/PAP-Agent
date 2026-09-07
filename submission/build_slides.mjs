@@ -158,7 +158,7 @@ function renderSlide(pres,d,i,total) {
       meaning(s,d); break;
     }
     case 'console':
-      s.images.add({blob:screenshot,contentType:'image/png',alt:'Actual local PAP console showing a withheld decision and its inspector tabs',fit:'contain',position:{left:64,top:177,width:812,height:355}});
+      s.images.add({blob:screenshot,contentType:'image/png',alt:'Actual local PAP console showing a saved sunny-fixture evaluation with real Ollama records',fit:'contain',position:{left:64,top:177,width:812,height:355}});
       d.tabs.forEach(([label,detail],j)=>{
         text(s,label,911,176+j*61,305,28,24,C.cyan,true);
         text(s,detail,911,205+j*61,305,33,19,C.muted);

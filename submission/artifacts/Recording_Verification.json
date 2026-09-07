@@ -1,0 +1,154 @@
+[
+  {
+    "episode_id": "18b31d85-5307-49d3-969d-3f45f1c5bf77",
+    "duration_seconds": 150,
+    "audio": "None; ready for the owner's narration",
+    "chapters": [
+      {
+        "start_seconds": 0.0,
+        "title": "The operator's question"
+      },
+      {
+        "start_seconds": 12.5,
+        "title": "One selected run"
+      },
+      {
+        "start_seconds": 25.0,
+        "title": "Inspect the actual model context"
+      },
+      {
+        "start_seconds": 37.5,
+        "title": "See which memory was selected"
+      },
+      {
+        "start_seconds": 50.0,
+        "title": "Search memory without changing history"
+      },
+      {
+        "start_seconds": 62.5,
+        "title": "Follow the read-only tool calls"
+      },
+      {
+        "start_seconds": 75.0,
+        "title": "Understand each model role"
+      },
+      {
+        "start_seconds": 87.5,
+        "title": "Inspect outputs and limits"
+      },
+      {
+        "start_seconds": 100.01,
+        "title": "Follow the workflow in order"
+      },
+      {
+        "start_seconds": 112.5,
+        "title": "Explain the search decision"
+      },
+      {
+        "start_seconds": 125.01,
+        "title": "Check the service independently"
+      },
+      {
+        "start_seconds": 137.5,
+        "title": "Run the numerical preview"
+      }
+    ],
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1440,
+          "height": 1000
+        }
+      ],
+      "format": {
+        "duration": "149.966667"
+      }
+    },
+    "editing": "Chapters 8 and 10 use re-recorded browser footage with relevant raw fields in view.",
+    "replacement_chapters": [
+      8,
+      10
+    ],
+    "sha256": "5a469f34977822613ef2b6bd50bf903723cf63fa7f589d17bb052d55d4dddd6a",
+    "verification": "Full FFmpeg decode and Chromium playback/seek checks passed; chapter screenshots reviewed."
+  },
+  {
+    "episode_id": "18b31d85-5307-49d3-969d-3f45f1c5bf77",
+    "duration_seconds": 540,
+    "audio": "None; ready for the owner's narration",
+    "chapters": [
+      {
+        "start_seconds": 0.0,
+        "title": "The operator's question"
+      },
+      {
+        "start_seconds": 45.0,
+        "title": "One selected run"
+      },
+      {
+        "start_seconds": 90.0,
+        "title": "Inspect the actual model context"
+      },
+      {
+        "start_seconds": 135.0,
+        "title": "See which memory was selected"
+      },
+      {
+        "start_seconds": 180.0,
+        "title": "Search memory without changing history"
+      },
+      {
+        "start_seconds": 225.0,
+        "title": "Follow the read-only tool calls"
+      },
+      {
+        "start_seconds": 270.01,
+        "title": "Understand each model role"
+      },
+      {
+        "start_seconds": 315.0,
+        "title": "Inspect outputs and limits"
+      },
+      {
+        "start_seconds": 360.0,
+        "title": "Follow the workflow in order"
+      },
+      {
+        "start_seconds": 405.0,
+        "title": "Explain the search decision"
+      },
+      {
+        "start_seconds": 450.01,
+        "title": "Check the service independently"
+      },
+      {
+        "start_seconds": 495.01,
+        "title": "Run the numerical preview"
+      }
+    ],
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1440,
+          "height": 1000
+        }
+      ],
+      "format": {
+        "duration": "539.900000"
+      }
+    },
+    "editing": "Chapters 8 and 10 use re-recorded browser footage with relevant raw fields in view.",
+    "replacement_chapters": [
+      8,
+      10
+    ],
+    "sha256": "7cc8953efa485859421dd71e356d16584c6a84a2e9be20c0a91658b3582ddf43",
+    "verification": "Full FFmpeg decode and Chromium playback/seek checks passed; chapter screenshots reviewed."
+  }
+]

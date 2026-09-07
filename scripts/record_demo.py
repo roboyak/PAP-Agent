@@ -16,6 +16,21 @@ CHAPTERS = json.loads((ROOT / "submission/recording_chapters.json").read_text())
 os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(ROOT / ".cache/playwright"))
 
 
+async def focus_record(page, selector, key):
+    await page.locator(selector).evaluate(
+        """(element, key) => {
+          const node = element.firstChild, range = document.createRange();
+          const start = node.textContent.indexOf(`"${key}":`);
+          if (start < 0) throw new Error(`Missing recorded field: ${key}`);
+          range.setStart(node, start); range.setEnd(node, start + key.length + 3);
+          const panel = element.closest('[role="tabpanel"]');
+          panel.scrollTop += range.getBoundingClientRect().top
+            - panel.getBoundingClientRect().top - 16;
+        }""",
+        key,
+    )
+
+
 async def show(page, chapter):
     action = chapter["action"]
     tabs = {
@@ -41,12 +56,15 @@ async def show(page, chapter):
         if not await target.get_attribute("open"):
             await target.locator("summary").click()
         await target.scroll_into_view_if_needed()
+        if action == "agents_raw":
+            await focus_record(page, "#agent-activity", "tools")
     elif action == "memory_search":
         await page.locator("#memory-query").fill("battery voltage reserve")
         await page.get_by_role("button", name="Search memory", exact=True).click()
         await expect(page.get_by_role("button", name="Search memory", exact=True)).to_be_enabled()
     elif action == "search":
         await page.get_by_text("Search branches and selection", exact=True).click()
+        await focus_record(page, "#search-trace", "branches")
     elif action == "health":
         await page.get_by_role("button", name="Check service", exact=True).click()
         await expect(page.get_by_role("button", name="Check service", exact=True)).to_be_enabled()

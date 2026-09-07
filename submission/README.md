@@ -4,6 +4,18 @@ The reviewed report, decks, and supporting documents are versioned in
 [`artifacts/`](artifacts/). Git history preserves earlier reviewed versions alongside
 the content and scripts that produced them.
 
+| Review item | Versioned files |
+| --- | --- |
+| Final report | [PDF](artifacts/DragonWings_Final_Report.pdf), [DOCX](artifacts/DragonWings_Final_Report.docx) |
+| Main presentation | [PowerPoint](artifacts/DragonWings_Final_Presentation.pptx), [PDF](artifacts/DragonWings_Final_Presentation.pdf) |
+| 90-second pitch | [PowerPoint](artifacts/DragonWings_90_Second_Pitch.pptx), [PDF](artifacts/DragonWings_90_Second_Pitch.pdf) |
+| Speaking preparation | [Main script](artifacts/DragonWings_Presentation_Plan_and_Script.docx), [faculty Q&A](artifacts/DragonWings_Faculty_Showcase_Preparation.docx) |
+| App walkthroughs | [2:30 MP4](artifacts/DragonWings_App_Walkthrough_short.mp4), [9:00 MP4](artifacts/DragonWings_App_Walkthrough_full.mp4), [narration guide](artifacts/Narration_Guide.md) |
+| Video submission | [Link document](artifacts/DragonWings_Video_Link_Submission.docx), awaiting hosted URLs |
+
+The app walkthroughs are silent browser recordings. Add your narration before using them
+as a presentation submission. The 2:30 app walkthrough is separate from the 90-second pitch.
+
 Edit `content.json`, then regenerate all deliverables:
 
 ```bash
@@ -54,12 +66,13 @@ builds and QA previews remain ignored so the repository contains the selected ve
 
 ## Evidence and assets
 
-Implementation claims are anchored to commit `74cc759` and the cited PR records. Update
+Implementation claims are anchored to commit `aa61ba7` and the cited PR records. Update
 the evidence deliberately after new measurements. A single real outcome comparison or
 agent pair is not an accuracy rate. Weather remains synthetic and the live equipment cap
 is unconfigured. The repository visibility and recording state are not inferred by builders.
 
-`assets/pap-console.png` is the actual September 7 local Playwright screenshot.
+`assets/pap-console.png` is the September 7 Playwright view of the saved sunny-fixture
+run with four actual Ollama calls.
 `assets/blueprint.png` is a conceptual illustration made with the built-in image tool.
 Its prompt requested a dark navy, text-free technical blueprint, cyan traces, muted amber
 details, generic solar panels and an unbranded portable battery on the right, and open
