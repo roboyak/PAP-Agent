@@ -13,6 +13,8 @@ from pap_agent.database import Database
 @pytest.fixture(autouse=True)
 def deterministic_models(monkeypatch):
     monkeypatch.setenv("EMBEDDING_BACKEND", "test")
+    monkeypatch.setenv("AGENT_BACKEND", "test")
+    monkeypatch.setenv("ENABLE_INTERPRETATION_AGENT", "false")
 
 
 @pytest.fixture

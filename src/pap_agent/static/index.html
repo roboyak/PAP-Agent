@@ -28,6 +28,7 @@
       </div>
       <div class="controls">
         <button id="run-workflow" class="primary">Run PAP</button>
+        <button id="compare-agents">Compare agent off / on</button>
         <button id="check-service">Check service</button>
         <button id="load-fixture">Load sunny fixture</button>
         <button id="load-mysolark">Read MySolArk now</button>
@@ -59,8 +60,9 @@
       <section id="context" role="tabpanel" aria-labelledby="tab-context" tabindex="0">
         <h2>Model context</h2>
         <p class="muted">The messages and evidence actually sent to a model.</p>
-        <dl><dt>Messages</dt><dd>0</dd><dt>Model calls</dt><dd>0</dd></dl>
-        <p class="empty">No model context yet. Service checks do not call a model.</p>
+        <dl><dt>Messages</dt><dd id="model-messages">0</dd><dt>Model calls</dt><dd id="model-calls">0</dd></dl>
+        <pre id="model-context">No model context yet. Service checks do not call a model.</pre>
+        <h3>Agent comparison</h3><pre id="agent-comparison">No comparison yet.</pre>
         <h3>Loaded evidence</h3><pre id="evidence-context">No evidence loaded.</pre>
         <h3>Deterministic calculation</h3><pre id="calculation-result">No calculation yet.</pre>
       </section>
@@ -82,7 +84,7 @@
       <section id="subagent" role="tabpanel" aria-labelledby="tab-subagent" tabindex="0" hidden>
         <h2>Subagent activity</h2>
         <p class="muted">Each agent's task, input context, tool calls, and returned result.</p>
-        <p class="empty">No subagent has run.</p>
+        <pre id="agent-activity">No subagent has run.</pre>
       </section>
       <section id="trace" role="tabpanel" aria-labelledby="tab-trace" tabindex="0" hidden>
         <h2>Execution trace</h2>

@@ -4,6 +4,7 @@ import json
 from time import perf_counter
 from uuid import NAMESPACE_URL, uuid5
 
+import httpx
 from sqlalchemy import text
 
 from pap_agent.config import Settings
@@ -126,6 +127,42 @@ def retrieve(database: Database, query: str, source_kind="live") -> dict:
         "metric": "cosine similarity (not probability)",
         "candidates": [dict(row) for row in rows],
         "duration_ms": round((perf_counter() - started) * 1000),
+    }
+
+
+def select_context(database: Database, source_kind: str, forecast_version: str) -> dict:
+    """A small deterministic reranker: eligible cosine order, version check, dedup, top three."""
+    query = "battery voltage reserve and solar forecast overestimation uncertainty"
+    minimum = Settings().retrieval_min_score
+    try:
+        result = retrieve(database, query, source_kind)
+    except (httpx.HTTPError, ValueError, StopIteration):
+        return {"query": query, "status": "unavailable", "selected": [], "candidates": []}
+    selected, seen = [], set()
+    for item in result["candidates"]:
+        metadata = item["metadata"]
+        normalized = " ".join(item["content"].lower().split())
+        if metadata.get("version") != 1 or (
+            metadata.get("kind") == "outcome"
+            and metadata.get("forecast_version") != forecast_version
+        ):
+            reason = "wrong configuration/version"
+        elif item["score"] < minimum:
+            reason = "below minimum score"
+        elif normalized in seen:
+            reason = "duplicate content"
+        elif len(selected) >= 3:
+            reason = "top-three limit"
+        else:
+            reason = "selected"
+            selected.append(item)
+            seen.add(normalized)
+        item["selection_reason"] = reason
+    return {
+        **result,
+        "status": "ok" if selected else "insufficient",
+        "minimum_score": minimum,
+        "selected": selected,
     }
 
 

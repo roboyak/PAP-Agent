@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://127.0.0.1:11434"
     embedding_model: str = "nomic-embed-text:latest"
     embedding_backend: Literal["ollama", "test"] = "ollama"
+    enable_interpretation_agent: bool = False
+    agent_model: str = "gemma3:4b"
+    agent_backend: Literal["ollama", "test"] = "ollama"
+    retrieval_min_score: float = Field(default=0.3, ge=-1, le=1)
 
     database_url: SecretStr = SecretStr(
         "postgresql+psycopg://pap:pap_local_only@127.0.0.1:55432/pap"

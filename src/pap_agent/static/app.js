@@ -23,7 +23,8 @@ function renderPublication(publication) {
   byId("profile-provenance").textContent = evidence
     ? `${evidence.telemetry.source} · ${evidence.telemetry.observed_at} · ${live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
     : publication.reason;
-  byId("profile-explanation").textContent = publication.profile?.explanation ?? "No validated profile is available.";
+  byId("profile-explanation").textContent = [publication.profile?.explanation ?? "No validated profile is available.",
+    publication.interpretation?.advice?.explanation ?? ""].join(" ");
   byId("profile-intervals").replaceChildren();
   for (const interval of intervals) {
     const row = document.createElement("tr");
@@ -73,7 +74,7 @@ async function readApi(path, body) {
   const started = performance.now();
   let result;
   try {
-    const response = await fetch(path, { signal: AbortSignal.timeout(15000), cache: "no-store",
+    const response = await fetch(path, { signal: AbortSignal.timeout(120000), cache: "no-store",
       method: body ? "POST" : "GET", headers: body ? {"Content-Type": "application/json"} : {},
       body: body ? JSON.stringify(body) : undefined });
     result = { status: response.status, body: await response.json() };
@@ -114,6 +115,11 @@ byId("reset-view").addEventListener("click", () => {
   currentScenario = "mysolark";
   currentPublication = null;
   byId("outcome-feedback").textContent = "No outcome evaluated yet.";
+  byId("agent-activity").textContent = "No subagent has run.";
+  byId("model-context").textContent = "No model context yet.";
+  byId("memory-results").textContent = "No retrieval yet.";
+  byId("agent-comparison").textContent = "No comparison yet.";
+  byId("model-messages").textContent = byId("model-calls").textContent = "0";
   byId("published-profile").hidden = true;
   byId("calculation-result").textContent = "No calculation yet.";
   byId("graph-trace").textContent = "No workflow run yet.";
@@ -187,6 +193,7 @@ byId("run-workflow").addEventListener("click", async () => {
   const response = await readApi("/api/v1/pap/run", { scenario: currentScenario });
   if (response.status === 200) {
     const episode = response.body;
+    await renderInspection(episode);
     renderPublication((await readApi(`/api/v1/pap/${episode.publication_id}`)).body);
     byId("graph-trace").textContent = JSON.stringify(episode, null, 2);
     const evidence = (await readApi(`/api/v1/evidence/${episode.evidence_id}`)).body;
@@ -202,6 +209,33 @@ byId("run-workflow").addEventListener("click", async () => {
     selectTab(byId("tab-trace"));
   } else appendMessage("Workflow", "Run unavailable; inspect Trace.");
   byId("run-workflow").disabled = false;
+});
+
+async function renderInspection(episode) {
+  const response = await readApi(`/api/v1/episodes/${episode.episode_id}/inspection`);
+  const records = response.status === 200 ? response.body : [];
+  const agents = records.filter(record => record.calls !== undefined);
+  byId("model-calls").textContent = episode.model_calls ?? 0;
+  byId("model-messages").textContent = agents.reduce((sum, record) => sum + 2 * record.calls, 0);
+  byId("model-context").textContent = JSON.stringify(agents.map(({kind, system, input}) => ({role: kind, system, input})), null, 2);
+  byId("agent-activity").textContent = JSON.stringify(agents, null, 2);
+  byId("memory-results").textContent = JSON.stringify(records.filter(record => record.kind === "retrieval"), null, 2);
+}
+
+byId("compare-agents").addEventListener("click", async () => {
+  byId("compare-agents").disabled = byId("run-workflow").disabled = true;
+  appendMessage("Comparison", "Running the same evidence with interpretation off, then on.");
+  const response = await readApi("/api/v1/pap/compare", {scenario: currentScenario});
+  byId("agent-comparison").textContent = JSON.stringify(response.body, null, 2);
+  if (response.status === 200) {
+    const episode = response.body.runs[1].episode;
+    await renderInspection(episode);
+    renderPublication((await readApi(`/api/v1/pap/${episode.publication_id}`)).body);
+    byId("graph-trace").textContent = JSON.stringify(episode, null, 2);
+    appendMessage("Comparison", `Same available power: ${response.body.same_available_power}. ${response.body.runs.map(run => `${run.interpretation_enabled ? "On" : "Off"}: ${run.model_calls} calls, ${run.elapsed_ms} ms`).join(" · ")}`);
+    selectTab(byId("tab-context"));
+  } else appendMessage("Comparison", "Unavailable; inspect Trace.");
+  byId("compare-agents").disabled = byId("run-workflow").disabled = false;
 });
 
 readApi("/api/v1/pap/latest").then((response) => {

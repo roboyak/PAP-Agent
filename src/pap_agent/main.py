@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 
 from pap_agent import __version__
+from pap_agent.comparison import compare_agents
 from pap_agent.config import Settings
 from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
@@ -18,6 +19,7 @@ from pap_agent.evidence import Evidence, acquire
 from pap_agent.memory import index_memory, retrieve
 from pap_agent.outcomes import evaluate_publication
 from pap_agent.publisher import PublishedPAP
+from pap_agent.reasoning import episode_records
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -125,6 +127,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/v1/pap/run")
     async def run_pap(request: RunRequest) -> PAPGraphState:
         return await run_episode(app.state.database, request.scenario)
+
+    @app.post("/api/v1/pap/compare")
+    async def compare_pap(request: RunRequest) -> dict:
+        return await compare_agents(app.state.database, request.scenario)
+
+    @app.get("/api/v1/episodes/{episode_id}/inspection")
+    def inspect_episode(episode_id: UUID) -> list[dict]:
+        return episode_records(app.state.database, episode_id)
 
     @app.get("/api/v1/pap/latest")
     def latest_pap() -> PublishedPAP | None:
