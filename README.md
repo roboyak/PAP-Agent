@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR06, published PAP and operator console.** Model nodes arrive later.
+**Current increment: PR07, outcome evaluation and confidence feedback.** Model nodes arrive later.
 
 ## Run locally
 
@@ -36,6 +36,7 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
 | `/api/v1/scenarios` | Available local development fixtures |
 | `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
+| `POST /api/v1/pap/{id}/evaluate` | Evaluate a newer live reading, or the fixture’s cloudy demo outcome |
 | `/api/v1/pap/latest` | Latest persisted publication, or null before the first run |
 | `/api/v1/pap/{id}` | Canonical profile, provenance, constraints, and validation reason |
 | `POST /api/v1/pap/run` | Run the durable workflow |
@@ -66,6 +67,14 @@ voltage floor, confidence, and validation reason. Withheld publications retain t
 ID and rejection reason; profile/calculation/source fields may be absent. T7 rechecks freshness and constraints before
 publication. Source age is shown when the page renders; a stored decision is historical, and
 stale data requires a new run. Local logs correlate episode, PAP, evidence, node, and status.
+
+Evaluate latest reading compares a newer MySolArk scrape with the matching forecast interval.
+The Memory panel shows the observed sample and point-power errors (kW, not interval energy).
+A bounded evaluation graph stores separate raw observations, metrics, and confidence summaries.
+Synthetic and real feedback stay separate. Repeated samples are deduplicated per publication. The sunny fixture's
+Evaluate cloudy demo creates a labeled synthetic outcome; later sunny runs keep 10.600 kWh but
+show low confidence. The demo threshold is mean solar overestimation above 0.25 kW. Feedback
+cannot change physical arithmetic or voltage policy. See [PR07](docs/pr/PR-07.md).
 
 ## Code map
 

@@ -6,6 +6,10 @@ let currentPublication = null;
 function renderPublication(publication) {
   if (!publication) return;
   currentPublication = publication;
+  byId("evaluate-outcome").disabled = publication.status !== "valid";
+  byId("evaluate-outcome").textContent = publication.evidence?.telemetry.data_mode === "synthetic"
+    ? "Evaluate cloudy demo" : "Evaluate latest reading";
+  if (publication.feedback) byId("outcome-feedback").textContent = JSON.stringify(publication.feedback, null, 2);
   byId("published-profile").hidden = false;
   byId("publication-status").textContent = publication.status;
   const intervals = publication.profile?.intervals ?? [];
@@ -109,6 +113,7 @@ byId("check-service").addEventListener("click", async () => {
 byId("reset-view").addEventListener("click", () => {
   currentScenario = "mysolark";
   currentPublication = null;
+  byId("outcome-feedback").textContent = "No outcome evaluated yet.";
   byId("published-profile").hidden = true;
   byId("calculation-result").textContent = "No calculation yet.";
   byId("graph-trace").textContent = "No workflow run yet.";
@@ -201,4 +206,16 @@ byId("run-workflow").addEventListener("click", async () => {
 
 readApi("/api/v1/pap/latest").then((response) => {
   if (response.status === 200) renderPublication(response.body);
+});
+
+byId("evaluate-outcome").addEventListener("click", async () => {
+  if (!currentPublication) return;
+  byId("evaluate-outcome").disabled = true;
+  const response = await readApi(`/api/v1/pap/${currentPublication.id}/evaluate`, {});
+  byId("outcome-feedback").textContent = JSON.stringify(response.body, null, 2);
+  appendMessage("Outcome evaluation", response.status === 200
+    ? `${response.body.calibration.guidance}. Point power comparison; ${response.body.calibration.samples} samples. Future confidence only.`
+    : response.body.detail ?? "Evaluation unavailable.");
+  selectTab(byId("tab-memory"));
+  byId("evaluate-outcome").disabled = false;
 });
