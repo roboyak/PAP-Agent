@@ -20,12 +20,18 @@ def test_checkpoint_resume_preserves_domain_ids(database):
         assert [item["node"] for item in resumed["trace"]] == [
             "acquire_evidence (T1/T2/T3)",
             "calculate_profile (T4/T5/T6)",
+            "publish_profile (T7)",
             "finalize_episode",
         ]
 
     asyncio.run(exercise())
     with database.session() as session:
-        for table in ("evidence_records", "calculation_records", "episode_records"):
+        for table in (
+            "evidence_records",
+            "calculation_records",
+            "episode_records",
+            "pap_publications",
+        ):
             assert session.execute(text(f"SELECT count(*) FROM {table}")).scalar_one() == 1
         assert session.execute(text("SELECT count(*) FROM checkpoints")).scalar_one() > 0
 
@@ -39,4 +45,4 @@ def test_invalid_evidence_skips_calculation(database, source_database):
     result = asyncio.run(run_episode(database))
     assert result["status"] == "withheld"
     assert result["calculation_id"] == ""
-    assert len(result["trace"]) == 2
+    assert len(result["trace"]) == 3

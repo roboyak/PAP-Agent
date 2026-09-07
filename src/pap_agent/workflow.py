@@ -1,7 +1,9 @@
 """Small durable control flow. Domain facts live in their own PostgreSQL records."""
 
+import json
+import logging
 from time import perf_counter
-from typing import Literal
+from typing import Literal, NotRequired
 from uuid import UUID, uuid4, uuid5
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
@@ -12,6 +14,7 @@ from typing_extensions import TypedDict
 from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.evidence import Evidence, acquire
+from pap_agent.publisher import publish
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -26,6 +29,7 @@ class PAPGraphState(TypedDict):
     scenario: str
     evidence_id: str
     calculation_id: str
+    publication_id: NotRequired[str]
     status: Literal["running", "valid", "withheld"]
     stop_reason: str
     trace: list[dict]
@@ -89,17 +93,48 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
         save_episode(database, {**state, "trace": trace})
         return {"trace": trace}
 
+    def publish_profile(state: PAPGraphState):
+        started = perf_counter()
+        publication = publish(
+            database,
+            UUID(state["episode_id"]),
+            UUID(state["evidence_id"]),
+            UUID(state["calculation_id"]) if state["calculation_id"] else None,
+        )
+        logging.getLogger("uvicorn.error").info(
+            json.dumps(
+                {
+                    "episode_id": state["episode_id"],
+                    "node": "publish_profile",
+                    "pap_id": str(publication.id),
+                    "evidence_id": state["evidence_id"],
+                    "status": publication.status,
+                    "reason": publication.reason,
+                }
+            )
+        )
+        return {
+            "publication_id": str(publication.id),
+            "status": publication.status,
+            "stop_reason": publication.reason,
+            "trace": event(
+                state, "publish_profile (T7)", publication.status, started, str(publication.id)
+            ),
+        }
+
     graph = StateGraph(PAPGraphState)
     graph.add_node("acquire_evidence", acquire_evidence)
     graph.add_node("calculate_profile", calculate_profile)
     graph.add_node("finalize_episode", finalize_episode)
+    graph.add_node("publish_profile", publish_profile)
     graph.add_edge(START, "acquire_evidence")
     graph.add_conditional_edges(
         "acquire_evidence",
         lambda state: state["status"],
-        {"valid": "calculate_profile", "withheld": "finalize_episode"},
+        {"valid": "calculate_profile", "withheld": "publish_profile"},
     )
-    graph.add_edge("calculate_profile", "finalize_episode")
+    graph.add_edge("calculate_profile", "publish_profile")
+    graph.add_edge("publish_profile", "finalize_episode")
     graph.add_edge("finalize_episode", END)
     return graph.compile(checkpointer=checkpointer, interrupt_after=interrupt_after)
 

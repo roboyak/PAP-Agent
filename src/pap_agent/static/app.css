@@ -31,6 +31,10 @@ button.primary:hover { background: #fdba74; }
 button:disabled { cursor: wait; opacity: .6; }
 :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 .session-note { font-size: 13px; }
+#published-profile { margin-top: 24px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 8px 4px; border-bottom: 1px solid #e5e7eb; text-align: right; }
+th:first-child, td:first-child { text-align: left; }
 .inspector { border: 1px solid #d1d5db; border-radius: 8px; margin-top: 40px; overflow: hidden; }
 [role="tablist"] { display: flex; flex-wrap: wrap; border-bottom: 1px solid #d1d5db; padding: 0 6px; background: #f9fafb; }
 [role="tab"] { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 12px 10px; font-size: 13px; }

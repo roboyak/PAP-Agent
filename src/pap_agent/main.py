@@ -15,10 +15,12 @@ from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.domain import Scenario
 from pap_agent.evidence import Evidence, acquire
+from pap_agent.publisher import PublishedPAP
 from pap_agent.store import (
     get_calculation,
     get_episode,
     get_evidence,
+    get_publication,
     get_scenario,
     list_scenarios,
     save_calculation,
@@ -110,6 +112,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/v1/pap/run")
     async def run_pap(request: RunRequest) -> PAPGraphState:
         return await run_episode(app.state.database, request.scenario)
+
+    @app.get("/api/v1/pap/latest")
+    def latest_pap() -> PublishedPAP | None:
+        return get_publication(app.state.database)
+
+    @app.get("/api/v1/pap/{publication_id}")
+    def published_pap(publication_id: UUID) -> PublishedPAP:
+        result = get_publication(app.state.database, publication_id)
+        if result is None:
+            raise HTTPException(404, "PAP publication not found")
+        return PublishedPAP.model_validate(result)
 
     @app.get("/api/v1/episodes/{episode_id}")
     def episode(episode_id: UUID) -> PAPGraphState:
