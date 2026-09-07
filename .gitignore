@@ -13,4 +13,5 @@ htmlcov/
 dist/
 build/
 test-results/
+output/capstone/
 .DS_Store
