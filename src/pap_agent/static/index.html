@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/app.css">
   <script src="/static/app.js" defer></script>
 </head>
-<body>
+<body data-default-source="__DEFAULT_SOURCE__">
 <main>
   <header>
     <div class="title-row"><h1>DragonWings PAP Forecaster</h1><span class="badge">READ ONLY</span></div>
@@ -21,7 +21,7 @@
       <div class="conversation" role="log" aria-label="Session activity" aria-live="polite">
         <div id="empty-session" class="empty-session">
           <h3>Ready to calculate availability</h3>
-          <p>Read MySolArk now, then calculate the solar-surplus profile.</p>
+          <p>Run PAP to read the source and calculate solar surplus.</p>
           <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
         </div>
         <div id="messages"></div>
@@ -35,7 +35,7 @@
         <button id="calculate-pap">Calculate PAP</button>
         <button id="reset-view">Reset view</button>
       </div>
-      <p id="evidence-note" class="muted session-note">No telemetry loaded. Load a fixture to inspect stored evidence.</p>
+      <p id="evidence-note" class="muted session-note">Run PAP or select a source to inspect its evidence.</p>
       <section id="published-profile" hidden>
         <h2>Power availability <span id="publication-status" class="badge"></span></h2>
         <p id="profile-summary"></p>
@@ -104,11 +104,12 @@
           <dt>Version</dt><dd id="app-version">Not checked</dd>
         </dl>
         <p id="health-note">Use Check service to refresh.</p>
+        <h3>Runtime readiness</h3><pre id="readiness-result">Not checked.</pre>
       </section>
     </section>
   </div>
   <footer><span>Local diagnostic console</span><nav aria-label="Service information">
-    <a href="/health">Health</a><a href="/api/v1/version">Version</a><a href="/docs">API documentation</a>
+    <a href="/health">Health</a><a href="/health/ready">Readiness</a><a href="/api/v1/version">Version</a><a href="/docs">API documentation</a>
   </nav></footer>
 </main>
 </body>

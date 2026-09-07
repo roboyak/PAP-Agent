@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     agent_model: str = "gemma3:4b"
     agent_backend: Literal["ollama", "test"] = "ollama"
     retrieval_min_score: float = Field(default=0.3, ge=-1, le=1)
+    pap_profile: Literal["test", "development", "macmini-replay"] = "development"
+    enable_langsmith: bool = False
+    langsmith_api_key: SecretStr | None = None
+    langsmith_project: str = "pap-development"
 
     database_url: SecretStr = SecretStr(
         "postgresql+psycopg://pap:pap_local_only@127.0.0.1:55432/pap"

@@ -1,6 +1,6 @@
 const byId = (id) => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[role="tab"]')];
-let currentScenario = "mysolark";
+let currentScenario = document.body.dataset.defaultSource;
 let currentPublication = null;
 
 function renderPublication(publication) {
@@ -98,21 +98,22 @@ async function readApi(path, body) {
 byId("check-service").addEventListener("click", async () => {
   byId("check-service").disabled = byId("reset-view").disabled = true;
   appendMessage("You", "Check service", true);
-  const [health, version] = await Promise.all([readApi("/health"), readApi("/api/v1/version")]);
-  const healthy = health.status === 200 && health.body.status === "ok";
+  const [health, version, readiness] = await Promise.all([readApi("/health"), readApi("/api/v1/version"), readApi("/health/ready")]);
+  const healthy = health.status === 200 && readiness.status === 200;
+  byId("readiness-result").textContent = JSON.stringify(readiness.body, null, 2);
   byId("service-status").textContent = healthy ? "Service healthy" : "Service unavailable";
   byId("service-status").dataset.status = healthy ? "ok" : "error";
   byId("database-status").textContent = health.body.database ?? "unavailable";
   byId("pgvector-status").textContent = health.body.pgvector ?? "unavailable";
   byId("app-version").textContent = version.body.version ?? "unavailable";
-  const note = healthy ? "PostgreSQL responded and pgvector is enabled." : "Check the local database. Health and Trace contain the result.";
+  const note = healthy ? "Database, checkpoints, read-only sources and models are ready." : "Health and Trace show which local dependency needs attention.";
   byId("health-note").textContent = note;
   appendMessage("Service", note);
   byId("check-service").disabled = byId("reset-view").disabled = false;
 });
 
 byId("reset-view").addEventListener("click", () => {
-  currentScenario = "mysolark";
+  currentScenario = document.body.dataset.defaultSource;
   currentPublication = null;
   byId("outcome-feedback").textContent = "No outcome evaluated yet.";
   byId("agent-activity").textContent = "No subagent has run.";
@@ -127,7 +128,8 @@ byId("reset-view").addEventListener("click", () => {
   byId("graph-trace").textContent = "No workflow run yet.";
   byId("tool-calls").textContent = "No MCP tool calls have run.";
   byId("evidence-context").textContent = "No evidence loaded.";
-  byId("evidence-note").textContent = "No telemetry loaded. Load a fixture to inspect stored evidence.";
+  byId("evidence-note").textContent = "Run PAP or select a source to inspect its evidence.";
+  byId("readiness-result").textContent = "Not checked.";
   byId("messages").replaceChildren();
   byId("trace-events").replaceChildren();
   byId("empty-session").hidden = byId("empty-trace").hidden = false;
@@ -235,6 +237,13 @@ byId("compare-agents").addEventListener("click", async () => {
     const episode = response.body.runs[1].episode;
     await renderInspection(episode);
     renderPublication((await readApi(`/api/v1/pap/${episode.publication_id}`)).body);
+    const evidence = (await readApi(`/api/v1/evidence/${episode.evidence_id}`)).body;
+    byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
+    byId("evidence-note").textContent = evidence.scenario?.label ?? evidence.reason;
+    byId("tool-calls").textContent = JSON.stringify({available: evidence.tools, calls: evidence.calls}, null, 2);
+    byId("calculation-result").textContent = episode.calculation_id
+      ? JSON.stringify((await readApi(`/api/v1/calculations/${episode.calculation_id}`)).body, null, 2)
+      : "No calculation: evidence withheld.";
     byId("graph-trace").textContent = JSON.stringify(episode, null, 2);
     appendMessage("Comparison", `Same available power: ${response.body.same_available_power}. ${response.body.runs.map(run => `${run.interpretation_enabled ? "On" : "Off"}: ${run.model_calls} calls, ${run.elapsed_ms} ms`).join(" · ")}`);
     selectTab(byId("tab-context"));

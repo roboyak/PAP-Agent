@@ -1,174 +1,116 @@
 # DragonWings PAP Agent
 
-Read-only power availability decision support, built one PR at a time.
-**Current increment: PR11, bounded generator/critic agents with optional interpretation.**
+A read-only capstone MVP, built in twelve small PRs. It reads DW 1.24's persisted
+MySolArk scrape, calculates a twelve-hour solar-surplus profile, and exposes the evidence,
+memory, tool calls and agent decisions behind it. No Docker or Gradio.
 
-## Run locally
+## Run
 
-Requires Python 3.12, [uv](https://docs.astral.sh/uv/), and native PostgreSQL with pgvector.
-This Mac's Postgres.app already provides PostgreSQL 17.4 and pgvector 0.8.0.
-The default binaries are `/Applications/Postgres.app/Contents/Versions/latest/bin`;
-set `PG_BIN` to use another installation. No Docker is needed.
+Requires Python 3.12, uv, native PostgreSQL with pgvector, and local Ollama.
+This Mac already has Postgres.app, `gemma3:4b`, and `nomic-embed-text:latest`.
 
 ```bash
-make setup
-make db-up
-make migrate
-make seed
-make verify
-make dev
+make bootstrap   # dependencies, Chromium, PAP database, migrations, seed and memory
+make run         # loopback service, http://127.0.0.1:8000
 ```
 
-Open <http://127.0.0.1:8000>. Stop the service with Ctrl-C; `make db-down` stops
-PostgreSQL and preserves `.cache/postgres/`. `make db-up` initializes and starts this
-project's native database on first use. Initial setup downloads Python packages and Chromium.
-Core PAP calculation and verification need no cloud service or model; semantic memory uses local Ollama.
+Stop the service with Ctrl-C. `make db-down` stops the separate PAP PostgreSQL cluster
+and preserves its data. `make run` starts it again. For a synthetic source:
 
-`.env` is optional; [.env.example](.env.example) documents the local default. Environment
-variables override it. `DATABASE_URL` is the PAP database, never the source telemetry database.
-The bundled credentials are for synthetic local development. A separate PAP cluster binds to
-`127.0.0.1:55432`; the service binds to `127.0.0.1:8000`.
+```bash
+PAP_PROFILE=macmini-replay make run
+```
 
-| Route | Result |
+`.env` is optional; [.env.example](.env.example) lists defaults. Environment variables win.
+`DATABASE_URL` points to PAP storage on port 55432. `SOURCE_DATABASE_DSN` points to the
+existing MySolArk source database. The adapter opens a read-only source transaction.
+Do not point PAP migrations at the source database.
+
+## Use the console
+
+**Run PAP** reads the latest source and runs the durable workflow. **Load sunny fixture**
+and **Read MySolArk now** select/inspect a source; **Calculate PAP** runs the numerical core.
+**Evaluate latest reading** compares a newer scrape with the forecast. The sunny fixture's
+**Evaluate cloudy demo** creates clearly labeled synthetic feedback.
+
+| Inspector | What it shows |
 | --- | --- |
-| `/` | READ ONLY console with Context, Memory, Tools, Subagent, Trace, and Health tabs |
-| `/health` | 200 when PostgreSQL responds and pgvector is enabled; otherwise 503 |
-| `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
-| `/api/v1/scenarios` | Available local development fixtures |
-| `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
-| `POST /api/v1/memory/index` | Index guidance and validated outcome records |
-| `/api/v1/memory/search?query=...&source_kind=live` | Ranked eligible records with scores and provenance |
-| `POST /api/v1/pap/{id}/evaluate` | Evaluate a newer live reading, or the fixture’s cloudy demo outcome |
-| `/api/v1/pap/latest` | Latest persisted publication, or null before the first run |
-| `/api/v1/pap/{id}` | Canonical profile, provenance, constraints, and validation reason |
-| `POST /api/v1/pap/run` | Run the durable workflow |
-| `/api/v1/episodes/{id}` | Read the completed episode and node trace |
-| `POST /api/v1/episodes/{id}/resume` | Resume or return a completed episode |
-| `POST /api/v1/pap/calculate` | Acquire fresh evidence and persist the deterministic result |
-| `/api/v1/calculations/{id}` | Read a stored calculation |
-| `/api/v1/evidence/{id}` | Read the exact evidence used by a calculation |
-| `/api/v1/evidence/current?scenario=mysolark` | MCP acquisition, T3 decision, persisted live evidence and calls |
+| Context | Actual agent inputs, call/message counts, evidence and calculation |
+| Memory | pgvector candidates, scores, selection/rejection reasons and outcome feedback |
+| Tools | Discovered read-only MCP schemas, arguments, results and elapsed time |
+| Subagent | Generator, critic and interpretation inputs, schemas, outputs, usage and limits |
+| Trace | Graph nodes, IDs, reasoning mode, branches, pruning, scores and stop reasons |
+| Health | Database, migrations, vectors, checkpoint, source and model readiness |
 
-Calculate PAP uses the last selected source (MySolArk by default). It produces a twelve-hour
-solar-surplus profile, with a zero battery-discharge budget and explicit kW/kWh units.
-The fixed `BATTERY_FLOOR_V=305.2` gates additional power at/below the floor; the user maps
-that floor to their ~30% SOC reserve. Future lower readings cannot lower the configured floor.
-The sunny fixture still uses its own synthetic 48 V / 5 kW policy. Live equipment capability
-is unconfigured, and future voltage is not predicted. All results are an evaluation baseline.
+The UI is built from plain HTML/CSS/JavaScript following the reference's conversation and
+inspector layout. Reset view clears browser state; published records remain in PostgreSQL.
+Stored profiles are historical evaluations. Run again for fresh evidence.
 
-Run PAP uses [LangGraph with its official PostgreSQL checkpointer](https://docs.langchain.com/oss/python/langgraph/add-memory).
-Five default nodes acquire validated evidence, calculate, assess ambiguity, publish, and finalize. Enabling
-interpretation adds retrieve, interpret, and validate nodes. Invalid evidence goes directly
-to withheld publication. There are no automatic retries; the graph has a 24-step limit. The Trace
-panel shows node results, IDs, and timing. PostgreSQL domain records remain canonical;
-checkpoints hold IDs/statuses for resume. Cloud tracing is disabled. [PR06](docs/pr/PR-06.md)
-includes inspection commands.
+## Voltage and available power
 
-Run PAP fills the hourly availability table and restores the latest publication on reload.
-Valid publications record evidence/calculation IDs, source timestamp, generation time,
-voltage floor, confidence, and validation reason. Withheld publications retain their evidence
-ID and rejection reason; profile/calculation/source fields may be absent. T7 rechecks freshness and constraints before
-publication. Source age is shown when the page renders; a stored decision is historical, and
-stale data requires a new run. Local logs correlate episode, PAP, evidence, node, and status.
+The fixed live battery floor is **305.2 V**, the scanned minimum that the user maps to their
+approximately 30% SOC reserve. The scanned maximum was **394.3 V**. Future lower readings
+do not lower this configured floor. At/below the floor, additional power is withheld.
+SOC is not a measured input, and no voltage-to-SOC curve is inferred.
 
-Evaluate latest reading compares a newer MySolArk scrape with the matching forecast interval.
-The Memory panel shows the observed sample and point-power errors (kW, not interval energy).
-A bounded evaluation graph stores separate raw observations, metrics, and confidence summaries.
-Synthetic and real feedback stay separate. Repeated samples are deduplicated per publication. The sunny fixture's
-Evaluate cloudy demo creates a labeled synthetic outcome; later sunny runs keep 10.600 kWh but
-lower confidence or withhold publication after selective search. The demo threshold is mean solar overestimation above 0.25 kW. Feedback
-cannot change physical arithmetic or voltage policy. See [PR07](docs/pr/PR-07.md).
+The current profile uses measured PV/load power with **synthetic weather factors**, constant
+demand, and **zero battery-discharge budget**. kW is power; kWh is power multiplied by hours.
+Live equipment capability is unconfigured; future battery voltage is not predicted. This
+is evaluation-only guidance. It never commands a battery, inverter, generator or load.
+The sunny fixture has its own synthetic 48 V floor / 5 kW cap and 10.600 kWh baseline.
 
-Memory supports Index memory and Search memory. `make memory-index` offers the same indexing
-from the command line. Three concise project-guidance records and up to 100 validated outcome
-comparisons are embedded with local [Ollama](https://docs.ollama.com/api/embed)
-`nomic-embed-text:latest` (768 dimensions). The model digest is stored with each record.
-[pgvector](https://github.com/pgvector/pgvector) performs exact cosine search for up to five
-eligible results; scores are not probabilities. No approximate index or separate vector DB is
-needed. Real/synthetic outcomes and embedding versions are filtered independently.
-The local Ollama runtime/model is required for real memory operations; core PAP calculation
-still needs no model. Automated tests use a named deterministic embedding double.
+## Agents and comparison
 
-## Code map
+Ordinary runs remain linear and need no model generation. Recorded solar overestimation
+above the demo threshold of 0.25 kW triggers selective search over baseline/refresh/withhold
+guidance. Local LangChain `create_agent` generator and critic roles receive bounded evidence
+and no tools. Python prunes invalid branches and owns all numerical/voltage constraints.
 
-- `src/pap_agent/config.py`: typed local settings.
-- `src/pap_agent/database.py`: connection pool and commit/rollback sessions.
-- `src/pap_agent/main.py`: local page and API routes.
-- `src/pap_agent/domain.py`, `store.py`, `seed.py`: typed records, explicit SQL, one sunny fixture.
-- `src/pap_agent/static/`: plain HTML/CSS/JavaScript console; no Gradio or frontend build step.
-- `migrations/`: pgvector and normalized telemetry, policy, scenario, and weather tables.
-- `tests/`: configuration, API, real PostgreSQL, and live Playwright checks.
+```bash
+ENABLE_INTERPRETATION_AGENT=true make run
+```
 
-`make verify` checks formatting/lint, starts/migrates/seeds the DB, and runs all tests.
-Tests create uniquely named `pap_test_*` databases and remove only those databases.
-The test role needs database-creation privileges; the local setup creates a role with them.
-`make test` runs API/config/DB checks; `make e2e` launches Uvicorn and Chromium itself,
-checks every tab, keyboard/mobile layout, success and database failure, and saves
-`test-results/pap-home.png` and `test-results/pap-mobile.png`.
-Use `make format` to format code. Missing DB/browser dependencies fail verification.
+The optional third interpretation role defaults to **false**. **Compare agent off / on**
+runs both modes on one telemetry/weather snapshot, regardless of that default. It reports
+role calls, elapsed time and whether calculated power stayed identical. Advice and publication
+status can differ. One pair is a latency observation, not proof of better answer quality.
+A real pair in [PR11](docs/pr/PR-11.md) took 53 seconds / four calls with two roles versus
+70 seconds / six calls with three roles; calculations matched, but the latter withheld.
 
-The console follows the reference's conversation/inspector layout. Check service makes
-real health/version requests and shows their status, timing, and JSON in Trace.
-Reset view clears only the browser view. Context shows loaded evidence and Tools shows MCP
-activity. Memory shows retrieval and outcome feedback. Subagent shows each bounded agent call.
-Load sunny fixture reads PostgreSQL and displays its evidence in Context. Fixture values
-and the voltage-floor/power-cap policy are synthetic examples, not DragonWings ratings.
-The fixture uses a fixed UTC replay clock. Repeated `make seed` preserves existing rows.
+Search bounds: three children per parent, beam two, at most one refinement, final submission
+at depth three, and eight total model attempts per episode including the optional role.
+Each call has a 45-second / 768-output-token limit and no retry. Interrupted attempts count;
+checkpoint resume reuses their stored records. Missing or malformed search output can withhold.
 
-Read MySolArk now starts one local MCP process with two read-only tools, following the
-reference's discover-tools/call-tool pattern using the [official MCP SDK](https://github.com/modelcontextprotocol/python-sdk).
-Tools shows schemas, arguments, results, and timing. T3 checks required values and a five-minute
-freshness limit. MySolArk is read directly from the local source database with its real scrape
-timestamp (Rails UTC convention). The UI shows age in seconds. Scrape time is not verified device
-measurement time. Weather remains synthetic. The live reserve floor is the user-approved 305.2 V observed minimum. `SOURCE_DATABASE_DSN` configures
-the source; no device IDs, raw JSON, or credentials appear in evidence. Tests use an isolated
-source-shaped database; normal MySolArk runs use the actual local source. See [PR03's notes](docs/pr/PR-03.md).
+`make memory-index` embeds project guidance and up to 100 validated outcome records using
+local nomic-embed-text (768 dimensions). Exact pgvector cosine retrieval selects up to five;
+version, source, expiry, score and duplicate checks reduce model context to at most three.
+Scores are ranking aids, not probabilities. Real and synthetic outcomes remain separate.
 
-Migration `0001_enable_pgvector` leaves the shared vector extension installed on downgrade.
-Downgrading `0002_domain_evidence` drops its four evidence tables; retain those tables
-when rolling back an application version that has stored evidence.
+## Verify and inspect
 
-## Build plan
+```bash
+make verify       # format/lint, migrations, integration checks, Chromium Playwright
+make verify-mac   # same gate plus a command-line demo using explicit model doubles
+make demo         # synthetic-source demo using configured local models
+```
 
-The [PR prompts](docs/build-prompts/README.md) define the sequence. The
-[capstone review](docs/CAPSTONE_NOTES.md) records the source comparison and accepted adjustments.
-Lessons stay as one-line PR/commit notes in [docs/pr](docs/pr).
+Tests own disposable `pap_test_*` databases and never alter the MySolArk source.
+`test-results/` contains ignored browser screenshots. The CLI demo prints readiness,
+PAP IDs, a stale-data rejection and paired results; it leaves no PAP/MCP child process.
+It stores labeled synthetic records in PAP. Existing outcome feedback can make its first
+run selective. The database remains available for inspection.
 
-The planned architecture uses LangGraph for workflow control, PostgreSQL/pgvector for
-storage and memory, read-only MCP sources, and deterministic calculations and validation.
-LangChain agents run only inside selected interpretation/search nodes. Deep Agents is outside this MVP;
-LangSmith is optional. No hardware-control functionality is part of this project.
+`/health/live` checks the service; `/health/ready` checks dependencies without persisting
+probe evidence. `/health` retains the simple DB/vector check. `/docs` lists the API.
+`GET /api/v1/pap/latest`, `/api/v1/episodes/{id}` and `/api/v1/episodes/{id}/inspection`
+provide publication, workflow and local audit records.
 
-## Optional interpretation and A/B
+Full prompts, tools and decisions stay local. `ENABLE_LANGSMITH=true` optionally exports
+only an allowlisted run summary using locally configured LangSmith credentials. Automatic
+SDK tracing stays disabled; export failure cannot change a PAP decision.
 
-`ENABLE_INTERPRETATION_AGENT=false` is the default. Set it to `true` before starting the
-service to add a local `gemma3:4b` interpretation call using LangChain `create_agent`.
-Run `make memory-index` first. The agent receives up to three selected records, current
-voltage/policy and a forecast summary. Its structured recommendation can lower confidence
-or request fresh evidence; Python keeps all power calculations and publish authority.
-
-Use **Compare agent off / on** to run both modes on one telemetry/weather snapshot, regardless
-of the environment default. Context shows sent inputs, Memory shows selection reasons,
-Subagent shows returned JSON and call limits, and Trace shows the graph. Times are a single
-paired observation, affected by model warm-up; they do not measure answer quality.
-
-## Selective search
-
-A recorded mean solar overestimation above the demo threshold of 0.25 kW triggers a
-LangGraph search subgraph. It compares baseline, refresh and withhold guidance using
-three branches, beam two, at most one refinement and a final depth-three hard check. Ordinary
-runs remain linear. Generator and critic use isolated local LangChain `create_agent` calls. Automated tests
-supply deterministic model doubles through the same agent graph. Trace shows branch IDs, citations,
-pruning, scores and selection. All arithmetic and voltage policy remain deterministic.
-
-To demonstrate: Load sunny fixture → Run PAP → Evaluate cloudy demo → Run PAP.
-The second run shows selective_tot while preserving the 10.600 kWh calculation.
-
-Existing sunny outcome feedback can make the first displayed run selective already.
-
-Ambiguous runs use generator and critic roles; the interpretation environment flag adds
-the optional third role. Every attempt counts against an eight-call shared episode budget,
-with no retries and 45 seconds / 768 output tokens per call. The deterministic model doubles stop after
-one generator and one critic call. Real roles can run repeatedly during refinement. A close result can refine the two-branch beam once.
-Unavailable/malformed search agents lead to a withheld profile; the direct Calculate PAP
-endpoint remains model-free. Only validated structured outputs are retained.
+See the [runbook](docs/MVP_RUNBOOK.md), [final architecture](docs/architecture/FINAL_MVP.md),
+[capstone review](docs/CAPSTONE_NOTES.md), and terse [PR lessons](docs/pr).
+[The reference repository](https://github.com/jabarkle/Agent-with-Subagent) guided the agent
+boundaries and inspector; PAP is its own repository and UI. Deep Agents is outside this MVP.

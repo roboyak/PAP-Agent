@@ -48,6 +48,8 @@ def test_live_durable_workflow(browser, live_service, database_url, source_datab
         page = browser.new_page()
         try:
             page.goto(url)
+            page.get_by_role("button", name="Read MySolArk now").click()
+            expect(page.get_by_role("button", name="Read MySolArk now")).to_be_enabled()
             with page.expect_response("**/api/v1/pap/run") as response:
                 page.get_by_role("button", name="Run PAP").click()
             episode = response.value.json()
@@ -172,7 +174,7 @@ def test_live_home_health_and_version(browser, live_service, database_url):
             expect(page.locator("#pgvector-status")).to_have_text("ok")
             expect(page.locator("#app-version")).to_have_text(__version__)
             page.get_by_role("tab", name="Trace", exact=True).click()
-            expect(page.locator("#trace-events li")).to_have_count(3)
+            expect(page.locator("#trace-events li")).to_have_count(4)
             page.locator("#trace-events summary").first.click()
             Path("test-results").mkdir(exist_ok=True)
             page.screenshot(path="test-results/pap-home.png", full_page=True)

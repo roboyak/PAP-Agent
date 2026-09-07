@@ -67,7 +67,11 @@ def validate_sources(telemetry: SourceResult, weather: SourceResult, now: dateti
 
 
 async def acquire(
-    database: Database, scenario: str = "sunny", evidence_id: UUID | None = None
+    database: Database,
+    scenario: str = "sunny",
+    evidence_id: UUID | None = None,
+    *,
+    persist=True,
 ) -> Evidence:
     calls, tools, age = [], [], None
     try:
@@ -110,7 +114,8 @@ async def acquire(
                 },
             )
         record = validate_sources(telemetry, weather, now)
-        save_scenario(database, record)
+        if persist:
+            save_scenario(database, record)
         evidence = Evidence(
             status="valid",
             reason=f"T3 passed at {telemetry.clock} clock",
@@ -128,5 +133,7 @@ async def acquire(
             calls=calls,
         )
     evidence.id = evidence_id or evidence.id
+    if not persist:
+        return evidence
     save_evidence(database, evidence.model_dump(mode="json"))
     return Evidence.model_validate(get_evidence(database, evidence.id))

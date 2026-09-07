@@ -15,6 +15,8 @@ def deterministic_models(monkeypatch):
     monkeypatch.setenv("EMBEDDING_BACKEND", "test")
     monkeypatch.setenv("AGENT_BACKEND", "test")
     monkeypatch.setenv("ENABLE_INTERPRETATION_AGENT", "false")
+    monkeypatch.setenv("PAP_PROFILE", "test")
+    monkeypatch.setenv("ENABLE_LANGSMITH", "false")
 
 
 @pytest.fixture
