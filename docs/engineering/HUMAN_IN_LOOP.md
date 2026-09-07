@@ -1,6 +1,8 @@
 # Human-in-the-Loop Verification
 
-Every PR requires local human verification before merge.
+The user authorized agent merges after local Playwright verification and will watch
+PR01/02 before the remaining work continues autonomously. Local human verification
+commands remain available for optional inspection; they are not a mandatory merge gate.
 
 The PR must include:
 1. prerequisites;
