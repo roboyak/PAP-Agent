@@ -114,3 +114,18 @@ See the [runbook](docs/MVP_RUNBOOK.md), [final architecture](docs/architecture/F
 [capstone review](docs/CAPSTONE_NOTES.md), and terse [PR lessons](docs/pr).
 [The reference repository](https://github.com/jabarkle/Agent-with-Subagent) guided the agent
 boundaries and inspector; PAP is its own repository and UI. Deep Agents is outside this MVP.
+
+## Capstone submission artifacts
+
+The [versioned artifacts](submission/artifacts/) include the final report, 10-slide
+presentation, three-slide 90-second pitch, recording script, video-link document, and
+faculty Q&A brief. The [submission builders](submission/README.md) regenerate them from
+editable source content:
+
+```bash
+bash submission/build.sh
+```
+
+This uses the installed Codex artifact runtime, separately from PAP's application dependencies.
+Each build writes a new directory under `output/capstone/`. Record and add the video links
+before Canvas submission; repository visibility remains the owner's final step.

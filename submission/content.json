@@ -1,0 +1,227 @@
+{
+  "project": "DragonWings Power Availability Profile Forecaster",
+  "author": "Shawn Cunningham",
+  "program": "Carnegie Mellon University and ExecOnline Agentic AI Program",
+  "date": "September 7, 2026",
+  "assignment": "Final Capstone Project Report and Presentation Section B",
+  "repository": "https://github.com/roboyak/PAP-Agent",
+  "evidence_commit": "74cc759",
+  "video_url": "",
+  "optional_pitch_url": "",
+  "facts": {
+    "floor_v": "305.2",
+    "max_v": "394.3",
+    "scan_n": "6,527",
+    "horizon": "12",
+    "unit_tests": "40",
+    "browser_tests": "10",
+    "two_calls": "4",
+    "three_calls": "6",
+    "two_seconds": "53.035",
+    "three_seconds": "70.223",
+    "solar_error": "0.410",
+    "availability_error": "0.076",
+    "retrieval_score": "0.618"
+  },
+  "report": {
+    "summary": "DragonWings PAP is a working, read-only agent service that estimates additional solar power available over the next {{horizon}} hours. It combines real MySolArk telemetry, deterministic calculations, durable workflow state, retrieved memory, and bounded model roles. The MVP demonstrates integration and inspectable decisions. Its present evidence supports implementation correctness and bounded execution, while forecast accuracy and model quality still require broader evaluation.",
+    "pages": [
+      [
+        {"heading": "Problem and intended user", "paragraphs": [
+          "An operator of a portable solar and battery system needs to decide whether additional electrical load is reasonable. A current power reading cannot establish future availability because solar generation and existing demand change. A fluent language-model answer is insufficient: the answer requires fresh measurements, consistent units, explicit constraints, and a record of how the calculation was produced.",
+          "The intended users are DragonWings operators and engineers reviewing optional-load plans. PAP presents an interval profile, supporting evidence, and guidance or a withholding reason. The operator retains responsibility for equipment decisions. The service has no path for commanding an inverter, battery, generator, or connected load."
+        ]},
+        {"heading": "Goal scope and evaluation criteria", "paragraphs": [
+          "The goal is an explainable {{horizon}}-hour profile of additional power in kW and interval energy in kWh. After an operator requests a run, the workflow autonomously acquires evidence, validates it, calculates availability, selects any needed model interpretation, and publishes or withholds. Outcome evaluation and memory indexing are explicit operator actions.",
+          "The smallest working scope uses the latest persisted DW 1.24 MySolArk scrape, synthetic hourly solar factors, constant measured demand, and zero battery-discharge allowance. It provides evaluation guidance, with live equipment capability still unconfigured. Success criteria are correct arithmetic and units, rejection of stale evidence and observed voltage-floor violations, bounded model execution, durable inspection records, and reproducible local browser behavior. Forecast error and the optional third agent are evaluated separately. [R1, R2]"
+        ]}
+      ],
+      [
+        {"heading": "Final architecture and major components", "paragraphs": [
+          "LangGraph coordinates one typed workflow. PostgreSQL stores canonical telemetry, forecasts, outcomes, provenance, and audit records. The official PostgreSQL checkpointer stores workflow references and control state, allowing execution to resume without treating checkpoint data as a second source of operational facts.",
+          "T1 and T2 expose two read-only Model Context Protocol tools for telemetry and weather inputs. T3 validates schemas, units, UTC scrape freshness, and the weather horizon. Deterministic Python implements T4 forecasting, T5 availability arithmetic, and T6 constraints. Available power is nonnegative solar surplus, subject to an equipment cap when configured. Energy integrates each interval once.",
+          "The routine route can proceed without model generation. Recorded solar overestimation above a demonstration threshold of 0.25 kW triggers selective search. T9 retrieves qualified memory. LangChain create_agent nodes generate and critique structured guidance using the same evidence. Python prunes candidates, controls the search, and retains numerical authority. T7 rechecks freshness and constraints before publishing or withholding. T8 compares later observations with the forecast and stores feedback for subsequent runs. [R2]"
+        ]},
+        {"heading": "Implementation approach", "paragraphs": [
+          "The native command-line application uses Python, FastAPI, LangGraph, LangChain, PostgreSQL with pgvector, and Ollama. Gemma 3 4B supplies local model responses, while nomic-embed-text supplies 768-dimensional memory vectors. Exact cosine retrieval considers five candidates and admits at most three after source, model-version, expiry, relevance, and duplicate checks. Similarity scores are ranking aids, not probabilities.",
+          "The HTML, CSS, and JavaScript console follows the conversation-and-inspector idea in Agent-with-Subagent, without Gradio. Context, Memory, Tools, Subagent, Trace, and Health expose inputs, schemas, evidence, calls, selected branches, and stop reasons. Twelve small PRs built the vertical slice, each with a terse teaching lesson. Docker and Deep Agents are excluded. [R1, R2]"
+        ]}
+      ],
+      [
+        {"heading": "Design evolution across checkpoints", "paragraphs": [
+          "Each checkpoint added a capability and clarified its authority. The final implementation narrows several early design ambitions so the full workflow can be demonstrated locally. [C1]"
+        ], "table": {
+          "headers": ["Checkpoint", "Refinement and reason"],
+          "rows": [
+            ["1  Problem framing", "Defined an interval availability forecast for operators because a single present-state reading cannot answer a planning question."],
+            ["2  Tools and memory", "Introduced a ReAct-inspired evidence and feedback cycle. The implementation uses explicit graph steps and persistent records for repeatability."],
+            ["3  Retrieval", "Added searchable validated history and guidance. Retrieval changes context and advice while current measurements and calculations remain authoritative."],
+            ["4  Selective search", "Reserved alternative generation for grounded ambiguity. A small beam and explicit stopping rules limit unnecessary model work."],
+            ["5  Coordination", "Separated generator and critic roles. The MVP adds an optional interpretation role, disabled by default, for a controlled comparison."],
+            ["6  Safety and oversight", "Layered input, numerical, runtime, and publication checks. Failed checks produce visible withholding and an opportunity for human review."]
+          ]
+        }, "after": [
+          "Implementation choices include a {{horizon}}-hour horizon, voltage instead of measured SOC, synthetic weather factors, and no battery discharge. LangGraph owns orchestration, MCP owns the bounded source interface, and model nodes interpret evidence. This keeps one functioning system within the capstone's minimal scope."
+        ]},
+        {"heading": "Safety reliability and human oversight", "paragraphs": [
+          "A scan of {{scan_n}} MySolArk records found {{floor_v}}–{{max_v}} V. The user designated {{floor_v}} V as the fixed battery floor, corresponding to their approximate 30% reserve policy. PAP withholds at or below that reading and never lowers the floor automatically. This is an operating assumption, not a measured SOC conversion or a guarantee of future voltage.",
+          "All model roles receive zero tools and schema-checked outputs with evidence citations. Search permits three children per parent, a beam of two, one refinement, and at most eight shared model attempts. Each call has a 45-second limit and no retry. Durable attempt reservations prevent checkpoint recovery from repeating a call. Operators inspect the evidence and request a new validated run when needed. Approval of prose cannot override hard checks. [R1, R2]"
+        ]}
+      ],
+      [
+        {"heading": "Evaluation methods and results", "paragraphs": [
+          "Deterministic model doubles make required tests reproducible. Separate live Playwright runs exercise actual MySolArk data and Ollama. These are different evidence classes and do not establish an operational success rate."
+        ], "table": {
+          "headers": ["Evaluation", "Observed result", "Interpretation"],
+          "rows": [
+            ["Local verification", "{{unit_tests}} unit/integration tests and {{browser_tests}} Chromium Playwright checks passed", "Supports tested behavior and UI integration"],
+            ["One real outcome sample", "{{solar_error}} kW solar overestimation and {{availability_error}} kW availability error", "Point-power comparison, not hourly energy accuracy"],
+            ["One actual model pair", "Two roles: {{two_calls}} calls, {{two_seconds}} s, valid. Three roles: {{three_calls}} calls, {{three_seconds}} s, withheld", "Calculated kW/kWh stayed identical"],
+            ["One semantic query", "Reserve guidance ranked first at cosine {{retrieval_score}}", "Illustrative retrieval behavior, not retrieval accuracy"]
+          ]
+        }, "after": [
+          "The paired comparison reuses one evidence snapshot, but its sequential order and tiny sample leave warm-up and model variability unresolved. It demonstrates added cost, without establishing a quality benefit from the third role. The flag therefore remains off by default. A final live browser run completed with five bounded model calls and a withheld result, with all six inspection panels verified. Withholding is an observable outcome rather than proof of correct advice. [R3–R6]"
+        ]},
+        {"heading": "Limitations and next improvements", "paragraphs": [
+          "Synthetic weather, constant demand, unknown live equipment capability, and the absence of a battery model limit forecast usefulness. Source timestamps represent persisted scrapes rather than verified device measurement times. Free-text advice can still be wrong despite valid schemas and citations. Optional LangSmith summary export is tested with a fake client, with no remote export claimed.",
+          "Next work should validate a real weather source and equipment limits, collect held-out forecast outcomes across changing conditions, and run repeated, order-balanced agent comparisons. Operator review should evaluate whether explanations help decisions. Physical control remains outside scope."
+        ]},
+        {"heading": "Repository and review instructions", "paragraphs": [
+          "Repository: {{repository}}. The README explains setup and use. Core code, migrations, tests, the final architecture, and PR evidence support technical review. After installing the documented native prerequisites, run make bootstrap, PAP_PROFILE=macmini-replay make run for a synthetic source, and make verify for the local gate. Real data requires the authorized local source database. [R1]"
+        ]}
+      ]
+    ]
+  },
+  "sources": [
+    {"id":"R1","label":"Project README and reproducible commands","path":"README.md"},
+    {"id":"R2","label":"Final MVP architecture and boundaries","path":"docs/architecture/FINAL_MVP.md"},
+    {"id":"R3","label":"PR07 observed point-power evaluation","path":"docs/pr/PR-07.md"},
+    {"id":"R4","label":"PR08 actual local semantic retrieval check","path":"docs/pr/PR-08.md"},
+    {"id":"R5","label":"PR11 actual two-role and three-role comparison","path":"docs/pr/PR-11.md"},
+    {"id":"R6","label":"PR12 final verification and live browser evidence","path":"docs/pr/PR-12.md"},
+    {"id":"C1","label":"Earlier report with checkpoint 1–6 source record","path":"20260907_151637_UTC_Final_Capstone_Report_DragonWings_PAP_Section_B.pdf"}
+  ],
+  "slides": [
+    {
+      "kind":"cover", "title":"DragonWings\nPower Availability\nProfile Forecaster", "checkpoint":"Final capstone submission", "seconds":40,
+      "subtitle":"A bounded agent for additional solar power estimates",
+      "plain":"Working MVP with inspectable evidence and human oversight",
+      "notes":"Hello, I am Shawn Cunningham. My capstone is the DragonWings Power Availability Profile Forecaster, or PAP. It helps an operator review how much additional solar power may be available over the next twelve hours. This is a working local agent service with real telemetry, searchable memory, and bounded model roles. The central design decision is to give numerical calculations and validation to ordinary code, while models interpret evidence. I will walk through the six checkpoints, show how they became one application, and distinguish the implementation results from the forecast quality that still needs broader evaluation.",
+      "sources":["R1","R2"]
+    },
+    {
+      "kind":"problem", "title":"The operator's planning question", "checkpoint":"Checkpoint 1   Problem and scope", "seconds":50,
+      "question":"How much extra load might the next 12 hours support?",
+      "inputs":["Solar production","Existing demand","Battery voltage"],
+      "output":"12-hour\nsolar-surplus profile", "human":"Operator\nreviews the evidence",
+      "what":"Estimates additional power and energy by interval.",
+      "why":"A reading taken now does not establish future availability.",
+      "caveat":"MVP scope: synthetic weather factors, constant demand, zero battery discharge",
+      "notes":"The first checkpoint started with an operating question, rather than a choice of framework. An operator can see solar production, load, and battery voltage, but those readings alone do not tell them what optional load might be reasonable later. PAP combines those inputs into a twelve-hour profile. Kilowatts describe power during an interval. Kilowatt-hours describe energy over time. For this MVP, I intentionally limited the calculation to additional solar surplus. It uses synthetic hourly solar factors, keeps measured demand constant, and allocates no battery discharge. These choices make the smallest complete workflow testable, but they also mean the output is evaluation guidance. The operator still makes every equipment decision.",
+      "sources":["R1","R2","C1"]
+    },
+    {
+      "kind":"architecture", "title":"One workflow connects the components", "checkpoint":"Checkpoint 2   Tools and persistent state", "seconds":65,
+      "nodes":[["Read inputs","T1 / T2  MCP"],["Validate evidence","T3  Units and freshness"],["Calculate profile","T4 / T5 / T6  Python"],["Publish or withhold","T7  Final recheck"]],
+      "model":"Qualified memory + bounded model roles", "branch":"Only when the route needs interpretation",
+      "storage":"PostgreSQL stores evidence and results. LangGraph checkpoints store workflow progress.",
+      "what":"Runs the evidence-to-decision sequence automatically after a request.",
+      "why":"Every result can be traced to inputs, calculations, and a stopping decision.",
+      "notes":"Checkpoint two introduced the tool and feedback cycle. In the implemented system, LangGraph owns the workflow. The first two tools are read-only MCP adapters. One reads the persisted MySolArk scrape and one supplies the current synthetic weather scenario. T3 checks their structure, units, timestamps, and freshness. Python then forecasts, calculates solar surplus, and applies constraints. Only after those calculations does the graph assess whether interpretation is needed. Qualified memory and bounded model roles can supply advice, but they cannot rewrite the calculated power. T7 performs another freshness and constraint check before the result is published or withheld. PostgreSQL stores the actual evidence and results. The graph checkpointer stores progress and record references, which allows a run to resume without creating a competing copy of the facts.",
+      "sources":["R2"]
+    },
+    {
+      "kind":"memory", "title":"Memory adds relevant experience", "checkpoint":"Checkpoint 3   Retrieval and grounding", "seconds":55,
+      "nodes":[["Compare outcomes","Forecast vs newer sample"],["Admit memory","Qualified records only"],["Retrieve 5","Local vector search"],["Keep at most 3","Filter and deduplicate"]],
+      "destination":"Cited context for model guidance",
+      "what":"Finds relevant past outcomes and operating guidance.",
+      "why":"The agent can explain caution using evidence from an earlier run.",
+      "caveat":"Current measurements and numerical constraints stay authoritative",
+      "notes":"Checkpoint three added searchable external memory. The operator can compare a forecast with a newer reading, then explicitly index qualified outcome records and short guidance documents. The system creates local embeddings and stores them in pgvector alongside the relational data. A query considers five candidates, checks source, version, expiry, relevance, and duplicates, and passes at most three into model context. Think of this as finding a relevant note from a previous job. It is useful context, but it cannot change the current instrument reading. One actual semantic query about protecting the battery ranked reserve guidance first. That demonstrates the mechanism. It is not an estimate of retrieval accuracy, and the cosine score is not a probability.",
+      "sources":["R2","R4"]
+    },
+    {
+      "kind":"search", "title":"Extra reasoning has a fixed budget", "checkpoint":"Checkpoint 4   Selective Tree of Thoughts", "seconds":60,
+      "routine":"Routine evidence", "routine_end":"Final publication check",
+      "ambiguous":"Recorded ambiguity", "nodes":["Generate 3\nalternatives","Prune invalid\ncandidates","Critique\nsurvivors","Keep 2\nbest branches"],
+      "bounds":"One refinement. Depth-three submission. Eight shared model attempts maximum.",
+      "what":"Compares a few explanations when recorded evidence justifies it.",
+      "why":"Simple cases stay quick, and difficult cases still terminate.",
+      "notes":"Checkpoint four introduced selective Tree of Thoughts. Routine evidence takes the direct path to the final publication check and needs no model generation. In the current demonstration, recorded mean solar overestimation above zero point two five kilowatts triggers ambiguity. The generator proposes up to three alternatives. Python removes invalid candidates before the critic evaluates the survivors. The controller retains a beam of two and permits only one refinement before final submission. All roles share a maximum of eight model attempts. Every call also has a time and output limit. These limits bound the search and make termination visible. The alternatives concern interpretation, refreshing evidence, or withholding. They do not propose new battery limits or alter the power formula.",
+      "sources":["R1","R2"]
+    },
+    {
+      "kind":"comparison", "title":"The third role added cost in one trial", "checkpoint":"Checkpoint 5   Agent coordination", "seconds":65,
+      "roles":["Generator proposes","Critic evaluates","Optional interpreter adds context"],
+      "headers":["Same evidence snapshot","Model calls","Elapsed","Result"],
+      "rows":[["Two roles","{{two_calls}}","{{two_seconds}} s","Valid"],["Three roles","{{three_calls}}","{{three_seconds}} s","Withheld"]],
+      "finding":"Calculated kW and kWh stayed identical",
+      "what":"An environment flag enables an additional interpretation role.",
+      "why":"Its contribution can be compared before accepting added complexity.",
+      "caveat":"One sequential pair. No demonstrated quality improvement. Third role defaults off.",
+      "notes":"Checkpoint five separated the generator and critic so that proposing and evaluating guidance have distinct roles. The MVP also has an optional third role that interprets the evidence before search. An environment variable controls that role, and the browser comparison uses the same telemetry and weather snapshot for both modes. In one actual MySolArk and Ollama pair, two roles used four calls and about fifty-three seconds, producing a valid publication. Three roles used six calls and about seventy seconds, producing a withheld result. The calculated power and energy were identical. This is an informative latency observation, but only one sequential pair. Warm-up and model variability could affect the comparison. I have not established that the third role improves quality, so it remains disabled by default.",
+      "sources":["R5"]
+    },
+    {
+      "kind":"safety", "title":"Validation controls publication", "checkpoint":"Checkpoint 6   Safety and human oversight", "seconds":55,
+      "checks":["Fresh inputs","Valid arithmetic","Voltage above floor","Supported guidance"],
+      "outcomes":["Pass: publish read-only profile","Fail: withhold with a reason"],
+      "floor":"{{floor_v}} V", "floor_label":"Fixed observed voltage floor",
+      "what":"Stops publication when required evidence or checks fail.",
+      "why":"A convincing explanation must not bypass an operating constraint.",
+      "caveat":"No equipment commands. No prediction or guarantee of future battery voltage.",
+      "notes":"Checkpoint six made the safety and oversight boundaries explicit. Input checks, numerical checks, bounded model execution, and the final publication gate each have a visible purpose. A scan of six thousand five hundred twenty-seven MySolArk records found a minimum of three hundred five point two volts. I use that fixed floor under the user's operating policy, which associates it with roughly thirty percent reserve. PAP does not measure SOC or derive a voltage-to-SOC curve. It withholds at or below the configured reading and never reduces the floor automatically. It also does not predict future battery voltage. The operator can inspect a withholding reason, resolve the evidence or configuration, and request another validated run. There are no hardware-control tools.",
+      "sources":["R1","R2"]
+    },
+    {
+      "kind":"console", "title":"Six views explain each decision", "checkpoint":"Integrated MVP   Monitoring and debugging", "seconds":50,
+      "tabs":[["Context","Inputs and calculated facts"],["Memory","Retrieved records and feedback"],["Tools","Schemas, calls, and results"],["Subagent","Role inputs and validated outputs"],["Trace","Branches, scores, and stop reasons"],["Health","Source and dependency readiness"]],
+      "what":"Makes the working agent inspectable from one local console.",
+      "why":"A result is easier to debug when its evidence and decisions are visible.",
+      "notes":"The integrated console brings these checkpoints together. Context shows the actual inputs and calculated facts. Memory shows retrieved records and evaluated outcomes. Tools shows the read-only interfaces, call arguments, results, and elapsed time. Subagent shows role inputs, schemas, validated outputs, and usage. Trace shows graph progress, branch pruning, scores, and stopping reasons. Health checks the source, database, vector store, checkpointer, and local models. The screenshot is an actual browser run that withheld publication. That is useful to inspect because the application should explain why it stopped, rather than leave an unexplained empty result. These views expose evidence and structured decisions, not private model chain-of-thought.",
+      "sources":["R1","R6"]
+    },
+    {
+      "kind":"evaluation", "title":"Evidence supports the integrated workflow", "checkpoint":"Final evaluation   Implemented behavior and limits", "seconds":65,
+      "counts":[["{{unit_tests}}","Unit and integration tests"],["{{browser_tests}}","Chromium Playwright checks"]],
+      "point_title":"One newer real telemetry sample",
+      "point_rows":[["Solar overestimation","{{solar_error}} kW"],["Availability error","{{availability_error}} kW"]],
+      "what":"Tests arithmetic, boundaries, persistence, retrieval, and the browser flow.",
+      "why":"Separates software correctness from forecast and advice quality.",
+      "caveat":"Required tests use model doubles. Live checks are small demonstrations, not accuracy rates.",
+      "notes":"Evaluation uses two complementary methods. The required local gate passed forty unit and integration tests plus ten Chromium Playwright checks. The tests cover numerical behavior, invalid inputs, voltage policy, model boundaries, search budgets, durable execution, retrieval, and the console. They use deterministic model doubles so results can be repeated. Separately, live browser checks used the real local telemetry database and actual Ollama models. One newer sample measured zero point four one zero kilowatts of solar overestimation and zero point zero seven six kilowatts of availability error. These are point-power comparisons, not measured hourly energy. The final live run completed within its model budget and exposed a withheld outcome. The evidence supports integration and tested boundaries. It does not establish forecast accuracy, calibrated confidence, or an agent quality success rate.",
+      "sources":["R3","R6"]
+    },
+    {
+      "kind":"closing", "title":"Repository and next steps", "checkpoint":"Capstone review and continuation", "seconds":55,
+      "files":[["README.md","Setup and usage"],["src/pap_agent/","Workflow, tools, models, and UI"],["tests/ and docs/pr/","Verification and teaching evidence"],["submission/","Editable content and artifact builders"]],
+      "commands":["make bootstrap","PAP_PROFILE=macmini-replay make run","make verify"],
+      "next":["Validated weather and equipment limits","Held-out forecast outcomes","Repeated agent comparisons and operator review"],
+      "what":"A reproducible local MVP with bounded, observable model roles.",
+      "why":"The next improvements can be measured against an inspectable baseline.",
+      "notes":"The repository is at github dot com slash roboyak slash PAP dash Agent. Its README explains the native prerequisites, architecture, setup, and usage. Reviewers can use the synthetic replay profile without the private telemetry database. The code, tests, and PR evidence show each teaching increment. The submission folder contains the editable content and scripts that regenerate this presentation and report. The main strength is the integrated boundary between evidence, deterministic calculation, and model advice, with enough visibility to inspect a run. The next work is to validate real weather and equipment capability, evaluate held-out forecast outcomes, and repeat the agent comparison with order balanced across trials. The result is a working foundation for evaluation, with the limits of its current claims stated explicitly.",
+      "sources":["R1","R2"]
+    }
+  ],
+  "faculty_questions": [
+    [
+      {"topic":"Agent purpose","question":"Why use agents if ordinary code calculates the power?","answer":"The model roles address interpretation and explanation when recorded evidence is ambiguous. Code already handles the routine calculation. Selective search compares supported guidance such as refreshing evidence or withholding, while retrieval supplies relevant context. I have demonstrated that integration, but not yet that it outperforms deterministic guidance. A code-only baseline is essential to the next evaluation."},
+      {"topic":"Autonomy and coordination","question":"What is autonomous, and who controls the workflow?","answer":"After an operator requests a run, LangGraph acquires evidence, validates it, calculates a profile, routes any required model work, and reaches publication or withholding. Python controls branch selection and stopping limits. This is task-level autonomy within one run. It has no continuous scheduling, equipment actuation, or automatic outcome-indexing loop. Evaluation and indexing are explicit operator actions."},
+      {"topic":"Model selection","question":"Why Gemma 3 4B, and why an optional third role?","answer":"Gemma 3 4B was available locally through Ollama and fit the minimal local prototype. This was an implementation choice, not the result of a comparative model benchmark. Generator and critic have distinct responsibilities. The optional interpreter lets me test added complexity. One real pair increased calls from four to six and latency from about 53 to 70 seconds, with no demonstrated quality improvement, so the third role defaults off."},
+      {"topic":"Tool and memory boundaries","question":"What can the models access or change?","answer":"The model roles have zero tools. The graph calls two read-only MCP source adapters, and Python passes bounded, validated evidence into the models. They cannot issue SQL, control hardware, or change numerical constraints. pgvector retrieval filters stored guidance and outcomes before injecting up to three records. Retrieved text can still be irrelevant or misleading, so eligibility checks and citations support inspection rather than proving truth."}
+    ],
+    [
+      {"topic":"Evaluation strength","question":"What do the current results actually establish?","answer":"Forty unit and integration tests plus ten Chromium checks support the tested calculations, workflow boundaries, persistence, retrieval, and UI. Required tests use model doubles. Separate actual-model runs demonstrate the live path. One outcome sample and one sequential agent pair are too small to establish forecast accuracy or model quality. I would next use held-out outcomes, a code-only guidance baseline, repeated order-balanced model comparisons, and human ratings of factual support and usefulness."},
+      {"topic":"Safety and voltage","question":"Does the system guarantee the battery stays above its floor?","answer":"No. It withholds additional power at or below the configured observed-voltage floor of 305.2 V and allocates zero battery discharge. That floor is the user's operating assumption associated with approximately 30% reserve. It is not a calibrated SOC conversion, and the system does not predict future voltage. Existing site load and equipment behavior remain outside this advisory service. A real battery model and verified equipment limits would be needed for stronger claims."},
+      {"topic":"Forecast limitations","question":"How useful is the forecast while weather is synthetic?","answer":"The present forecast is a persistence-based solar-surplus demonstration. Synthetic factors and constant load make the integrated workflow reproducible, while real telemetry tests the source interface and timestamps. They limit operational usefulness. My next forecast work would validate a real weather source, confirm device measurement-time semantics, establish equipment capability, and measure error over changing conditions before expanding the energy model."},
+      {"topic":"Scaling after the program","question":"What would you change before serving more sites?","answer":"I would first validate the forecast and agent quality on held-out data. Then I would add explicit site configuration and evidence isolation, measure concurrent database and model load, and introduce scheduling or queues only when needed. Each site would retain fixed numerical constraints, provenance, and bounded model work. Those scale features are future work. The current system intentionally proves one local vertical slice with PostgreSQL as the canonical record."}
+    ]
+  ],
+  "pitch_slides": [
+    {"kind":"pitch_problem","title":"Planning extra load\nneeds more than\na live reading","checkpoint":"DragonWings PAP   Optional 90-second pitch","seconds":25,"subtitle":"A power forecast with evidence an operator can inspect","notes":"An operator of a portable solar and battery system needs more than a current power reading. They need to understand how much additional load might be reasonable later, and why. My capstone, the DragonWings Power Availability Profile Forecaster, turns real local telemetry into a twelve-hour estimate of additional solar power.","sources":["R1"]},
+    {"kind":"pitch_flow","title":"An agent with clear limits","checkpoint":"How it works","seconds":35,"nodes":["Read fresh\ntelemetry","Calculate\nsolar surplus","Interpret\nwith evidence","Publish\nor withhold"],"plain":"Code owns the numbers. Models explain uncertain cases.","boundary":"Read-only guidance. Every equipment action stays with the operator.","notes":"It uses a durable workflow, searchable memory, and bounded language-model roles to explain uncertain cases. Ordinary code owns the calculations and validation. The models cannot change the battery voltage floor or command equipment. Six inspection views show the evidence, tool calls, memory, model outputs, and stopping decisions. That makes a published result, or a decision to withhold it, something an engineer can inspect and debug.","sources":["R1","R2"]},
+    {"kind":"pitch_proof","title":"A working foundation\nfor measured improvement","checkpoint":"What the MVP demonstrates","seconds":30,"proof":"{{unit_tests}} unit and integration tests\n{{browser_tests}} Chromium browser checks","takeaway":"Bounded model roles with visible evidence","limit":"Forecast quality still needs broader evaluation","notes":"The local gate passed forty unit and integration tests plus ten browser checks. One live comparison kept the same power calculation while the third agent added latency without a demonstrated quality benefit. The forecast still uses synthetic weather factors and needs broader evaluation. My takeaway is that useful agent autonomy needs clear authority and visible evidence. DragonWings PAP makes that boundary concrete in a working local system.","sources":["R5","R6"]}
+  ],
+  "video_summary":"This presentation explains how the DragonWings Power Availability Profile Forecaster evolved across six checkpoints into a working local agent system. It shows how read-only telemetry, deterministic calculations, retrieved memory, and bounded model roles produce an inspectable decision, then reviews the measured implementation results and the remaining limits on forecast and advice quality.",
+  "optional_pitch":"An operator of a portable solar and battery system needs more than a current power reading. They need to understand how much additional load might be reasonable later, and why. My capstone, the DragonWings Power Availability Profile Forecaster, turns real local telemetry into a twelve-hour estimate of additional solar power. It uses a durable workflow, searchable memory, and bounded language-model roles to explain uncertain cases. Ordinary code owns the calculations and validation. The models cannot change the battery voltage floor or command equipment. Six inspection views show the evidence, tool calls, memory, model outputs, and stopping decisions. The local gate passed forty unit and integration tests plus ten browser checks. An actual two-role and three-role comparison kept the same power calculation, while the extra role added latency without a demonstrated quality benefit. The current forecast still uses synthetic weather factors and needs broader evaluation. The main takeaway is that useful agent autonomy comes from clear authority and visible evidence. This project makes that boundary concrete in a working, reproducible system."
+}
