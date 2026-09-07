@@ -8,6 +8,22 @@ from pap_agent.seed import sunny_fixture
 from pap_agent.store import save_scenario
 
 
+def test_live_memory_search(browser, live_service, database_url):
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("tab", name="Memory", exact=True).click()
+            page.get_by_role("button", name="Index memory").click()
+            expect(page.locator("#memory-results")).to_contain_text('"indexed": 3')
+            page.locator("#memory-query").fill("battery voltage reserve")
+            page.get_by_role("button", name="Search memory").click()
+            expect(page.locator("#memory-results")).to_contain_text('"source_id": "reserve"')
+            expect(page.locator("#memory-results")).to_contain_text("cosine similarity")
+        finally:
+            page.close()
+
+
 def test_live_outcome_feedback(browser, live_service, database, database_url):
     save_scenario(database, sunny_fixture())
     with live_service(database_url) as url:

@@ -29,6 +29,7 @@ button:hover { background: #f3f4f6; }
 button.primary { background: #fb923c; border-color: #f97316; color: #431407; font-weight: 600; flex: 1; }
 button.primary:hover { background: #fdba74; }
 button:disabled { cursor: wait; opacity: .6; }
+input, select { width: 100%; font: inherit; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; margin-top: 6px; }
 :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 .session-note { font-size: 13px; }
 #published-profile { margin-top: 24px; border-top: 1px solid #e5e7eb; padding-top: 20px; }

@@ -10,6 +10,11 @@ from pap_agent.config import Settings
 from pap_agent.database import Database
 
 
+@pytest.fixture(autouse=True)
+def deterministic_models(monkeypatch):
+    monkeypatch.setenv("EMBEDDING_BACKEND", "test")
+
+
 @pytest.fixture
 def source_database(database, monkeypatch):
     """Small source-shaped schema, isolated from PAP and the real source database."""
