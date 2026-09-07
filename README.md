@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR10, selective bounded search over guidance.**
+**Current increment: PR11, bounded generator/critic agents with optional interpretation.**
 
 ## Run locally
 
@@ -76,7 +76,7 @@ The Memory panel shows the observed sample and point-power errors (kW, not inter
 A bounded evaluation graph stores separate raw observations, metrics, and confidence summaries.
 Synthetic and real feedback stay separate. Repeated samples are deduplicated per publication. The sunny fixture's
 Evaluate cloudy demo creates a labeled synthetic outcome; later sunny runs keep 10.600 kWh but
-show low confidence. The demo threshold is mean solar overestimation above 0.25 kW. Feedback
+lower confidence or withhold publication after selective search. The demo threshold is mean solar overestimation above 0.25 kW. Feedback
 cannot change physical arithmetic or voltage policy. See [PR07](docs/pr/PR-07.md).
 
 Memory supports Index memory and Search memory. `make memory-index` offers the same indexing
@@ -136,7 +136,7 @@ Lessons stay as one-line PR/commit notes in [docs/pr](docs/pr).
 
 The planned architecture uses LangGraph for workflow control, PostgreSQL/pgvector for
 storage and memory, read-only MCP sources, and deterministic calculations and validation.
-LangChain agents are added only in their lessons. Deep Agents is outside this MVP;
+LangChain agents run only inside selected interpretation/search nodes. Deep Agents is outside this MVP;
 LangSmith is optional. No hardware-control functionality is part of this project.
 
 ## Optional interpretation and A/B
@@ -157,11 +157,18 @@ paired observation, affected by model warm-up; they do not measure answer qualit
 A recorded mean solar overestimation above the demo threshold of 0.25 kW triggers a
 LangGraph search subgraph. It compares baseline, refresh and withhold guidance using
 three branches, beam two, at most one refinement and a final depth-three hard check. Ordinary
-runs remain linear. PR10 uses deterministic generator/critic fixtures (zero LLM calls);
-PR11 connects models through those interfaces. Trace shows branch IDs, citations,
+runs remain linear. Generator and critic use isolated local LangChain `create_agent` calls. Automated tests
+supply deterministic model doubles through the same agent graph. Trace shows branch IDs, citations,
 pruning, scores and selection. All arithmetic and voltage policy remain deterministic.
 
 To demonstrate: Load sunny fixture → Run PAP → Evaluate cloudy demo → Run PAP.
 The second run shows selective_tot while preserving the 10.600 kWh calculation.
 
 Existing sunny outcome feedback can make the first displayed run selective already.
+
+Ambiguous runs use generator and critic roles; the interpretation environment flag adds
+the optional third role. Every attempt counts against an eight-call shared episode budget,
+with no retries and 45 seconds / 768 output tokens per call. The deterministic model doubles stop after
+one generator and one critic call. Real roles can run repeatedly during refinement. A close result can refine the two-branch beam once.
+Unavailable/malformed search agents lead to a withheld profile; the direct Calculate PAP
+endpoint remains model-free. Only validated structured outputs are retained.

@@ -104,3 +104,62 @@ def test_no_acceptable_branch_withholds(database, monkeypatch):
     result = asyncio.run(run_episode(database, "sunny"))
     assert result["status"] == "withheld"
     assert get_publication(database, result["publication_id"])["profile"] is None
+
+
+def test_two_and_three_agent_pair(database):
+    from pap_agent.comparison import compare_agents
+    from pap_agent.reasoning import episode_records
+
+    asyncio.run(seed_ambiguity(database))
+    pair = asyncio.run(compare_agents(database, "sunny"))
+    assert pair["same_available_power"]
+    assert [run["model_calls"] for run in pair["runs"]] == [2, 3]
+    roles = [
+        record["kind"]
+        for record in episode_records(database, pair["runs"][1]["episode"]["episode_id"])
+        if "calls" in record
+    ]
+    assert sorted(roles) == ["critic", "generator", "interpretation"]
+
+
+def test_invalid_generator_and_critic_withhold(database, monkeypatch):
+    original = search.call_agent
+    broken_role = "generator"
+
+    async def malformed(db, record_id, episode_id, role, context, schema, fixture):
+        if role == broken_role:
+            fixture = (
+                {"thoughts": [{"available_kw": 999}]}
+                if role == "generator"
+                else {
+                    "scores": [
+                        {
+                            "branch_id": "invented",
+                            "rubric": {
+                                "grounding": 25,
+                                "freshness": 20,
+                                "consistency": 20,
+                                "uncertainty": 20,
+                                "usefulness": 15,
+                            },
+                        }
+                    ]
+                }
+            )
+        return await original(db, record_id, episode_id, role, context, schema, fixture)
+
+    monkeypatch.setattr(search, "call_agent", malformed)
+    asyncio.run(seed_ambiguity(database))
+    for broken_role in ("generator", "critic"):
+        result = asyncio.run(run_episode(database, "sunny"))
+        assert result["model_calls"] == (1 if broken_role == "generator" else 2)
+        assert result["status"] == "withheld"
+        assert get_publication(database, result["publication_id"])["profile"] is None
+
+
+def test_close_scores_prefer_grounding():
+    branches = [
+        {"id": "fluent", "score": 85, "rubric": {"grounding": 20, "uncertainty": 18}},
+        {"id": "grounded", "score": 82, "rubric": {"grounding": 25, "uncertainty": 18}},
+    ]
+    assert search.ranked(branches)[0]["id"] == "grounded"

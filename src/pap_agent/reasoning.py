@@ -41,3 +41,7 @@ def episode_records(database: Database, episode_id) -> list[dict]:
                 {"id": episode_id},
             ).scalars()
         )
+
+
+def model_call_count(database: Database, episode_id) -> int:
+    return sum(record.get("calls", 0) for record in episode_records(database, episode_id))

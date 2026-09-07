@@ -74,7 +74,7 @@ async function readApi(path, body) {
   const started = performance.now();
   let result;
   try {
-    const response = await fetch(path, { signal: AbortSignal.timeout(120000), cache: "no-store",
+    const response = await fetch(path, { signal: AbortSignal.timeout(600000), cache: "no-store",
       method: body ? "POST" : "GET", headers: body ? {"Content-Type": "application/json"} : {},
       body: body ? JSON.stringify(body) : undefined });
     result = { status: response.status, body: await response.json() };

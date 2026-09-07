@@ -8,10 +8,10 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import TypedDict
 
-from pap_agent.agents import MAX_MODEL_CALLS
+from pap_agent.agents import MAX_MODEL_CALLS, call_agent
 from pap_agent.core import calculate
 from pap_agent.evidence import Evidence
-from pap_agent.reasoning import get_record, save_record
+from pap_agent.reasoning import get_record, model_call_count, save_record
 from pap_agent.store import get_evidence
 
 LIMITS = {
@@ -23,14 +23,22 @@ LIMITS = {
 }
 
 
-class Candidate(BaseModel):
+class Thought(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    parent_id: str
     evidence_ids: list[str] = Field(min_length=1, max_length=5)
     fallback: Literal["baseline", "refresh_telemetry", "withhold"]
     uncertainty: Literal["baseline", "elevated"]
     summary: str = Field(min_length=1, max_length=240)
     unsupported_assumptions: list[str] = Field(default_factory=list, max_length=2)
+
+
+class Candidate(Thought):
+    parent_id: str
+
+
+class GeneratedThoughts(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    thoughts: list[Thought] = Field(min_length=1, max_length=3)
 
 
 class Rubric(BaseModel):
@@ -40,6 +48,17 @@ class Rubric(BaseModel):
     consistency: int = Field(ge=0, le=20)
     uncertainty: int = Field(ge=0, le=20)
     usefulness: int = Field(ge=0, le=15)
+
+
+class ScoredThought(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    branch_id: str
+    rubric: Rubric
+
+
+class Critique(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scores: list[ScoredThought] = Field(min_length=1, max_length=6)
 
 
 class SearchState(TypedDict):
@@ -56,9 +75,10 @@ class SearchState(TypedDict):
 
 
 async def generate_candidates(database, state, context, parents):
-    """PR10 fixture interface; PR11 plugs in one bounded generator call per parent."""
-    candidates = []
+    """One isolated generator invocation per parent; Python supplies the parent IDs."""
+    candidates, agent_ids, calls = [], [], 0
     for parent in parents:
+        fixture = []
         for fallback, summary in (
             ("baseline", "Keep the persistence evaluation with its stated assumptions."),
             (
@@ -67,29 +87,92 @@ async def generate_candidates(database, state, context, parents):
             ),
             ("withhold", "Withhold guidance until the forecast uncertainty is resolved."),
         ):
-            candidates.append(
-                Candidate(
-                    parent_id=parent,
+            fixture.append(
+                Thought(
                     evidence_ids=context["evidence_ids"],
                     fallback=fallback,
                     uncertainty="elevated",
                     summary=summary,
                 ).model_dump()
             )
-    return {"candidates": candidates, "calls": 0, "agent_ids": []}
+        history = get_record(database, state.get("search_id")) if state.get("search_id") else None
+        previous = (
+            next(
+                (branch["candidate"] for branch in history["branches"] if branch["id"] == parent),
+                None,
+            )
+            if history
+            else None
+        )
+        record = await call_agent(
+            database,
+            uuid5(UUID(parent), "generator"),
+            state["episode_id"],
+            "generator",
+            {
+                "task": "Propose up to three distinct advisory interpretations: baseline, "
+                "refresh_telemetry, withhold. Use only supplied evidence_ids. "
+                "Keep each summary under 100 characters. No new assumptions or arithmetic.",
+                "evidence": context,
+                "previous_summary": previous,
+            },
+            GeneratedThoughts,
+            {"thoughts": fixture},
+        )
+        agent_ids.append(record["id"])
+        calls += record["calls"]
+        if record["status"] == "ok":
+            candidates.extend(
+                {**thought, "parent_id": parent} for thought in record["output"]["thoughts"]
+            )
+    return {"candidates": candidates, "calls": calls, "agent_ids": agent_ids}
 
 
 async def score_candidates(database, state, context, branches):
     """A rubric score is a ranking aid, never probability or hard-check authority."""
-    scores = {}
+    scores = []
     for branch in branches:
         values = {
             "refresh_telemetry": (23, 18, 18, 19, 13),
             "baseline": (20, 18, 16, 8, 9),
             "withhold": (20, 18, 17, 17, 9),
         }[branch["candidate"]["fallback"]]
-        scores[branch["id"]] = dict(zip(Rubric.model_fields, values, strict=True))
-    return {"scores": scores, "calls": 0, "agent_ids": []}
+        scores.append(
+            {
+                "branch_id": branch["id"],
+                "rubric": dict(zip(Rubric.model_fields, values, strict=True)),
+            }
+        )
+    record = await call_agent(
+        database,
+        uuid5(UUID(state["search_id"]), f"critic:{state['search_round']}"),
+        state["episode_id"],
+        "critic",
+        {
+            "task": "Score each surviving branch. Rubric maxima: grounding 25, freshness 20, "
+            "consistency 20, uncertainty 20, usefulness 15. Scores rank guidance, "
+            "not physical safety or probabilities. Favor an evidence-supported refresh "
+            "over ignoring observed overestimation; withhold only if guidance is unusable.",
+            "evidence": context,
+            "survivors": [
+                {key: branch[key] for key in ("id", "candidate", "hard_checks")}
+                for branch in branches
+            ],
+        },
+        Critique,
+        {"scores": scores},
+    )
+    output = record["output"]["scores"] if record["status"] == "ok" else []
+    allowed = {branch["id"] for branch in branches}
+    known = all(item["branch_id"] in allowed for item in output)
+    unique = len({item["branch_id"] for item in output}) == len(output)
+    return {
+        "scores": {item["branch_id"]: item["rubric"] for item in output}
+        if known and unique
+        else {},
+        "calls": record["calls"],
+        "agent_ids": [record["id"]],
+    }
 
 
 def hard_errors(database, state, candidate: Candidate, allowed: set[str]) -> list[str]:
@@ -129,6 +212,7 @@ def build_search(database, checkpointer=None, interrupt_after=None):
         record = get_record(database, search_id)
         if record is None:
             selected = get_record(database, state["retrieval_id"])["selected"]
+            evidence = Evidence.model_validate(get_evidence(database, state["evidence_id"]))
             record = {
                 "id": search_id,
                 "episode_id": state["episode_id"],
@@ -144,14 +228,23 @@ def build_search(database, checkpointer=None, interrupt_after=None):
                     "evidence_ids": [state["evidence_id"], state["assessment_id"]],
                     "assessment": get_record(database, state["assessment_id"]),
                     "memory": selected,
+                    "validated_state": {
+                        "observed_at": evidence.scenario.telemetry.observed_at.isoformat(),
+                        "battery_voltage_v": evidence.scenario.telemetry.battery_voltage_v,
+                        "voltage_floor_v": evidence.scenario.policy.min_battery_voltage_v,
+                        "forecast": "Solar persistence; synthetic weather; no battery discharge",
+                        "checks": "T3 and T6 passed; power arithmetic cannot be changed",
+                    },
                 },
             }
         depth = record["round"]
         parents = record["beams"][-1] if record["beams"] else [search_id]
         if not any(branch["depth"] == depth for branch in record["branches"]):
             generated = await generate_candidates(database, state, record["context"], parents)
-            record["model_calls"] += generated["calls"]
-            record["agent_ids"].extend(generated["agent_ids"])
+            record["model_calls"] = model_call_count(database, state["episode_id"])
+            record["agent_ids"] = list(
+                dict.fromkeys([*record["agent_ids"], *generated["agent_ids"]])
+            )
             counts = Counter()
             for raw in generated["candidates"]:
                 candidate = Candidate.model_validate(raw)
@@ -207,8 +300,8 @@ def build_search(database, checkpointer=None, interrupt_after=None):
             if survivors
             else {"scores": {}, "calls": 0, "agent_ids": []}
         )
-        record["model_calls"] += scored["calls"]
-        record["agent_ids"].extend(scored["agent_ids"])
+        record["model_calls"] = model_call_count(database, state["episode_id"])
+        record["agent_ids"] = list(dict.fromkeys([*record["agent_ids"], *scored["agent_ids"]]))
         for branch in survivors:
             if branch["id"] in scored["scores"]:
                 rubric = Rubric.model_validate(scored["scores"][branch["id"]]).model_dump()
@@ -228,6 +321,8 @@ def build_search(database, checkpointer=None, interrupt_after=None):
             ]
         )
         beam = ordered[: LIMITS["beam_width"]]
+        for branch in ordered[LIMITS["beam_width"] :]:
+            branch.update(status="pruned", prune_reason="Outside two-branch beam")
         record["beams"].append([branch["id"] for branch in beam])
         dominant = (
             bool(beam)

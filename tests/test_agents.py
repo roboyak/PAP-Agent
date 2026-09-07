@@ -95,3 +95,24 @@ def test_offline_model_continues_with_low_confidence(database, monkeypatch):
     assert publication["status"] == "valid"
     assert publication["profile"]["confidence"] == "low"
     assert publication["interpretation"]["accepted"] is False
+
+
+def test_shared_budget_counts_reserved_attempts(database):
+    from pap_agent.reasoning import model_call_count, save_record
+
+    episode_id = uuid4()
+    for _ in range(8):
+        save_record(
+            database,
+            {
+                "id": str(uuid4()),
+                "episode_id": str(episode_id),
+                "kind": "generator",
+                "status": "interrupted",
+                "calls": 1,
+            },
+        )
+    record = asyncio.run(call_agent(database, uuid4(), episode_id, "critic", {}, Advice, {}))
+    assert record["calls"] == 0
+    assert record["reason"] == "Model call budget exhausted"
+    assert model_call_count(database, episode_id) == 8
