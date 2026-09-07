@@ -15,6 +15,14 @@
     <div class="status-row"><span>Local telemetry · synthetic weather</span><span id="service-status" role="status">Service not checked</span></div>
   </header>
 
+  <section class="run-overview" aria-labelledby="run-heading">
+    <h2 id="run-heading">Selected run</h2>
+    <p id="run-status">No run selected. Run PAP to begin.</p>
+    <p id="run-meta" class="muted session-note"></p>
+    <p id="next-step" class="session-note">Choose a source, then inspect one completed run across all six tabs.</p>
+    <p id="run-progress" aria-live="polite" hidden></p>
+  </section>
+
   <div class="workspace">
     <section class="session" aria-labelledby="session-heading">
       <h2 id="session-heading">PAP session</h2>
@@ -60,35 +68,46 @@
       <section id="context" role="tabpanel" aria-labelledby="tab-context" tabindex="0">
         <h2>Model context</h2>
         <p class="muted">The messages and evidence actually sent to a model.</p>
-        <dl><dt>Messages</dt><dd id="model-messages">0</dd><dt>Model calls</dt><dd id="model-calls">0</dd></dl>
+        <p id="model-summary">No model call to inspect.</p>
+        <dl><dt>Input messages</dt><dd id="model-messages">0</dd><dt>Model attempts</dt><dd id="model-calls">0</dd></dl>
         <pre id="model-context">No model context yet. Service checks do not call a model.</pre>
-        <h3>Agent comparison</h3><pre id="agent-comparison">No comparison yet.</pre>
-        <h3>Loaded evidence</h3><pre id="evidence-context">No evidence loaded.</pre>
-        <h3>Deterministic calculation</h3><pre id="calculation-result">No calculation yet.</pre>
+        <h3>Agent comparison</h3><p id="comparison-summary">No comparison yet.</p><pre id="agent-comparison">No comparison yet.</pre>
+        <h3>Loaded evidence</h3><div id="evidence-summary"></div><pre id="evidence-context">No evidence loaded.</pre>
+        <h3>Deterministic calculation</h3><p id="calculation-summary">No calculation yet.</p><pre id="calculation-result">No calculation yet.</pre>
       </section>
       <section id="memory" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
         <h2>Long-term memory</h2>
         <p class="muted">Stored knowledge and the records selected for a run.</p>
+        <h3>Memory used by this run</h3>
+        <ul id="run-memory-summary" class="inspection-list"><li>No retrieval for this run.</li></ul>
+        <pre id="run-memory-results">No retrieval for this run.</pre>
+        <h3>Manual memory search</h3>
+        <p class="muted session-note">A separate search; it does not change the selected run's recorded context.</p>
         <label for="memory-query">Retrieval query</label>
         <input id="memory-query" value="battery voltage reserve and solar uncertainty" maxlength="500">
         <div class="controls"><button id="index-memory">Index memory</button><button id="search-memory">Search memory</button></div>
+        <p id="memory-search-summary">Search stored guidance or index newly evaluated outcomes.</p>
         <pre id="memory-results">No retrieval yet.</pre>
         <h3>Outcome feedback</h3><pre id="outcome-feedback">No outcome evaluated yet.</pre>
       </section>
       <section id="tools" role="tabpanel" aria-labelledby="tab-tools" tabindex="0" hidden>
         <h2>Tools and calls</h2>
         <p class="muted">Available tools, their inputs, results, and elapsed time.</p>
+        <ul id="tool-summary" class="inspection-list"><li>No calls to inspect.</li></ul>
         <pre id="tool-calls">No MCP tool calls have run.</pre>
         <p>Service HTTP requests are visible in Trace.</p>
       </section>
       <section id="subagent" role="tabpanel" aria-labelledby="tab-subagent" tabindex="0" hidden>
         <h2>Subagent activity</h2>
-        <p class="muted">Each agent's task, input context, tool calls, and returned result.</p>
+        <p class="muted">Model records grouped by role. Trace shows workflow order. Expand details for inputs, schemas and outputs.</p>
+        <ul id="agent-summary" class="inspection-list"><li>No model call for this run.</li></ul>
         <pre id="agent-activity">No subagent has run.</pre>
       </section>
       <section id="trace" role="tabpanel" aria-labelledby="tab-trace" tabindex="0" hidden>
         <h2>Execution trace</h2>
         <p>Reasoning mode: <strong id="reasoning-mode">Not run</strong></p>
+        <p id="reasoning-summary">No workflow run yet.</p>
+        <ol id="node-summary" class="inspection-list"></ol>
         <details><summary>Search branches and selection</summary><pre id="search-trace">No selective search.</pre></details>
         <pre id="graph-trace">No workflow run yet.</pre>
         <p class="muted">Requests and results from this browser session. Most recent 20 events.</p>
@@ -104,6 +123,7 @@
           <dt>Version</dt><dd id="app-version">Not checked</dd>
         </dl>
         <p id="health-note">Use Check service to refresh.</p>
+        <p id="readiness-summary">Current service configuration has not been checked.</p>
         <h3>Runtime readiness</h3><pre id="readiness-result">Not checked.</pre>
       </section>
     </section>

@@ -274,7 +274,60 @@ def test_live_agent_comparison(browser, live_service, database, database_url):
             expect(page.locator("#agent-activity")).to_contain_text('"tools": []')
             expect(page.locator("#agent-activity")).to_contain_text('"status": "ok"')
             page.get_by_role("tab", name="Memory", exact=True).click()
-            expect(page.locator("#memory-results")).to_contain_text("selection_reason")
+            expect(page.locator("#run-memory-results")).to_contain_text("selection_reason")
+            saved_url = page.url
+            page.reload()
+            expect(page.locator("#run-meta a")).to_have_attribute(
+                "href", "?episode=" + saved_url.split("?episode=")[1]
+            )
+            page.get_by_role("tab", name="Subagent", exact=True).click()
+            expect(page.locator("#agent-summary")).to_contain_text("interpretation: ok")
+            expect(page.locator("#agent-summary")).to_contain_text("test-double")
+            page.get_by_role("tab", name="Memory", exact=True).click()
+            recorded_memory = page.locator("#run-memory-results").text_content()
+            page.get_by_role("button", name="Search memory", exact=True).click()
+            expect(page.locator("#memory-search-summary")).to_contain_text("manual search results")
+            assert page.locator("#run-memory-results").text_content() == recorded_memory
+            page.route("**/inspection", lambda route: route.abort())
+            page.reload()
+            expect(page.locator("#run-status")).to_have_text("Run details unavailable.")
+            expect(page.locator("#published-profile")).to_be_hidden()
+            expect(page.locator("#model-summary")).to_have_text("Run records could not be loaded.")
+            expect(page.locator("#trace-events")).to_contain_text("network error")
+            assert page.url == saved_url
+            page.unroute("**/inspection")
+            page.reload()
+            expect(page.locator("#agent-summary")).to_contain_text("interpretation: ok")
+            page.get_by_role("button", name="Load sunny fixture").click()
+            expect(page.locator("#run-status")).to_contain_text("source preview")
+            expect(page.locator("#published-profile")).to_be_hidden()
+            expect(page.locator("#run-meta")).to_be_empty()
+            expect(page.locator("#agent-summary")).to_be_empty()
+        finally:
+            page.close()
+
+
+def test_live_pending_run_locks_source_actions(browser, live_service, database, database_url):
+    save_scenario(database, sunny_fixture())
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        pending = []
+        try:
+            page.goto(url)
+            page.route("**/api/v1/pap/run", lambda route: pending.append(route))
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#run-progress")).to_contain_text("seconds elapsed")
+            expect(page.get_by_role("button", name="Load sunny fixture")).to_be_disabled()
+            expect(page.get_by_role("button", name="Compare agent off / on")).to_be_disabled()
+            expect(page.locator("#trace-events")).to_contain_text("pending")
+            route = pending[0]
+            response = page.request.post(route.request.url, data=route.request.post_data_json)
+            route.fulfill(response=response)
+            expect(page.locator("#run-status")).to_contain_text(
+                "Published evaluation", timeout=15000
+            )
+            expect(page.locator("#run-progress")).to_be_hidden()
+            expect(page.get_by_role("button", name="Load sunny fixture")).to_be_enabled()
         finally:
             page.close()
 
@@ -293,6 +346,7 @@ def test_live_selective_search_trace(browser, live_service, database, database_u
             page.get_by_role("button", name="Run PAP", exact=True).click()
             expect(page.locator("#reasoning-mode")).to_have_text("selective_tot", timeout=15000)
             page.get_by_role("tab", name="Trace", exact=True).click()
+            expect(page.locator("#node-summary")).not_to_contain_text("undefined")
             page.get_by_text("Search branches and selection", exact=True).click()
             expect(page.locator("#search-trace")).to_contain_text('"beam_width": 2')
             expect(page.locator("#search-trace")).to_contain_text("prune_reason")

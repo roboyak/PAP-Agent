@@ -46,6 +46,12 @@ The UI is built from plain HTML/CSS/JavaScript following the reference's convers
 inspector layout. Reset view clears browser state; published records remain in PostgreSQL.
 Stored profiles are historical evaluations. Run again for fresh evidence.
 
+The selected-run link restores the same result, evidence, memory and model records after reload.
+Each tab starts with a readable summary; **Inspect raw details** opens the underlying records.
+Trace lists completed workflow nodes in execution order. Model records are grouped by role.
+Source/calculation previews clear the selected workflow, and manual memory search has its own
+results. Long actions show elapsed time and a pending request while conflicting actions are disabled.
+
 ## Voltage and available power
 
 The fixed live battery floor is **305.2 V**, the scanned minimum that the user maps to their
@@ -162,3 +168,7 @@ bash submission/build.sh
 This uses the installed Codex artifact runtime, separately from PAP's application dependencies.
 Each build writes a new directory under `output/capstone/`. Record and add the video links
 before Canvas submission; repository visibility remains the owner's final step.
+
+To recreate the short (2:30) and full (9:00) silent app recordings, see the
+[recording instructions](submission/README.md#app-recordings). Narration cues are editable;
+add your own audio and hosted links before submitting a presentation video.
