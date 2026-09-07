@@ -1,0 +1,314 @@
+{
+  "captured_at": "2026-09-07T23:49:25.054648+00:00",
+  "implementation_commit": "7c06105b433c664054018c3c2dc66f8862667ea5",
+  "working_tree_dirty": true,
+  "episode": {
+    "episode_id": "976a617d-799f-464d-ae8f-224643488af2",
+    "scenario": "mysolark",
+    "evidence_id": "4a89c4d3-5978-5bde-badc-7b48691210c9",
+    "calculation_id": "eadb6995-b290-5561-ba4a-0bb9a935862e",
+    "publication_id": "06bc07f6-563f-58d0-afbc-9bb07a4b078a",
+    "status": "valid",
+    "stop_reason": "T6 passed; evaluation baseline",
+    "trace": [
+      {
+        "node": "acquire_evidence (T1/T2/T3)",
+        "status": "valid",
+        "record_id": "4a89c4d3-5978-5bde-badc-7b48691210c9",
+        "duration_ms": 739
+      },
+      {
+        "node": "calculate_profile (T4/T5/T6)",
+        "status": "valid",
+        "record_id": "eadb6995-b290-5561-ba4a-0bb9a935862e",
+        "duration_ms": 3
+      },
+      {
+        "node": "assess_ambiguity",
+        "status": "selective_tot",
+        "record_id": "6c8d58bf-a77f-515a-add8-f945953a9660",
+        "duration_ms": 3
+      },
+      {
+        "node": "retrieve (T9)",
+        "status": "ok",
+        "record_id": "b396d2d4-ad0b-5563-b989-4114a0d44777",
+        "duration_ms": 609
+      },
+      {
+        "node": "selective_tot",
+        "record_id": "e23037ab-64b6-5e31-809a-615dd101f041",
+        "status": "valid",
+        "reason": "One-revision/depth limit"
+      },
+      {
+        "node": "publish_profile (T7)",
+        "status": "valid",
+        "record_id": "06bc07f6-563f-58d0-afbc-9bb07a4b078a",
+        "duration_ms": 13
+      },
+      {
+        "node": "finalize_episode",
+        "status": "valid",
+        "record_id": "",
+        "duration_ms": 0
+      }
+    ],
+    "interpretation_enabled": false,
+    "retrieval_id": "b396d2d4-ad0b-5563-b989-4114a0d44777",
+    "model_calls": 5,
+    "assessment_id": "6c8d58bf-a77f-515a-add8-f945953a9660",
+    "reasoning_mode": "selective_tot",
+    "search_id": "e23037ab-64b6-5e31-809a-615dd101f041",
+    "search_round": 2,
+    "search_done": true
+  },
+  "publication": {
+    "id": "06bc07f6-563f-58d0-afbc-9bb07a4b078a",
+    "episode_id": "976a617d-799f-464d-ae8f-224643488af2",
+    "evidence_id": "4a89c4d3-5978-5bde-badc-7b48691210c9",
+    "calculation_id": "eadb6995-b290-5561-ba4a-0bb9a935862e",
+    "generated_at": "2026-09-07T23:47:35.292843Z",
+    "status": "valid",
+    "profile": {
+      "id": "eadb6995-b290-5561-ba4a-0bb9a935862e",
+      "created_at": "2026-09-07T23:46:15.852515Z",
+      "telemetry_id": "7824d262-9507-5423-a60e-e2bda52853f6",
+      "policy_id": "dw-floor-305.2",
+      "status": "valid",
+      "intervals": [
+        {
+          "starts_at": "2026-09-07T23:46:08.528303Z",
+          "ends_at": "2026-09-08T00:46:08.528303Z",
+          "available_kw": 0.622,
+          "energy_kwh": 0.622
+        },
+        {
+          "starts_at": "2026-09-08T00:46:08.528303Z",
+          "ends_at": "2026-09-08T01:46:08.528303Z",
+          "available_kw": 0.622,
+          "energy_kwh": 0.622
+        },
+        {
+          "starts_at": "2026-09-08T01:46:08.528303Z",
+          "ends_at": "2026-09-08T02:46:08.528303Z",
+          "available_kw": 0.474,
+          "energy_kwh": 0.474
+        },
+        {
+          "starts_at": "2026-09-08T02:46:08.528303Z",
+          "ends_at": "2026-09-08T03:46:08.528303Z",
+          "available_kw": 0.326,
+          "energy_kwh": 0.326
+        },
+        {
+          "starts_at": "2026-09-08T03:46:08.528303Z",
+          "ends_at": "2026-09-08T04:46:08.528303Z",
+          "available_kw": 0.178,
+          "energy_kwh": 0.178
+        },
+        {
+          "starts_at": "2026-09-08T04:46:08.528303Z",
+          "ends_at": "2026-09-08T05:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        },
+        {
+          "starts_at": "2026-09-08T05:46:08.528303Z",
+          "ends_at": "2026-09-08T06:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        },
+        {
+          "starts_at": "2026-09-08T06:46:08.528303Z",
+          "ends_at": "2026-09-08T07:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        },
+        {
+          "starts_at": "2026-09-08T07:46:08.528303Z",
+          "ends_at": "2026-09-08T08:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        },
+        {
+          "starts_at": "2026-09-08T08:46:08.528303Z",
+          "ends_at": "2026-09-08T09:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        },
+        {
+          "starts_at": "2026-09-08T09:46:08.528303Z",
+          "ends_at": "2026-09-08T10:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        },
+        {
+          "starts_at": "2026-09-08T10:46:08.528303Z",
+          "ends_at": "2026-09-08T11:46:08.528303Z",
+          "available_kw": 0.0,
+          "energy_kwh": 0.0
+        }
+      ],
+      "confidence": "low",
+      "explanation": "Evaluation baseline: synthetic weather; constant measured demand; solar surplus only; zero battery discharge. Voltage floor gates additional power. Future voltage and equipment capability are not predicted."
+    },
+    "evidence": {
+      "name": "mysolark-7824d262-305.2",
+      "label": "MySolArk live scrape + synthetic weather",
+      "telemetry": {
+        "id": "7824d262-9507-5423-a60e-e2bda52853f6",
+        "observed_at": "2026-09-07T23:46:08.528303Z",
+        "battery_voltage_v": 392.9,
+        "solar_power_kw": 1.48,
+        "load_power_kw": 0.858,
+        "source": "DW 1.24 MySolArk persisted scrape",
+        "data_mode": "live",
+        "measurement_time_verified": false
+      },
+      "weather": [
+        {
+          "starts_at": "2026-09-07T23:46:08.528303Z",
+          "ends_at": "2026-09-08T00:46:08.528303Z",
+          "solar_factor": 1.0,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T00:46:08.528303Z",
+          "ends_at": "2026-09-08T01:46:08.528303Z",
+          "solar_factor": 1.0,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T01:46:08.528303Z",
+          "ends_at": "2026-09-08T02:46:08.528303Z",
+          "solar_factor": 0.9,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T02:46:08.528303Z",
+          "ends_at": "2026-09-08T03:46:08.528303Z",
+          "solar_factor": 0.8,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T03:46:08.528303Z",
+          "ends_at": "2026-09-08T04:46:08.528303Z",
+          "solar_factor": 0.7,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T04:46:08.528303Z",
+          "ends_at": "2026-09-08T05:46:08.528303Z",
+          "solar_factor": 0.5,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T05:46:08.528303Z",
+          "ends_at": "2026-09-08T06:46:08.528303Z",
+          "solar_factor": 0.3,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T06:46:08.528303Z",
+          "ends_at": "2026-09-08T07:46:08.528303Z",
+          "solar_factor": 0.1,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T07:46:08.528303Z",
+          "ends_at": "2026-09-08T08:46:08.528303Z",
+          "solar_factor": 0.0,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T08:46:08.528303Z",
+          "ends_at": "2026-09-08T09:46:08.528303Z",
+          "solar_factor": 0.0,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T09:46:08.528303Z",
+          "ends_at": "2026-09-08T10:46:08.528303Z",
+          "solar_factor": 0.0,
+          "source": "synthetic weather"
+        },
+        {
+          "starts_at": "2026-09-08T10:46:08.528303Z",
+          "ends_at": "2026-09-08T11:46:08.528303Z",
+          "solar_factor": 0.0,
+          "source": "synthetic weather"
+        }
+      ],
+      "policy": {
+        "id": "dw-floor-305.2",
+        "label": "Fixed observed-minimum floor; user maps to ~30% SOC reserve. No equipment cap configured.",
+        "min_battery_voltage_v": 305.2,
+        "max_extra_power_kw": null
+      }
+    },
+    "observed_age_seconds": 86.8,
+    "reason": "T6 passed; evaluation baseline",
+    "evaluation_only": true,
+    "feedback": {
+      "samples": 1,
+      "guidance": "Lower confidence; re-evaluate solar before adding load",
+      "confidence": "low",
+      "mean_solar_bias_kw": 0.4099999999999999
+    },
+    "interpretation": null,
+    "search": {
+      "id": "e23037ab-64b6-5e31-809a-615dd101f041",
+      "status": "valid",
+      "guidance": {
+        "summary": "Clouds reduce solar; re-evaluate before adding load.",
+        "fallback": "refresh_telemetry",
+        "parent_id": "10cc6e3d-5b09-5270-ab10-21372f93d225",
+        "uncertainty": "elevated",
+        "evidence_ids": [
+          "0b7da9e2-a389-5d43-bc60-138518fcd5f1"
+        ],
+        "unsupported_assumptions": []
+      },
+      "selected_id": "1456e5fe-39b7-5eda-b446-8f6bd6ab2a52",
+      "stop_reason": "One-revision/depth limit"
+    }
+  },
+  "models": [
+    {
+      "kind": "critic",
+      "provider": "ollama",
+      "model": "gemma3:4b",
+      "status": "ok",
+      "calls": 1
+    },
+    {
+      "kind": "critic",
+      "provider": "ollama",
+      "model": "gemma3:4b",
+      "status": "ok",
+      "calls": 1
+    },
+    {
+      "kind": "generator",
+      "provider": "ollama",
+      "model": "gemma3:4b",
+      "status": "ok",
+      "calls": 1
+    },
+    {
+      "kind": "generator",
+      "provider": "ollama",
+      "model": "gemma3:4b",
+      "status": "ok",
+      "calls": 1
+    },
+    {
+      "kind": "generator",
+      "provider": "ollama",
+      "model": "gemma3:4b",
+      "status": "ok",
+      "calls": 1
+    }
+  ]
+}

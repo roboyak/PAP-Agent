@@ -4,133 +4,90 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DragonWings PAP Forecaster</title>
-  <link rel="stylesheet" href="/static/app.css">
-  <script src="/static/app.js" defer></script>
+  <link rel="stylesheet" href="/static/run.css">
+  <script src="/static/run.js" defer></script>
 </head>
 <body data-default-source="__DEFAULT_SOURCE__">
+<nav class="site-nav" aria-label="Main navigation">
+  <a class="brand" href="/">DragonWings <span>PAP / power availability</span></a>
+  <div><a href="/" aria-current="page">Forecast</a><a id="inspector-link" href="/inspector">Inspector</a></div>
+</nav>
 <main>
-  <header>
-    <div class="title-row"><h1>DragonWings PAP Forecaster</h1><span class="badge">READ ONLY</span></div>
-    <p>Local power availability, with the evidence and activity behind each result.</p>
-    <div class="status-row"><span>Local telemetry · synthetic weather</span><span id="service-status" role="status">Service not checked</span></div>
+  <header class="page-heading">
+    <div><h1>Power availability</h1><p>A twelve-hour view of additional solar power.</p></div>
+    <span class="badge">Read only / evaluation</span>
   </header>
-
-  <section class="run-overview" aria-labelledby="run-heading">
-    <h2 id="run-heading">Selected run</h2>
-    <p id="run-status">No run selected. Run PAP to begin.</p>
-    <p id="run-meta" class="muted session-note"></p>
-    <p id="next-step" class="session-note">Choose a source, then inspect one completed run across all six tabs.</p>
-    <p id="run-progress" aria-live="polite" hidden></p>
-  </section>
-
-  <div class="workspace">
-    <section class="session" aria-labelledby="session-heading">
-      <h2 id="session-heading">PAP session</h2>
-      <div class="conversation" role="log" aria-label="Session activity" aria-live="polite">
-        <div id="empty-session" class="empty-session">
-          <h3>Ready to calculate availability</h3>
-          <p>Run PAP to read the source and calculate solar surplus.</p>
-          <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
-        </div>
-        <div id="messages"></div>
-      </div>
-      <div class="controls">
-        <button id="run-workflow" class="primary">Run PAP</button>
-        <button id="compare-agents">Compare agent off / on</button>
-        <button id="check-service">Check service</button>
-        <button id="load-fixture">Load sunny fixture</button>
-        <button id="load-mysolark">Read MySolArk now</button>
-        <button id="calculate-pap">Calculate PAP</button>
-        <button id="reset-view">Reset view</button>
-      </div>
-      <p id="evidence-note" class="muted session-note">Run PAP or select a source to inspect its evidence.</p>
-      <section id="published-profile" hidden>
-        <h2>Power availability <span id="publication-status" class="badge"></span></h2>
-        <p id="profile-summary"></p>
-        <p id="profile-provenance" class="muted session-note"></p>
-        <table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead>
-          <tbody id="profile-intervals"></tbody></table>
-        <p id="profile-explanation" class="muted session-note"></p>
-        <button id="evaluate-outcome">Evaluate latest reading</button>
+  <div class="forecast-layout">
+    <aside class="source-rail" aria-label="Source and run controls">
+      <section>
+        <h2>Run a forecast</h2>
+        <label for="source">Telemetry source</label>
+        <select id="source"><option value="mysolark">MySolArk / DW 1.24</option><option value="sunny">Sunny demo / synthetic</option></select>
+        <p class="small">Run PAP reads a new snapshot and saves the result with its evidence.</p>
+        <button id="run-workflow" class="primary" disabled>Run PAP</button>
+        <p id="run-progress" role="status" hidden></p>
       </section>
-    </section>
-
-    <section class="inspector" aria-label="Run inspector">
-      <div role="tablist" aria-label="Monitoring panels">
-        <button id="tab-context" role="tab" aria-selected="true" aria-controls="context">Context</button>
-        <button id="tab-memory" role="tab" aria-selected="false" aria-controls="memory" tabindex="-1">Memory</button>
-        <button id="tab-tools" role="tab" aria-selected="false" aria-controls="tools" tabindex="-1">Tools</button>
-        <button id="tab-subagent" role="tab" aria-selected="false" aria-controls="subagent" tabindex="-1">Subagent</button>
-        <button id="tab-trace" role="tab" aria-selected="false" aria-controls="trace" tabindex="-1">Trace</button>
-        <button id="tab-health" role="tab" aria-selected="false" aria-controls="health" tabindex="-1">Health</button>
-      </div>
-
-      <section id="context" role="tabpanel" aria-labelledby="tab-context" tabindex="0">
-        <h2>Model context</h2>
-        <p class="muted">The messages and evidence actually sent to a model.</p>
-        <p id="model-summary">No model call to inspect.</p>
-        <dl><dt>Input messages</dt><dd id="model-messages">0</dd><dt>Model attempts</dt><dd id="model-calls">0</dd></dl>
-        <pre id="model-context">No model context yet. Service checks do not call a model.</pre>
-        <h3>Agent comparison</h3><p id="comparison-summary">No comparison yet.</p><pre id="agent-comparison">No comparison yet.</pre>
-        <h3>Loaded evidence</h3><div id="evidence-summary"></div><pre id="evidence-context">No evidence loaded.</pre>
-        <h3>Deterministic calculation</h3><p id="calculation-summary">No calculation yet.</p><pre id="calculation-result">No calculation yet.</pre>
-      </section>
-      <section id="memory" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
-        <h2>Long-term memory</h2>
-        <p class="muted">Stored knowledge and the records selected for a run.</p>
-        <h3>Memory used by this run</h3>
-        <ul id="run-memory-summary" class="inspection-list"><li>No retrieval for this run.</li></ul>
-        <pre id="run-memory-results">No retrieval for this run.</pre>
-        <h3>Manual memory search</h3>
-        <p class="muted session-note">A separate search; it does not change the selected run's recorded context.</p>
-        <label for="memory-query">Retrieval query</label>
-        <input id="memory-query" value="battery voltage reserve and solar uncertainty" maxlength="500">
-        <div class="controls"><button id="index-memory">Index memory</button><button id="search-memory">Search memory</button></div>
-        <p id="memory-search-summary">Search stored guidance or index newly evaluated outcomes.</p>
-        <pre id="memory-results">No retrieval yet.</pre>
-        <h3>Outcome feedback</h3><pre id="outcome-feedback">No outcome evaluated yet.</pre>
-      </section>
-      <section id="tools" role="tabpanel" aria-labelledby="tab-tools" tabindex="0" hidden>
-        <h2>Tools and calls</h2>
-        <p class="muted">Available tools, their inputs, results, and elapsed time.</p>
-        <ul id="tool-summary" class="inspection-list"><li>No calls to inspect.</li></ul>
-        <pre id="tool-calls">No MCP tool calls have run.</pre>
-        <p>Service HTTP requests are visible in Trace.</p>
-      </section>
-      <section id="subagent" role="tabpanel" aria-labelledby="tab-subagent" tabindex="0" hidden>
-        <h2>Subagent activity</h2>
-        <p class="muted">Model records grouped by role. Trace shows workflow order. Expand details for inputs, schemas and outputs.</p>
-        <ul id="agent-summary" class="inspection-list"><li>No model call for this run.</li></ul>
-        <pre id="agent-activity">No subagent has run.</pre>
-      </section>
-      <section id="trace" role="tabpanel" aria-labelledby="tab-trace" tabindex="0" hidden>
-        <h2>Execution trace</h2>
-        <p>Reasoning mode: <strong id="reasoning-mode">Not run</strong></p>
-        <p id="reasoning-summary">No workflow run yet.</p>
-        <ol id="node-summary" class="inspection-list"></ol>
-        <details><summary>Search branches and selection</summary><pre id="search-trace">No selective search.</pre></details>
-        <pre id="graph-trace">No workflow run yet.</pre>
-        <p class="muted">Requests and results from this browser session. Most recent 20 events.</p>
-        <p id="empty-trace" class="empty">Run a service check to see its requests.</p>
-        <ol id="trace-events"></ol>
-      </section>
-      <section id="health" role="tabpanel" aria-labelledby="tab-health" tabindex="0" hidden>
-        <h2>Service health</h2>
-        <p class="muted">Live PostgreSQL query and installed pgvector extension.</p>
-        <dl>
-          <dt>PostgreSQL</dt><dd id="database-status">Not checked</dd>
-          <dt>pgvector</dt><dd id="pgvector-status">Not checked</dd>
-          <dt>Version</dt><dd id="app-version">Not checked</dd>
+      <section>
+        <h2>Recorded source</h2>
+        <p id="source-state" class="small">No source loaded.</p>
+        <dl class="source-values">
+          <dt>Solar generation</dt><dd id="solar-value">—</dd>
+          <dt>Existing load</dt><dd id="load-value">—</dd>
+          <dt>Battery voltage</dt><dd id="voltage-value">—</dd>
+          <dt>Voltage floor</dt><dd id="floor-value">—</dd>
         </dl>
-        <p id="health-note">Use Check service to refresh.</p>
-        <p id="readiness-summary">Current service configuration has not been checked.</p>
-        <h3>Runtime readiness</h3><pre id="readiness-result">Not checked.</pre>
+        <p id="source-time" class="small"></p>
+        <p id="source-age" class="small"></p>
       </section>
-    </section>
+      <section class="assumptions">
+        <h2>Forecast assumptions</h2>
+        <ul><li>Synthetic weather factors</li><li>Existing load held constant</li><li>No battery discharge</li></ul>
+        <p class="small">Voltage checks the recorded battery floor. Future voltage and equipment capability are not predicted.</p>
+      </section>
+    </aside>
+    <div class="result-workspace">
+      <section id="empty-result" class="empty-result">
+        <div class="empty-diagram" aria-hidden="true"><span>Source</span><b>→</b><span>Agent</span><b>→</b><span>Profile</span></div>
+        <h2>See the power available beyond the existing load.</h2>
+        <p>Choose a telemetry source and run PAP. Your result will show an hourly profile, its assumptions and the agent's guidance.</p>
+      </section>
+      <p id="request-error" role="alert" hidden></p>
+      <section id="published-profile" hidden aria-labelledby="output-heading">
+        <div class="result-heading"><h2 id="output-heading">Forecast output</h2><span id="publication-status" class="badge"></span></div>
+        <p id="run-status" class="small"></p>
+        <div id="valid-output">
+          <div id="profile-summary" class="profile-summary">
+            <div class="primary-metric"><span>Additional power / first hour</span><strong><span id="power-value">—</span> <small>kW</small></strong></div>
+            <div><span>Energy / twelve hours</span><strong><span id="energy-value">—</span> <small>kWh</small></strong></div>
+            <div><span>Confidence</span><strong id="confidence-value">—</strong><small>Qualitative, not a probability</small></div>
+          </div>
+          <div class="chart-heading"><h3>Hourly solar surplus</h3><span>Additional power / kW</span></div>
+          <div id="forecast-chart" class="forecast-chart"></div>
+          <p id="chart-period" class="small"></p>
+          <p class="small chart-note">Zero means no additional solar power is allocated. The energy total is spread across twelve hours.</p>
+          <details id="hourly-details"><summary>View the hourly numbers</summary>
+            <table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead><tbody id="profile-intervals"></tbody></table>
+          </details>
+        </div>
+        <section class="guidance-panel">
+          <h3 id="guidance-heading">What the agent says</h3>
+          <p id="agent-guidance"></p>
+          <details><summary>Calculation assumptions</summary><p id="profile-explanation" class="small"></p></details>
+        </section>
+        <div class="result-footer"><p id="run-meta" class="small"></p><a id="view-inspector" class="button-link" href="/inspector">Inspect this run</a></div>
+      </section>
+      <section class="flow-section" aria-label="How the result is produced">
+        <h2>From reading to result</h2>
+        <div class="system-flow">
+          <div class="flow-node source-node"><span>Read</span><strong>Telemetry + weather</strong><small>MCP source snapshots</small></div><span class="connector" aria-hidden="true">→</span>
+          <div class="flow-node agent-node"><span>Reason</span><strong>Bounded workflow</strong><small>Models advise; Python checks</small></div><span class="connector" aria-hidden="true">→</span>
+          <div class="flow-node output-node"><span>Publish</span><strong>Hourly profile</strong><small>Or withhold with a reason</small></div><span class="connector" aria-hidden="true">→</span>
+          <div class="flow-node human-node"><span>Review</span><strong>Operator decision</strong><small>No equipment commands</small></div>
+        </div>
+      </section>
+    </div>
   </div>
-  <footer><span>Local diagnostic console</span><nav aria-label="Service information">
-    <a href="/health">Health</a><a href="/health/ready">Readiness</a><a href="/api/v1/version">Version</a><a href="/docs">API documentation</a>
-  </nav></footer>
+  <footer><span>DragonWings / capstone MVP</span><span>Saved evaluations retain their original source time.</span><a href="/docs">API documentation</a></footer>
 </main>
 </body>
 </html>

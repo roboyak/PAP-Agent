@@ -19,7 +19,7 @@ def test_live_cloud_provider_configuration(
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Check service", exact=True).click()
             expect(page.get_by_role("status")).to_have_text("Service healthy")
             page.get_by_role("tab", name="Health", exact=True).click()
@@ -37,7 +37,7 @@ def test_live_memory_search(browser, live_service, database_url):
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("tab", name="Memory", exact=True).click()
             page.get_by_role("button", name="Index memory").click()
             expect(page.locator("#memory-results")).to_contain_text('"indexed": 3')
@@ -54,7 +54,7 @@ def test_live_outcome_feedback(browser, live_service, database, database_url):
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Load sunny fixture").click()
             expect(page.locator("#evidence-note")).to_contain_text("Sunny demo")
             page.get_by_role("button", name="Run PAP", exact=True).click()
@@ -72,7 +72,7 @@ def test_live_durable_workflow(browser, live_service, database_url, source_datab
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Read MySolArk now").click()
             expect(page.get_by_role("button", name="Read MySolArk now")).to_be_enabled()
             with page.expect_response("**/api/v1/pap/run") as response:
@@ -102,7 +102,7 @@ def test_live_calculation_repeatable(
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Load sunny fixture").click()
             expect(page.locator("#evidence-note")).to_contain_text("Sunny demo")
             outputs = []
@@ -132,7 +132,7 @@ def test_live_mysolark_mcp(browser, live_service, database_url, source_database)
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Read MySolArk now").click()
             expect(page.locator("#evidence-note")).to_have_text(
                 "MySolArk live scrape + synthetic weather", timeout=15000
@@ -151,7 +151,7 @@ def test_live_persisted_fixture(browser, live_service, database, database_url):
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Load sunny fixture").click()
             expect(page.locator("#evidence-note")).to_have_text(
                 "Sunny demo (synthetic) loaded from PostgreSQL."
@@ -171,10 +171,10 @@ def test_live_home_health_and_version(browser, live_service, database_url):
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         try:
-            response = page.goto(url)
+            response = page.goto(url + "/inspector")
             assert response.status == 200
-            expect(page).to_have_title("DragonWings PAP Forecaster")
-            expect(page.get_by_role("heading", name="DragonWings PAP Forecaster")).to_be_visible()
+            expect(page).to_have_title("DragonWings PAP Inspector")
+            expect(page.get_by_role("heading", name="Run inspector")).to_be_visible()
             expect(page.get_by_text("READ ONLY", exact=True)).to_be_visible()
             expect(
                 page.get_by_text("Local telemetry · synthetic weather", exact=True)
@@ -232,7 +232,7 @@ def test_live_database_failure_is_visible(browser, live_service):
     with live_service("postgresql+psycopg://pap:test-secret@127.0.0.1:1/pap") as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Check service", exact=True).click()
             expect(page.get_by_role("status")).to_have_text("Service unavailable")
             page.get_by_role("tab", name="Health", exact=True).click()
@@ -262,7 +262,7 @@ def test_live_agent_comparison(browser, live_service, database, database_url):
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Load sunny fixture").click()
             page.get_by_role("button", name="Compare agent off / on").click()
             expect(page.locator("#agent-comparison")).to_contain_text(
@@ -313,7 +313,7 @@ def test_live_pending_run_locks_source_actions(browser, live_service, database, 
         page = browser.new_page()
         pending = []
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.route("**/api/v1/pap/run", lambda route: pending.append(route))
             page.get_by_role("button", name="Run PAP", exact=True).click()
             expect(page.locator("#run-progress")).to_contain_text("seconds elapsed")
@@ -337,7 +337,7 @@ def test_live_selective_search_trace(browser, live_service, database, database_u
     with live_service(database_url) as url:
         page = browser.new_page()
         try:
-            page.goto(url)
+            page.goto(url + "/inspector")
             page.get_by_role("button", name="Load sunny fixture").click()
             page.get_by_role("button", name="Run PAP", exact=True).click()
             expect(page.locator("#reasoning-mode")).to_have_text("linear", timeout=15000)
@@ -360,5 +360,97 @@ def test_live_selective_search_trace(browser, live_service, database, database_u
             expect(page.locator("#agent-comparison")).to_contain_text(
                 '"same_available_power": true'
             )
+        finally:
+            page.close()
+
+
+def test_live_forecast_and_inspector_share_run(
+    browser, live_service, database_url, source_database
+):
+    with live_service(database_url) as url:
+        page = browser.new_page(viewport={"width": 1440, "height": 1080})
+        errors = []
+        page.on("pageerror", lambda error: errors.append(str(error)))
+        try:
+            page.goto(url)
+            page.locator("#source").select_option("mysolark")
+            with page.expect_response("**/api/v1/pap/run") as response:
+                page.get_by_role("button", name="Run PAP", exact=True).click()
+            episode = response.value.json()
+            expect(page.locator("#publication-status")).to_have_text("Published evaluation")
+            expect(page.locator("#profile-summary")).to_be_in_viewport()
+            expect(page.locator("#floor-value")).to_have_text("305.2 V")
+            publication = page.request.get(f"{url}/api/v1/pap/{episode['publication_id']}").json()
+            assert (
+                float(page.locator("#power-value").inner_text())
+                == publication["profile"]["intervals"][0]["available_kw"]
+            )
+            page.get_by_text("View the hourly numbers", exact=True).click()
+            expect(page.locator("#profile-intervals tr")).to_have_count(12)
+            page.get_by_role("link", name="Inspect this run", exact=True).click()
+            assert page.url == f"{url}/inspector?episode={episode['episode_id']}"
+            expect(page.locator("#graph-trace")).to_contain_text(episode["episode_id"])
+            expect(page.get_by_role("tab")).to_have_count(6)
+            page.get_by_role("link", name="Forecast", exact=True).click()
+            expect(page.locator("#publication-status")).to_have_text("Published evaluation")
+            assert page.url == f"{url}/?episode={episode['episode_id']}"
+            page.screenshot(path="test-results/pap-forecast.png", full_page=True)
+            page.set_viewport_size({"width": 390, "height": 844})
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            page.screenshot(path="test-results/pap-forecast-mobile.png", full_page=True)
+            page.reload()
+            expect(page.locator("#floor-value")).to_have_text("305.2 V")
+            assert errors == []
+        finally:
+            page.close()
+
+
+def test_live_forecast_withheld_clears_previous_output(
+    browser, live_service, database, database_url, source_database
+):
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.locator("#source").select_option("mysolark")
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#publication-status")).to_have_text("Published evaluation")
+            with database.session() as session:
+                session.execute(
+                    text("""UPDATE source_fixture.telemetry_snapshots
+                    SET timestamp = timestamp - interval '10 minutes'""")
+                )
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#publication-status")).to_have_text("Withheld")
+            expect(page.locator("#valid-output")).to_be_hidden()
+            expect(page.locator("#guidance-heading")).to_have_text("Why the result was withheld")
+            expect(page.locator("#agent-guidance")).not_to_be_empty()
+            page.reload()
+            expect(page.locator("#publication-status")).to_have_text("Withheld")
+            expect(page.locator("#source")).to_have_value("mysolark")
+            page.get_by_role("link", name="Inspect this run", exact=True).click()
+            expect(page.locator("#run-status")).to_contain_text("Withheld")
+        finally:
+            page.close()
+
+
+def test_live_forecast_identifies_unavailable_model_advice(
+    browser, live_service, database_url, monkeypatch
+):
+    monkeypatch.setenv("AGENT_BACKEND", "ollama")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:1")
+    monkeypatch.setenv("ENABLE_INTERPRETATION_AGENT", "true")
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#publication-status")).to_have_text("Published evaluation")
+            expect(page.locator("#agent-guidance")).to_contain_text(
+                "Optional model advice was unavailable or rejected"
+            )
+            expect(page.locator("#confidence-value")).to_have_text("low")
+            page.set_viewport_size({"width": 390, "height": 844})
+            expect(page.locator(".assumptions")).to_be_visible()
         finally:
             page.close()

@@ -62,6 +62,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             (STATIC_DIR / "index.html").read_text().replace("__DEFAULT_SOURCE__", default_source)
         )
 
+    @app.get("/inspector", include_in_schema=False)
+    def inspector() -> HTMLResponse:
+        return HTMLResponse(
+            (STATIC_DIR / "inspector.html")
+            .read_text()
+            .replace("__DEFAULT_SOURCE__", default_source)
+        )
+
     @app.get("/health")
     def health(response: Response) -> dict[str, str]:
         try:

@@ -26,7 +26,12 @@ PAP_PROFILE=macmini-replay make run
 existing MySolArk source database. The adapter opens a read-only source transaction.
 Do not point PAP migrations at the source database.
 
-## Use the console
+## Use the app
+
+[Quick start and debugging guide](howto.md).
+**Forecast** (`/`) puts the result first: additional kW, twelve-hour kWh, the hourly chart,
+source age and agent guidance. **Inspect this run** opens **Inspector** (`/inspector`)
+with the same episode. The navigation links retain that episode in both directions.
 
 **Run PAP** reads the latest source and runs the durable workflow. **Load sunny fixture**
 and **Read MySolArk now** select/inspect a source; **Calculate PAP** runs the numerical core.
@@ -42,8 +47,9 @@ and **Read MySolArk now** select/inspect a source; **Calculate PAP** runs the nu
 | Trace | Graph nodes, IDs, reasoning mode, branches, pruning, scores and stop reasons |
 | Health | Database, migrations, vectors, checkpoint, source and model readiness |
 
-The UI is built from plain HTML/CSS/JavaScript following the reference's conversation and
-inspector layout. Reset view clears browser state; published records remain in PostgreSQL.
+The UI uses plain HTML/CSS/JavaScript. Its sand palette, monospaced type and outlined
+diagram blocks follow the [BRC Forecast design reference](https://brcforecast.corbett.vc/system).
+Inspector retains the original six-tab monitoring structure. Reset view clears browser state; published records remain in PostgreSQL.
 Stored profiles are historical evaluations. Run again for fresh evidence.
 
 The selected-run link restores the same result, evidence, memory and model records after reload.
@@ -172,3 +178,9 @@ before Canvas submission; repository visibility remains the owner's final step.
 To recreate the short (2:30) and full (9:00) silent app recordings, see the
 [recording instructions](submission/README.md#app-recordings). Narration cues are editable;
 add your own audio and hosted links before submitting a presentation video.
+
+The three-slide [output walkthrough](submission/artifacts/DragonWings_Output_Walkthrough.pptx)
+and [fresh-run video](submission/artifacts/DragonWings_Output_Demo.mp4) show the redesigned
+Forecast page and explain an actual MySolArk result. Recreate them with
+`scripts/record_output_demo.py` and `submission/build_output.sh`; see
+[the output recording instructions](submission/README.md#output-walkthrough).
