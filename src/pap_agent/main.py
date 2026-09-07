@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Query, Response
-from fastapi.responses import FileResponse
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Response
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,9 +17,11 @@ from pap_agent.database import Database
 from pap_agent.domain import Scenario
 from pap_agent.evidence import Evidence, acquire
 from pap_agent.memory import index_memory, retrieve
+from pap_agent.observability import export_summary
 from pap_agent.outcomes import evaluate_publication
 from pap_agent.publisher import PublishedPAP
 from pap_agent.reasoning import episode_records
+from pap_agent.runtime import readiness
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -35,11 +37,12 @@ STATIC_DIR = Path(__file__).with_name("static")
 
 
 class RunRequest(BaseModel):
-    scenario: Literal["sunny", "mysolark"] = "mysolark"
+    scenario: Literal["sunny", "mysolark"] | None = None
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
+    default_source = "mysolark" if settings.pap_profile == "development" else "sunny"
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -54,8 +57,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @app.get("/", include_in_schema=False)
-    def home() -> FileResponse:
-        return FileResponse(STATIC_DIR / "index.html")
+    def home() -> HTMLResponse:
+        return HTMLResponse(
+            (STATIC_DIR / "index.html").read_text().replace("__DEFAULT_SOURCE__", default_source)
+        )
 
     @app.get("/health")
     def health(response: Response) -> dict[str, str]:
@@ -71,6 +76,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "pgvector": "unavailable",
             }
         response.status_code = 503
+        return result
+
+    @app.get("/health/live")
+    def live() -> dict:
+        return {"status": "ok"}
+
+    @app.get("/health/ready")
+    async def ready(response: Response) -> dict:
+        result = await readiness(app.state.database, settings)
+        response.status_code = 200 if result["status"] == "ready" else 503
         return result
 
     @app.get("/api/v1/version")
@@ -112,7 +127,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/v1/pap/calculate")
     async def calculate_pap(request: RunRequest) -> Calculation:
-        evidence = await acquire(app.state.database, request.scenario)
+        evidence = await acquire(app.state.database, request.scenario or default_source)
         result = calculate(evidence)
         save_calculation(app.state.database, result.model_dump(mode="json"))
         return result
@@ -125,12 +140,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return Calculation.model_validate(result)
 
     @app.post("/api/v1/pap/run")
-    async def run_pap(request: RunRequest) -> PAPGraphState:
-        return await run_episode(app.state.database, request.scenario)
+    async def run_pap(request: RunRequest, background: BackgroundTasks) -> PAPGraphState:
+        result = await run_episode(app.state.database, request.scenario or default_source)
+        background.add_task(export_summary, result)
+        return result
 
     @app.post("/api/v1/pap/compare")
-    async def compare_pap(request: RunRequest) -> dict:
-        return await compare_agents(app.state.database, request.scenario)
+    async def compare_pap(request: RunRequest, background: BackgroundTasks) -> dict:
+        result = await compare_agents(app.state.database, request.scenario or default_source)
+        for run in result["runs"]:
+            background.add_task(export_summary, run["episode"])
+        return result
 
     @app.get("/api/v1/episodes/{episode_id}/inspection")
     def inspect_episode(episode_id: UUID) -> list[dict]:

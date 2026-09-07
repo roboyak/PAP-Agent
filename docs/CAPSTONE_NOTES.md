@@ -64,3 +64,14 @@ SOC is inferred from voltage.
 User clarified that the observed 305.2 V floor corresponds to their ~30% SOC reserve and
 batteries must stay above it. Configure 305.2 V as a fixed hard floor; do not automatically
 lower it from future minima. Continue calculations in voltage; do not derive an SOC curve.
+
+## Completed MVP choices
+
+PR01–12 implement the native CLI service, real read-only MySolArk adapter, deterministic
+PAP, durable graph, observed outcomes, local pgvector memory, optional interpretation and
+bounded generator/critic search. The final runbook documents foreground startup instead of
+adding a daemon manager. Weather remains synthetic and battery energy is budgeted as zero.
+The three-role comparison measures identical-evidence latency/call counts and exposes advice
+for review; the observed real-model pair did not establish a quality improvement. The fixed
+305.2 V floor and optional-third-role default remain unchanged. LangSmith is summary-only,
+optional and disabled; no remote tracing was exercised during the build.

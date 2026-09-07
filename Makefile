@@ -3,6 +3,19 @@ export PLAYWRIGHT_BROWSERS_PATH := $(CURDIR)/.cache/playwright
 
 .NOTPARALLEL: verify
 .PHONY: setup db-up db-down migrate seed dev format format-check lint test e2e verify
+.PHONY: bootstrap run demo verify-mac memory-index
+
+bootstrap:
+	bash scripts/bootstrap_mac.sh
+
+run:
+	bash scripts/run_local.sh
+
+verify-mac:
+	bash scripts/verify_local.sh
+
+demo: db-up migrate seed
+	PAP_PROFILE=macmini-replay uv run --locked python -m pap_agent.demo
 
 setup:
 	uv sync --locked
