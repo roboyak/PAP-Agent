@@ -5,7 +5,7 @@ Behavior changes require documentation changes.
 Use:
 - README for durable setup/run;
 - docs/architecture or engineering runtime docs for current design;
-- docs/lessons for one reusable lesson per PR;
+- one terse reusable lesson in the PR body and commit message;
 - MVP_RUNBOOK for operations;
 - PR body for change-specific evidence/HIL/rollback.
 

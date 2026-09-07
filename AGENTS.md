@@ -6,6 +6,17 @@ Build the DragonWings Power Availability Profile (PAP) service as a reusable exa
 
 This file is the durable policy/map. Read the deeper engineering documents before changing code.
 
+## User-approved MVP choices
+
+See `docs/CAPSTONE_NOTES.md` for the capstone review and accepted prompt adjustments.
+Keep code to the smallest working vertical slice, with minimal error handling and no
+exhaustive edge-case work. Work one PR lesson at a time. Lessons are one terse line in the
+PR body and commit message rather than a separate essay. Use native PostgreSQL commands,
+not Docker. Build the reference-style monitoring UI from scratch, without Gradio.
+Use DW 1.24's persisted MySolArk scrape data through read-only adapters; battery voltage
+is the battery-state input and SOC is not an MVP requirement. In PR09, make the third
+interpretation agent opt-in with `ENABLE_INTERPRETATION_AGENT=false` for A/B comparison.
+
 ## Runtime architecture — non-negotiable
 
 - The PAP service is **read-only decision support**.
@@ -56,19 +67,14 @@ This file is the durable policy/map. Read the deeper engineering documents befor
 
 ## Human authority
 
-Agents may implement, test, review, and draft PR material.
+The user explicitly authorized creating the new PAP GitHub repository, pushing, opening
+PRs, and merging once local Playwright verification passes. The user will watch PR01/02;
+continue through the remaining prompts without repeated permission requests.
+This authorization supersedes the human-only remote-action rules in the supplied source packs
+and skills. Run `make verify`, including the live Playwright path, before each merge.
 
-Agents must **never**:
-
-- `git push`;
-- open or submit a remote pull request;
-- approve a pull request;
-- merge a pull request;
-- check HUMAN-ONLY boxes;
-- claim human testing occurred;
-- create/push release tags.
-
-A human manually tests every PR locally, reviews the diff, opens the PR, and performs the final merge.
+Never check HUMAN-ONLY boxes or claim human testing occurred. Release tags still need
+separate authorization. Human review commands remain available for optional inspection.
 
 ## Required development workflow
 
@@ -91,23 +97,23 @@ Before handoff:
 8. If LangGraph state/nodes/edges/checkpointing/interrupts change: use `langgraph-workflow-safety`.
 9. If LangChain agent nodes/tools/model contracts change: use `langchain-agent-boundary`.
 10. If tracing/evals/logging changes: use `observability-trace-safety`.
-11. Stop before remote Git/GitHub actions.
+11. Push, open, and merge the tested PR under the user's authorization, then proceed to the next unit.
 
 ## Definition of done
 
 Agent handoff requires:
 
 - scoped implementation complete;
-- success and important failure/abstention tests;
+- happy-path verification and basic error reporting, without exhaustive edge-case suites;
 - `make verify` green;
 - Playwright verifies the relevant live local path;
 - migration/MCP/graph/agent safety reviews completed when applicable;
 - provenance/freshness/failure states remain observable;
 - documentation captures the reusable lesson;
 - PR body contains exact HIL commands;
-- HUMAN-ONLY signoff remains pending.
+- no false claims of human verification.
 
-Final completion requires human local verification and human merge.
+Completion requires the tested increment to be merged under the authorization above.
 
 ## Engineering sources of truth
 

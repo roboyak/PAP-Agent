@@ -1,12 +1,11 @@
 # Agent Use Policy
 
-Agents may inspect, edit within scope, run local tests/services, use read-only review subagents, draft HIL/PR docs, and recommend release notes.
+Agents may inspect, edit within scope, run local tests/services, use read-only review subagents,
+and draft HIL/PR docs. The user authorized creating PAP's GitHub repo, pushing, opening PRs,
+and merging after local Playwright verification. Continue autonomously after PR01/02.
 
 Agents may not:
-- push;
-- open/submit remote PR;
 - approve;
-- merge;
 - check HUMAN-ONLY signoff;
 - claim human testing;
 - tag releases remotely;
