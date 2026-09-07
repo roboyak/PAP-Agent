@@ -2,6 +2,7 @@
 
 from time import perf_counter
 
+from pap_agent.config import Settings
 from pap_agent.database import Database
 from pap_agent.evidence import acquire
 from pap_agent.store import get_calculation, get_publication
@@ -9,6 +10,7 @@ from pap_agent.workflow import run_episode
 
 
 async def compare_agents(database: Database, scenario="mysolark") -> dict:
+    settings = Settings()
     evidence = await acquire(database, scenario)
     runs = []
     intervals = []
@@ -39,6 +41,8 @@ async def compare_agents(database: Database, scenario="mysolark") -> dict:
             }
         )
     return {
+        "provider": settings.agent_backend,
+        "model": settings.agent_model if settings.agent_backend != "test" else "test-double",
         "evidence_id": str(evidence.id),
         "runs": runs,
         "same_available_power": intervals[0] is not None and intervals[0] == intervals[1],

@@ -47,6 +47,13 @@ bounded, zero-tool model call and reused on resume. The optional third interpret
 controlled by `ENABLE_INTERPRETATION_AGENT=false`; A/B reuses one canonical source snapshot.
 Free-text advice can still be wrong. Structured fields/citations do not prove semantic truth.
 
+`AGENT_BACKEND=ollama|openai|anthropic` and `AGENT_MODEL` select the same provider/model for
+all roles. Ollama remains the default; embeddings remain local. Cloud calls use native structured
+output and the same local Pydantic validation, 45-second/768-token bound and zero retries.
+API keys stay in local environment settings; audit rows record provider/model without credentials.
+Cloud selection sends bounded model context to the selected API. Local audit persistence and
+the deterministic graph authority are independent of provider choice.
+
 The plain HTML/CSS/JS inspector exposes Context, Memory, Tools, Subagent, Trace and Health.
 Audit records contain inputs, validated outputs, IDs, scores, prune reasons and limits,
 never private chain-of-thought. Optional LangSmith receives only an allowlisted summary;
