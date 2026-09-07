@@ -8,11 +8,27 @@ from pap_agent.database import Database
 from pap_agent.domain import Scenario
 
 
+def save_episode(database: Database, payload: dict) -> None:
+    with database.session() as session:
+        session.execute(
+            text("""INSERT INTO episode_records (id, payload)
+            VALUES (:id, CAST(:payload AS jsonb)) ON CONFLICT (id) DO NOTHING"""),
+            {"id": payload["episode_id"], "payload": json.dumps(payload)},
+        )
+
+
+def get_episode(database: Database, episode_id) -> dict | None:
+    with database.session() as session:
+        return session.execute(
+            text("SELECT payload FROM episode_records WHERE id = :id"), {"id": episode_id}
+        ).scalar_one_or_none()
+
+
 def save_evidence(database: Database, payload: dict) -> None:
     with database.session() as session:
         session.execute(
             text("""INSERT INTO evidence_records (id, payload)
-            VALUES (:id, CAST(:payload AS jsonb))"""),
+            VALUES (:id, CAST(:payload AS jsonb)) ON CONFLICT (id) DO NOTHING"""),
             {"id": payload["id"], "payload": json.dumps(payload)},
         )
 

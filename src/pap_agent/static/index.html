@@ -31,6 +31,7 @@
         <button id="load-fixture">Load sunny fixture</button>
         <button id="load-mysolark">Read MySolArk now</button>
         <button id="calculate-pap">Calculate PAP</button>
+        <button id="run-workflow">Run workflow</button>
         <button id="reset-view">Reset view</button>
       </div>
       <p id="evidence-note" class="muted session-note">No telemetry loaded. Load a fixture to inspect stored evidence.</p>
@@ -72,6 +73,7 @@
       </section>
       <section id="trace" role="tabpanel" aria-labelledby="tab-trace" tabindex="0" hidden>
         <h2>Execution trace</h2>
+        <pre id="graph-trace">No workflow run yet.</pre>
         <p class="muted">Requests and results from this browser session. Most recent 20 events.</p>
         <p id="empty-trace" class="empty">Run a service check to see its requests.</p>
         <ol id="trace-events"></ol>

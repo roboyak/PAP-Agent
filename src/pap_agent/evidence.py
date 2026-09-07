@@ -14,7 +14,7 @@ from pap_agent.config import Settings
 from pap_agent.database import Database
 from pap_agent.domain import ReservePolicy, Scenario, TelemetrySnapshot, WeatherForecastInterval
 from pap_agent.sources import SourceResult
-from pap_agent.store import save_evidence, save_scenario
+from pap_agent.store import get_evidence, save_evidence, save_scenario
 
 
 class Evidence(BaseModel):
@@ -66,7 +66,9 @@ def validate_sources(telemetry: SourceResult, weather: SourceResult, now: dateti
     )
 
 
-async def acquire(database: Database, scenario: str = "sunny") -> Evidence:
+async def acquire(
+    database: Database, scenario: str = "sunny", evidence_id: UUID | None = None
+) -> Evidence:
     calls, tools, age = [], [], None
     try:
         async with (
@@ -125,5 +127,6 @@ async def acquire(database: Database, scenario: str = "sunny") -> Evidence:
             tools=tools,
             calls=calls,
         )
+    evidence.id = evidence_id or evidence.id
     save_evidence(database, evidence.model_dump(mode="json"))
-    return evidence
+    return Evidence.model_validate(get_evidence(database, evidence.id))

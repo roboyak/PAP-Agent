@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR04, deterministic solar-surplus calculation.** Agents arrive later.
+**Current increment: PR05, durable LangGraph workflow.** Model nodes arrive later.
 
 ## Run locally
 
@@ -36,6 +36,9 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
 | `/api/v1/scenarios` | Available local development fixtures |
 | `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
+| `POST /api/v1/pap/run` | Run the durable workflow |
+| `/api/v1/episodes/{id}` | Read the completed episode and node trace |
+| `POST /api/v1/episodes/{id}/resume` | Resume or return a completed episode |
 | `POST /api/v1/pap/calculate` | Acquire fresh evidence and persist the deterministic result |
 | `/api/v1/calculations/{id}` | Read a stored calculation |
 | `/api/v1/evidence/{id}` | Read the exact evidence used by a calculation |
@@ -47,6 +50,13 @@ The fixed `BATTERY_FLOOR_V=305.2` gates additional power at/below the floor; the
 that floor to their ~30% SOC reserve. Future lower readings cannot lower the configured floor.
 The sunny fixture still uses its own synthetic 48 V / 5 kW policy. Live equipment capability
 is unconfigured, and future voltage is not predicted. All results are an evaluation baseline.
+
+Run workflow uses [LangGraph with its official PostgreSQL checkpointer](https://docs.langchain.com/oss/python/langgraph/add-memory).
+Three nodes acquire validated evidence, calculate, and finalize. Invalid evidence goes directly
+to finalization. There are no automatic retries; the graph has an eight-step limit. The Trace
+panel shows node results, IDs, and timing. PostgreSQL domain records remain canonical;
+checkpoints hold IDs/statuses for resume. Cloud tracing is disabled. [PR05](docs/pr/PR-05.md)
+includes inspection commands.
 
 ## Code map
 
