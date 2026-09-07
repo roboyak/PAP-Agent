@@ -30,6 +30,7 @@ class PublishedPAP(BaseModel):
     evaluation_only: Literal[True] = True
     feedback: dict | None = None
     interpretation: dict | None = None
+    search: dict | None = None
 
 
 def publish(
@@ -40,6 +41,7 @@ def publish(
     *,
     interpretation_id=None,
     retrieval_id=None,
+    search_id=None,
 ) -> PublishedPAP:
     publication_id = uuid5(episode_id, "publication")
     stored = get_publication(database, publication_id)
@@ -90,6 +92,17 @@ def publish(
                         "advice": advice.model_dump() if advice else None,
                     }
                     if advice is None or advice.confidence == "lower" or advice.insufficient:
+                        result.profile.confidence = "low"
+                if search_id:
+                    search = get_record(database, search_id)
+                    result.search = {
+                        key: search[key]
+                        for key in ("id", "status", "selected_id", "guidance", "stop_reason")
+                    }
+                    if search["status"] == "withheld":
+                        result.status, result.profile = "withheld", None
+                        result.reason = search["stop_reason"]
+                    elif search["guidance"]["fallback"] != "baseline":
                         result.profile.confidence = "low"
     save_publication(database, result.model_dump(mode="json"))
     return PublishedPAP.model_validate(get_publication(database, publication_id))

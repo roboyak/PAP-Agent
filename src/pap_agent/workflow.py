@@ -18,8 +18,10 @@ from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.evidence import Evidence, acquire
 from pap_agent.memory import select_context
+from pap_agent.outcomes import calibration
 from pap_agent.publisher import publish
 from pap_agent.reasoning import get_record, save_record
+from pap_agent.search import build_search
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -43,6 +45,11 @@ class PAPGraphState(TypedDict):
     interpretation_id: NotRequired[str]
     advice_accepted: NotRequired[bool]
     model_calls: NotRequired[int]
+    assessment_id: NotRequired[str]
+    reasoning_mode: NotRequired[Literal["linear", "selective_tot"]]
+    search_id: NotRequired[str]
+    search_round: NotRequired[int]
+    search_done: NotRequired[bool]
 
 
 def checkpoint_dsn(database: Database) -> str:
@@ -102,6 +109,36 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
         trace = event(state, "finalize_episode", state["status"], perf_counter())
         save_episode(database, {**state, "trace": trace})
         return {"trace": trace}
+
+    def assess_ambiguity(state: PAPGraphState):
+        started = perf_counter()
+        record_id = str(uuid5(UUID(state["episode_id"]), "assessment"))
+        record = get_record(database, record_id)
+        if record is None:
+            evidence = Evidence.model_validate(get_evidence(database, state["evidence_id"]))
+            result = get_calculation(database, state["calculation_id"])
+            feedback = calibration(
+                database, evidence.scenario.telemetry.data_mode, result["forecast_version"]
+            )
+            ambiguous = bool(feedback and feedback["mean_solar_bias_kw"] > 0.25)
+            record = {
+                "id": record_id,
+                "episode_id": state["episode_id"],
+                "kind": "assessment",
+                "mode": "selective_tot" if ambiguous else "linear",
+                "feedback": feedback,
+                "evidence_id": state["evidence_id"],
+                "reason": "Observed solar overestimation: persistence vs refresh guidance"
+                if ambiguous
+                else "No grounded ambiguity signal",
+                "demo_threshold_kw": 0.25,
+            }
+            save_record(database, record)
+        return {
+            "assessment_id": record_id,
+            "reasoning_mode": record["mode"],
+            "trace": event(state, "assess_ambiguity", record["mode"], started, record_id),
+        }
 
     def retrieve_context(state: PAPGraphState):
         started = perf_counter()
@@ -195,6 +232,7 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
             UUID(state["calculation_id"]) if state["calculation_id"] else None,
             interpretation_id=state.get("interpretation_id"),
             retrieval_id=state.get("retrieval_id"),
+            search_id=state.get("search_id"),
         )
         logging.getLogger("uvicorn.error").info(
             json.dumps(
@@ -225,6 +263,8 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
     graph.add_node("retrieve", retrieve_context)
     graph.add_node("grounded_interpretation", grounded_interpretation)
     graph.add_node("validate_recommendation", validate_recommendation)
+    graph.add_node("assess_ambiguity", assess_ambiguity)
+    graph.add_node("selective_tot", build_search(database))
     graph.add_edge(START, "acquire_evidence")
     graph.add_conditional_edges(
         "acquire_evidence",
@@ -233,16 +273,34 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
     )
     graph.add_conditional_edges(
         "calculate_profile",
+        lambda state: "assess_ambiguity" if state["status"] == "valid" else "publish_profile",
+        ["assess_ambiguity", "publish_profile"],
+    )
+    graph.add_conditional_edges(
+        "assess_ambiguity",
         lambda state: (
             "retrieve"
-            if state["status"] == "valid" and state.get("interpretation_enabled")
+            if (state.get("interpretation_enabled") or state["reasoning_mode"] == "selective_tot")
             else "publish_profile"
         ),
         ["retrieve", "publish_profile"],
     )
-    graph.add_edge("retrieve", "grounded_interpretation")
+    graph.add_conditional_edges(
+        "retrieve",
+        lambda state: (
+            "grounded_interpretation" if state.get("interpretation_enabled") else "selective_tot"
+        ),
+        ["grounded_interpretation", "selective_tot"],
+    )
     graph.add_edge("grounded_interpretation", "validate_recommendation")
-    graph.add_edge("validate_recommendation", "publish_profile")
+    graph.add_conditional_edges(
+        "validate_recommendation",
+        lambda state: (
+            "selective_tot" if state["reasoning_mode"] == "selective_tot" else "publish_profile"
+        ),
+        ["selective_tot", "publish_profile"],
+    )
+    graph.add_edge("selective_tot", "publish_profile")
     graph.add_edge("publish_profile", "finalize_episode")
     graph.add_edge("finalize_episode", END)
     return graph.compile(checkpointer=checkpointer, interrupt_after=interrupt_after)
@@ -258,7 +316,7 @@ async def run_episode(
     interpretation_enabled: bool | None = None,
 ) -> PAPGraphState:
     episode_id = episode_id or uuid4()
-    config = {"configurable": {"thread_id": str(episode_id)}, "recursion_limit": 12}
+    config = {"configurable": {"thread_id": str(episode_id)}, "recursion_limit": 24}
     async with AsyncPostgresSaver.from_conn_string(checkpoint_dsn(database)) as saver:
         await saver.setup()
         graph = build_graph(database, saver, interrupt_after)

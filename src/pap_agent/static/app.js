@@ -24,7 +24,7 @@ function renderPublication(publication) {
     ? `${evidence.telemetry.source} · ${evidence.telemetry.observed_at} · ${live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
     : publication.reason;
   byId("profile-explanation").textContent = [publication.profile?.explanation ?? "No validated profile is available.",
-    publication.interpretation?.advice?.explanation ?? ""].join(" ");
+    publication.interpretation?.advice?.explanation ?? "", publication.search?.guidance?.summary ?? ""].join(" ");
   byId("profile-intervals").replaceChildren();
   for (const interval of intervals) {
     const row = document.createElement("tr");
@@ -120,6 +120,8 @@ byId("reset-view").addEventListener("click", () => {
   byId("memory-results").textContent = "No retrieval yet.";
   byId("agent-comparison").textContent = "No comparison yet.";
   byId("model-messages").textContent = byId("model-calls").textContent = "0";
+  byId("reasoning-mode").textContent = "Not run";
+  byId("search-trace").textContent = "No selective search.";
   byId("published-profile").hidden = true;
   byId("calculation-result").textContent = "No calculation yet.";
   byId("graph-trace").textContent = "No workflow run yet.";
@@ -214,6 +216,8 @@ byId("run-workflow").addEventListener("click", async () => {
 async function renderInspection(episode) {
   const response = await readApi(`/api/v1/episodes/${episode.episode_id}/inspection`);
   const records = response.status === 200 ? response.body : [];
+  byId("reasoning-mode").textContent = episode.reasoning_mode ?? "linear";
+  byId("search-trace").textContent = JSON.stringify(records.filter(record => record.kind === "search"), null, 2);
   const agents = records.filter(record => record.calls !== undefined);
   byId("model-calls").textContent = episode.model_calls ?? 0;
   byId("model-messages").textContent = agents.reduce((sum, record) => sum + 2 * record.calls, 0);
