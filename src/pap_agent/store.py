@@ -17,6 +17,33 @@ def save_evidence(database: Database, payload: dict) -> None:
         )
 
 
+def save_calculation(database: Database, payload: dict) -> None:
+    with database.session() as session:
+        session.execute(
+            text("""INSERT INTO calculation_records (id, evidence_id, payload)
+            VALUES (:id, :evidence_id, CAST(:payload AS jsonb)) ON CONFLICT (id) DO NOTHING"""),
+            {
+                "id": payload["id"],
+                "evidence_id": payload["evidence_id"],
+                "payload": json.dumps(payload),
+            },
+        )
+
+
+def get_evidence(database: Database, record_id) -> dict | None:
+    with database.session() as session:
+        return session.execute(
+            text("SELECT payload FROM evidence_records WHERE id = :id"), {"id": record_id}
+        ).scalar_one_or_none()
+
+
+def get_calculation(database: Database, record_id) -> dict | None:
+    with database.session() as session:
+        return session.execute(
+            text("SELECT payload FROM calculation_records WHERE id = :id"), {"id": record_id}
+        ).scalar_one_or_none()
+
+
 def save_scenario(database: Database, scenario: Scenario) -> None:
     with database.session() as session:
         session.execute(

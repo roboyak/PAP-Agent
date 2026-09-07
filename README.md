@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR03, read-only MCP evidence.** Forecasts and agents arrive later.
+**Current increment: PR04, deterministic solar-surplus calculation.** Agents arrive later.
 
 ## Run locally
 
@@ -36,7 +36,17 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
 | `/api/v1/scenarios` | Available local development fixtures |
 | `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
+| `POST /api/v1/pap/calculate` | Acquire fresh evidence and persist the deterministic result |
+| `/api/v1/calculations/{id}` | Read a stored calculation |
+| `/api/v1/evidence/{id}` | Read the exact evidence used by a calculation |
 | `/api/v1/evidence/current?scenario=mysolark` | MCP acquisition, T3 decision, persisted live evidence and calls |
+
+Calculate PAP uses the last selected source (MySolArk by default). It produces a twelve-hour
+solar-surplus profile, with a zero battery-discharge budget and explicit kW/kWh units.
+The fixed `BATTERY_FLOOR_V=305.2` gates additional power at/below the floor; the user maps
+that floor to their ~30% SOC reserve. Future lower readings cannot lower the configured floor.
+The sunny fixture still uses its own synthetic 48 V / 5 kW policy. Live equipment capability
+is unconfigured, and future voltage is not predicted. All results are an evaluation baseline.
 
 ## Code map
 
@@ -69,7 +79,7 @@ reference's discover-tools/call-tool pattern using the [official MCP SDK](https:
 Tools shows schemas, arguments, results, and timing. T3 checks required values and a five-minute
 freshness limit. MySolArk is read directly from the local source database with its real scrape
 timestamp (Rails UTC convention). The UI shows age in seconds. Scrape time is not verified device
-measurement time. Weather and reserve policy are still synthetic. `SOURCE_DATABASE_DSN` configures
+measurement time. Weather remains synthetic. The live reserve floor is the user-approved 305.2 V observed minimum. `SOURCE_DATABASE_DSN` configures
 the source; no device IDs, raw JSON, or credentials appear in evidence. Tests use an isolated
 source-shaped database; normal MySolArk runs use the actual local source. See [PR03's notes](docs/pr/PR-03.md).
 

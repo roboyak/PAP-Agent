@@ -48,11 +48,21 @@ def validate_sources(telemetry: SourceResult, weather: SourceResult, now: dateti
             raise ValueError("Weather intervals must be contiguous hours")
     live = snapshot.data_mode == "live"
     return Scenario(
-        name=f"mysolark-{snapshot.id.hex[:8]}" if live else "sunny",
+        name=f"mysolark-{snapshot.id.hex[:8]}-{Settings().battery_floor_v}" if live else "sunny",
         label="MySolArk live scrape + synthetic weather" if live else "Sunny demo (synthetic)",
         telemetry=snapshot,
         weather=intervals,
-        policy=ReservePolicy(),
+        policy=ReservePolicy(
+            id=f"dw-floor-{Settings().battery_floor_v}",
+            label=(
+                "Fixed observed-minimum floor; user maps to ~30% SOC reserve. "
+                "No equipment cap configured."
+            ),
+            min_battery_voltage_v=Settings().battery_floor_v,
+            max_extra_power_kw=None,
+        )
+        if live
+        else ReservePolicy(),
     )
 
 
