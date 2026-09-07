@@ -66,3 +66,30 @@ details, generic solar panels and an unbranded portable battery on the right, an
 space on the left. It contains no equipment ratings and is not a picture of real hardware.
 The user's supplied PDF, PowerPoint, and video guide the visual style, not implementation
 claims. Sources and design credits are recorded in slide notes.
+
+## App recordings
+
+`scripts/record_demo.py` records actual browser use in two versions: 2:30 and 9:00.
+They are silent, ready for your narration. Chapter captions are recording annotations;
+the application results and interactions are real. `recording_chapters.json` contains the
+editable captions plus short and full narration guides.
+
+Requires the repository's Playwright installation and command-line `ffmpeg`/`ffprobe`.
+Start the app with `PAP_PROFILE=macmini-replay make run`, use the sunny fixture, and complete
+a published selective Ollama run with successful generator and critic records
+(Evaluate cloudy demo can trigger selective reasoning).
+Use the selected-run UUID shown by the UI:
+
+```bash
+uv run --locked python scripts/record_demo.py --episode YOUR_COMPLETED_RUN_UUID --version both
+```
+
+The recorder verifies sunny-fixture data, a published selective run, and successful Ollama roles.
+Two independent browser contexts inspect that saved run and perform manual memory searches
+and numerical previews; they do not generate new agent responses or evaluate/index new outcomes.
+Manual search uses the local embedding model. Health checks the current service independently.
+Recordings, narration guides and duration receipts go to a fresh `output/recordings/` directory.
+Use `--url` for another local service port or `--version short` / `--version full` for one cut.
+After inspecting playback and chapter screenshots, copy the selected MP4s and narration guide
+into `submission/artifacts/` and commit them. Add narration, host the video, and update the
+submission document's real URL before Canvas submission.
