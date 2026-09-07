@@ -8,6 +8,25 @@ from pap_agent.database import Database
 from pap_agent.domain import Scenario
 
 
+def save_publication(database: Database, payload: dict) -> None:
+    with database.session() as session:
+        session.execute(
+            text("""INSERT INTO pap_publications
+            (id, evidence_id, calculation_id, generated_at, payload)
+            VALUES (:id, :evidence_id, :calculation_id, :generated_at, CAST(:payload AS jsonb))
+            ON CONFLICT (id) DO NOTHING"""),
+            {key: payload[key] for key in ("id", "evidence_id", "calculation_id", "generated_at")}
+            | {"payload": json.dumps(payload)},
+        )
+
+
+def get_publication(database: Database, publication_id=None) -> dict | None:
+    with database.session() as session:
+        query = "SELECT payload FROM pap_publications "
+        query += "WHERE id = :id" if publication_id else "ORDER BY generated_at DESC LIMIT 1"
+        return session.execute(text(query), {"id": publication_id}).scalar_one_or_none()
+
+
 def save_episode(database: Database, payload: dict) -> None:
     with database.session() as session:
         session.execute(

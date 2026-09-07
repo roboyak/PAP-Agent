@@ -27,14 +27,22 @@
         <div id="messages"></div>
       </div>
       <div class="controls">
-        <button id="check-service" class="primary">Check service</button>
+        <button id="run-workflow" class="primary">Run PAP</button>
+        <button id="check-service">Check service</button>
         <button id="load-fixture">Load sunny fixture</button>
         <button id="load-mysolark">Read MySolArk now</button>
         <button id="calculate-pap">Calculate PAP</button>
-        <button id="run-workflow">Run workflow</button>
         <button id="reset-view">Reset view</button>
       </div>
       <p id="evidence-note" class="muted session-note">No telemetry loaded. Load a fixture to inspect stored evidence.</p>
+      <section id="published-profile" hidden>
+        <h2>Power availability <span id="publication-status" class="badge"></span></h2>
+        <p id="profile-summary"></p>
+        <p id="profile-provenance" class="muted session-note"></p>
+        <table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead>
+          <tbody id="profile-intervals"></tbody></table>
+        <p id="profile-explanation" class="muted session-note"></p>
+      </section>
     </section>
 
     <section class="inspector" aria-label="Run inspector">

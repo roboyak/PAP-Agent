@@ -14,10 +14,16 @@ def test_live_durable_workflow(browser, live_service, database_url, source_datab
         try:
             page.goto(url)
             with page.expect_response("**/api/v1/pap/run") as response:
-                page.get_by_role("button", name="Run workflow").click()
+                page.get_by_role("button", name="Run PAP").click()
             episode = response.value.json()
             expect(page.locator("#graph-trace")).to_contain_text("finalize_episode")
             assert episode["status"] == "valid"
+            expect(page.locator("#profile-intervals tr")).to_have_count(12)
+            expect(page.locator("#profile-provenance")).to_contain_text("floor 305.2 V")
+            publication = page.request.get(f"{url}/api/v1/pap/{episode['publication_id']}").json()
+            assert publication["evidence_id"] == episode["evidence_id"]
+            page.reload()
+            expect(page.locator("#profile-intervals tr")).to_have_count(12)
             assert (
                 page.request.get(f"{url}/api/v1/episodes/{episode['episode_id']}").json() == episode
             )
@@ -131,7 +137,7 @@ def test_live_home_health_and_version(browser, live_service, database_url):
             expect(page.locator("#pgvector-status")).to_have_text("ok")
             expect(page.locator("#app-version")).to_have_text(__version__)
             page.get_by_role("tab", name="Trace", exact=True).click()
-            expect(page.locator("#trace-events li")).to_have_count(2)
+            expect(page.locator("#trace-events li")).to_have_count(3)
             page.locator("#trace-events summary").first.click()
             Path("test-results").mkdir(exist_ok=True)
             page.screenshot(path="test-results/pap-home.png", full_page=True)

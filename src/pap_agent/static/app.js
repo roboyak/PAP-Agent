@@ -1,6 +1,36 @@
 const byId = (id) => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 let currentScenario = "mysolark";
+let currentPublication = null;
+
+function renderPublication(publication) {
+  if (!publication) return;
+  currentPublication = publication;
+  byId("published-profile").hidden = false;
+  byId("publication-status").textContent = publication.status;
+  const intervals = publication.profile?.intervals ?? [];
+  const energy = intervals.reduce((sum, row) => sum + row.energy_kwh, 0);
+  byId("profile-summary").textContent = publication.status === "valid"
+    ? `${intervals[0].available_kw} kW additional · ${energy.toFixed(3)} kWh over 12 hours · ${publication.profile.confidence} confidence`
+    : `Additional power withheld: ${publication.reason}`;
+  const evidence = publication.evidence;
+  const live = evidence?.telemetry.data_mode === "live";
+  const age = live ? Math.round((Date.now() - Date.parse(evidence.telemetry.observed_at)) / 1000) : null;
+  byId("profile-provenance").textContent = evidence
+    ? `${evidence.telemetry.source} · ${evidence.telemetry.observed_at} · ${live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
+    : publication.reason;
+  byId("profile-explanation").textContent = publication.profile?.explanation ?? "No validated profile is available.";
+  byId("profile-intervals").replaceChildren();
+  for (const interval of intervals) {
+    const row = document.createElement("tr");
+    for (const value of [interval.starts_at.replace("T", " ").slice(0, 16), interval.available_kw, interval.energy_kwh]) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+    byId("profile-intervals").append(row);
+  }
+}
 
 function selectTab(selected) {
   for (const tab of tabs) {
@@ -78,6 +108,8 @@ byId("check-service").addEventListener("click", async () => {
 
 byId("reset-view").addEventListener("click", () => {
   currentScenario = "mysolark";
+  currentPublication = null;
+  byId("published-profile").hidden = true;
   byId("calculation-result").textContent = "No calculation yet.";
   byId("graph-trace").textContent = "No workflow run yet.";
   byId("tool-calls").textContent = "No MCP tool calls have run.";
@@ -150,6 +182,7 @@ byId("run-workflow").addEventListener("click", async () => {
   const response = await readApi("/api/v1/pap/run", { scenario: currentScenario });
   if (response.status === 200) {
     const episode = response.body;
+    renderPublication((await readApi(`/api/v1/pap/${episode.publication_id}`)).body);
     byId("graph-trace").textContent = JSON.stringify(episode, null, 2);
     const evidence = (await readApi(`/api/v1/evidence/${episode.evidence_id}`)).body;
     byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
@@ -164,4 +197,8 @@ byId("run-workflow").addEventListener("click", async () => {
     selectTab(byId("tab-trace"));
   } else appendMessage("Workflow", "Run unavailable; inspect Trace.");
   byId("run-workflow").disabled = false;
+});
+
+readApi("/api/v1/pap/latest").then((response) => {
+  if (response.status === 200) renderPublication(response.body);
 });

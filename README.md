@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR05, durable LangGraph workflow.** Model nodes arrive later.
+**Current increment: PR06, published PAP and operator console.** Model nodes arrive later.
 
 ## Run locally
 
@@ -36,6 +36,8 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
 | `/api/v1/scenarios` | Available local development fixtures |
 | `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
+| `/api/v1/pap/latest` | Latest persisted publication, or null before the first run |
+| `/api/v1/pap/{id}` | Canonical profile, provenance, constraints, and validation reason |
 | `POST /api/v1/pap/run` | Run the durable workflow |
 | `/api/v1/episodes/{id}` | Read the completed episode and node trace |
 | `POST /api/v1/episodes/{id}/resume` | Resume or return a completed episode |
@@ -51,12 +53,19 @@ that floor to their ~30% SOC reserve. Future lower readings cannot lower the con
 The sunny fixture still uses its own synthetic 48 V / 5 kW policy. Live equipment capability
 is unconfigured, and future voltage is not predicted. All results are an evaluation baseline.
 
-Run workflow uses [LangGraph with its official PostgreSQL checkpointer](https://docs.langchain.com/oss/python/langgraph/add-memory).
-Three nodes acquire validated evidence, calculate, and finalize. Invalid evidence goes directly
-to finalization. There are no automatic retries; the graph has an eight-step limit. The Trace
+Run PAP uses [LangGraph with its official PostgreSQL checkpointer](https://docs.langchain.com/oss/python/langgraph/add-memory).
+Four nodes acquire validated evidence, calculate, publish, and finalize. Invalid evidence goes directly
+to withheld publication. There are no automatic retries; the graph has an eight-step limit. The Trace
 panel shows node results, IDs, and timing. PostgreSQL domain records remain canonical;
-checkpoints hold IDs/statuses for resume. Cloud tracing is disabled. [PR05](docs/pr/PR-05.md)
+checkpoints hold IDs/statuses for resume. Cloud tracing is disabled. [PR06](docs/pr/PR-06.md)
 includes inspection commands.
+
+Run PAP fills the hourly availability table and restores the latest publication on reload.
+Valid publications record evidence/calculation IDs, source timestamp, generation time,
+voltage floor, confidence, and validation reason. Withheld publications retain their evidence
+ID and rejection reason; profile/calculation/source fields may be absent. T7 rechecks freshness and constraints before
+publication. Source age is shown when the page renders; a stored decision is historical, and
+stale data requires a new run. Local logs correlate episode, PAP, evidence, node, and status.
 
 ## Code map
 
