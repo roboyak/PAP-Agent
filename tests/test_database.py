@@ -1,6 +1,7 @@
 import pytest
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import text
 
 from pap_agent.config import Settings
@@ -17,9 +18,10 @@ def test_migrate_empty_database_and_non_destructive_reapply(empty_database_url, 
         command.upgrade(config, "head")
         assert db.has_pgvector() is True
         with db.session() as session:
-            assert session.execute(
-                text("SELECT version_num FROM alembic_version")
-            ).scalar_one() == ("0001_enable_pgvector")
+            assert (
+                session.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+                == ScriptDirectory.from_config(config).get_current_head()
+            )
             assert (
                 session.execute(text("SELECT '[1,0,0]'::vector <=> '[1,0,0]'::vector")).scalar_one()
                 == 0

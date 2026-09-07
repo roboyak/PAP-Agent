@@ -28,9 +28,10 @@
       </div>
       <div class="controls">
         <button id="check-service" class="primary">Check service</button>
+        <button id="load-fixture">Load sunny fixture</button>
         <button id="reset-view">Reset view</button>
       </div>
-      <p class="muted session-note">No telemetry loaded. This view contains only local service checks.</p>
+      <p id="evidence-note" class="muted session-note">No telemetry loaded. Load a fixture to inspect stored evidence.</p>
     </section>
 
     <section class="inspector" aria-label="Run inspector">
@@ -48,6 +49,7 @@
         <p class="muted">The messages and evidence actually sent to a model.</p>
         <dl><dt>Messages</dt><dd>0</dd><dt>Model calls</dt><dd>0</dd></dl>
         <p class="empty">No model context yet. Service checks do not call a model.</p>
+        <h3>Loaded evidence</h3><pre id="evidence-context">No evidence loaded.</pre>
       </section>
       <section id="memory" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
         <h2>Long-term memory</h2>

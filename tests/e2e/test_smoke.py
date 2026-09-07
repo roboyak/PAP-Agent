@@ -3,6 +3,27 @@ from pathlib import Path
 from playwright.sync_api import expect
 
 from pap_agent import __version__
+from pap_agent.seed import sunny_fixture
+from pap_agent.store import save_scenario
+
+
+def test_live_persisted_fixture(browser, live_service, database, database_url):
+    save_scenario(database, sunny_fixture())
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Load sunny fixture").click()
+            expect(page.locator("#evidence-note")).to_have_text(
+                "Sunny demo (synthetic) loaded from PostgreSQL."
+            )
+            expect(page.locator("#evidence-context")).to_contain_text('"battery_voltage_v": 53.2')
+            expect(page.locator("#messages")).to_contain_text("4 kW solar")
+            result = page.request.get(f"{url}/api/v1/scenarios/sunny")
+            assert result.status == 200
+            assert result.json()["telemetry"]["source"] == "synthetic fixture"
+        finally:
+            page.close()
 
 
 def test_live_home_health_and_version(browser, live_service, database_url):

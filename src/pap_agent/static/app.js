@@ -1,5 +1,6 @@
 const byId = (id) => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[role="tab"]')];
+let currentScenario = null;
 
 function selectTab(selected) {
   for (const tab of tabs) {
@@ -74,6 +75,9 @@ byId("check-service").addEventListener("click", async () => {
 });
 
 byId("reset-view").addEventListener("click", () => {
+  currentScenario = null;
+  byId("evidence-context").textContent = "No evidence loaded.";
+  byId("evidence-note").textContent = "No telemetry loaded. Load a fixture to inspect stored evidence.";
   byId("messages").replaceChildren();
   byId("trace-events").replaceChildren();
   byId("empty-session").hidden = byId("empty-trace").hidden = false;
@@ -81,4 +85,20 @@ byId("reset-view").addEventListener("click", () => {
   delete byId("service-status").dataset.status;
   for (const id of ["database-status", "pgvector-status", "app-version"]) byId(id).textContent = "Not checked";
   byId("health-note").textContent = "Use Check service to refresh.";
+});
+
+byId("load-fixture").addEventListener("click", async () => {
+  byId("load-fixture").disabled = true;
+  const result = await readApi("/api/v1/scenarios/sunny");
+  if (result.status === 200) {
+    currentScenario = result.body.name;
+    const { telemetry, policy, weather } = result.body;
+    byId("evidence-context").textContent = JSON.stringify({ telemetry, policy, weather_intervals: weather.length }, null, 2);
+    byId("evidence-note").textContent = `${result.body.label} loaded from PostgreSQL.`;
+    appendMessage("Evidence", `${telemetry.battery_voltage_v} V battery · ${telemetry.solar_power_kw} kW solar · ${telemetry.load_power_kw} kW load. ${weather.length} hourly forecast inputs.`);
+    selectTab(byId("tab-context"));
+  } else {
+    appendMessage("Service", "Fixture unavailable. Run make seed, then load it again.");
+  }
+  byId("load-fixture").disabled = false;
 });
