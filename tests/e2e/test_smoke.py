@@ -1,10 +1,44 @@
 from pathlib import Path
 
 from playwright.sync_api import expect
+from sqlalchemy import text
 
 from pap_agent import __version__
 from pap_agent.seed import sunny_fixture
 from pap_agent.store import save_scenario
+
+
+def test_live_calculation_repeatable(
+    browser, live_service, database, database_url, source_database
+):
+    save_scenario(database, sunny_fixture())
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url)
+            page.get_by_role("button", name="Load sunny fixture").click()
+            expect(page.locator("#evidence-note")).to_contain_text("Sunny demo")
+            outputs = []
+            for _ in range(2):
+                with page.expect_response("**/api/v1/pap/calculate") as response:
+                    page.get_by_role("button", name="Calculate PAP").click()
+                outputs.append(response.value.json()["pap"]["intervals"])
+                expect(page.get_by_role("button", name="Calculate PAP")).to_be_enabled()
+            assert outputs[0] == outputs[1]
+            expect(page.locator("#messages")).to_contain_text("10.6 kWh across 12 hours")
+            with database.session() as session:
+                session.execute(
+                    text("""UPDATE source_fixture.telemetry_snapshots
+                    SET timestamp = timestamp - interval '10 minutes'""")
+                )
+            page.get_by_role("button", name="Read MySolArk now").click()
+            expect(page.get_by_role("button", name="Read MySolArk now")).to_be_enabled()
+            with page.expect_response("**/api/v1/pap/calculate") as response:
+                page.get_by_role("button", name="Calculate PAP").click()
+            assert response.value.json()["status"] == "withheld"
+            expect(page.locator("#messages")).to_contain_text("PAP withheld")
+        finally:
+            page.close()
 
 
 def test_live_mysolark_mcp(browser, live_service, database_url, source_database):

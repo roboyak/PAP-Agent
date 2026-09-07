@@ -20,9 +20,9 @@
       <h2 id="session-heading">PAP session</h2>
       <div class="conversation" role="log" aria-label="Session activity" aria-live="polite">
         <div id="empty-session" class="empty-session">
-          <h3>Ready to check the foundation</h3>
-          <p>Check the service and its database. Follow the requests in Trace.</p>
-          <p class="muted">PAP forecasts and agent runs are not connected yet.</p>
+          <h3>Ready to calculate availability</h3>
+          <p>Read MySolArk now, then calculate the solar-surplus profile.</p>
+          <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
         </div>
         <div id="messages"></div>
       </div>
@@ -30,6 +30,7 @@
         <button id="check-service" class="primary">Check service</button>
         <button id="load-fixture">Load sunny fixture</button>
         <button id="load-mysolark">Read MySolArk now</button>
+        <button id="calculate-pap">Calculate PAP</button>
         <button id="reset-view">Reset view</button>
       </div>
       <p id="evidence-note" class="muted session-note">No telemetry loaded. Load a fixture to inspect stored evidence.</p>
@@ -51,6 +52,7 @@
         <dl><dt>Messages</dt><dd>0</dd><dt>Model calls</dt><dd>0</dd></dl>
         <p class="empty">No model context yet. Service checks do not call a model.</p>
         <h3>Loaded evidence</h3><pre id="evidence-context">No evidence loaded.</pre>
+        <h3>Deterministic calculation</h3><pre id="calculation-result">No calculation yet.</pre>
       </section>
       <section id="memory" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
         <h2>Long-term memory</h2>

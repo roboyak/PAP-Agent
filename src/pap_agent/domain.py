@@ -33,7 +33,7 @@ class ReservePolicy(BaseModel):
     id: str = "demo-v1"
     label: str = "Synthetic demo policy; not equipment ratings"
     min_battery_voltage_v: float = Field(default=48.0, gt=0)
-    max_extra_power_kw: float = Field(default=5.0, gt=0)
+    max_extra_power_kw: float | None = Field(default=5.0, gt=0)
 
 
 class Scenario(BaseModel):
@@ -45,8 +45,8 @@ class Scenario(BaseModel):
 
 
 class ForecastInterval(Interval):
-    generation_kw: float
-    demand_kw: float
+    generation_kw: float = Field(ge=0, allow_inf_nan=False)
+    demand_kw: float = Field(ge=0, allow_inf_nan=False)
 
 
 class PowerAvailabilityInterval(Interval):

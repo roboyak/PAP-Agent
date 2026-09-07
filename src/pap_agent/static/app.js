@@ -1,6 +1,6 @@
 const byId = (id) => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[role="tab"]')];
-let currentScenario = null;
+let currentScenario = "mysolark";
 
 function selectTab(selected) {
   for (const tab of tabs) {
@@ -35,11 +35,13 @@ function appendMessage(label, text, request = false) {
   message.scrollIntoView({ block: "nearest" });
 }
 
-async function readApi(path) {
+async function readApi(path, body) {
   const started = performance.now();
   let result;
   try {
-    const response = await fetch(path, { signal: AbortSignal.timeout(15000), cache: "no-store" });
+    const response = await fetch(path, { signal: AbortSignal.timeout(15000), cache: "no-store",
+      method: body ? "POST" : "GET", headers: body ? {"Content-Type": "application/json"} : {},
+      body: body ? JSON.stringify(body) : undefined });
     result = { status: response.status, body: await response.json() };
   } catch {
     result = { status: "network error", body: { status: "unavailable", error: "Local service did not respond." } };
@@ -47,7 +49,7 @@ async function readApi(path) {
   const event = document.createElement("li");
   const details = document.createElement("details");
   const summary = document.createElement("summary");
-  summary.textContent = `GET ${path} · ${result.status} · ${Math.round(performance.now() - started)} ms`;
+  summary.textContent = `${body ? "POST" : "GET"} ${path} · ${result.status} · ${Math.round(performance.now() - started)} ms`;
   const output = document.createElement("pre");
   output.textContent = JSON.stringify(result.body, null, 2);
   details.append(summary, output);
@@ -75,7 +77,8 @@ byId("check-service").addEventListener("click", async () => {
 });
 
 byId("reset-view").addEventListener("click", () => {
-  currentScenario = null;
+  currentScenario = "mysolark";
+  byId("calculation-result").textContent = "No calculation yet.";
   byId("tool-calls").textContent = "No MCP tool calls have run.";
   byId("evidence-context").textContent = "No evidence loaded.";
   byId("evidence-note").textContent = "No telemetry loaded. Load a fixture to inspect stored evidence.";
@@ -89,11 +92,12 @@ byId("reset-view").addEventListener("click", () => {
 });
 
 byId("load-mysolark").addEventListener("click", async () => {
+  currentScenario = "mysolark";
   byId("load-mysolark").disabled = true;
   const result = await readApi("/api/v1/evidence/current?scenario=mysolark");
   const evidence = result.body;
   if (evidence.status === "valid") {
-    currentScenario = evidence.scenario.name;
+    currentScenario = "mysolark";
     byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
     byId("evidence-note").textContent = evidence.scenario.label;
     byId("tool-calls").textContent = JSON.stringify({ available: evidence.tools, calls: evidence.calls }, null, 2);
@@ -105,6 +109,7 @@ byId("load-mysolark").addEventListener("click", async () => {
 });
 
 byId("load-fixture").addEventListener("click", async () => {
+  currentScenario = "sunny";
   byId("load-fixture").disabled = true;
   const result = await readApi("/api/v1/scenarios/sunny");
   if (result.status === 200) {
@@ -118,4 +123,23 @@ byId("load-fixture").addEventListener("click", async () => {
     appendMessage("Service", "Fixture unavailable. Run make seed, then load it again.");
   }
   byId("load-fixture").disabled = false;
+});
+
+byId("calculate-pap").addEventListener("click", async () => {
+  byId("calculate-pap").disabled = true;
+  const response = await readApi("/api/v1/pap/calculate", { scenario: currentScenario });
+  const result = response.body;
+  if (response.status === 200) {
+    byId("calculation-result").textContent = JSON.stringify(result, null, 2);
+    const evidence = (await readApi(`/api/v1/evidence/${result.evidence_id}`)).body;
+    byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
+    byId("tool-calls").textContent = JSON.stringify({ available: evidence.tools, calls: evidence.calls }, null, 2);
+    byId("evidence-note").textContent = evidence.scenario?.label ?? evidence.reason;
+    if (result.status === "valid") {
+      const total = result.pap.intervals.reduce((sum, item) => sum + item.energy_kwh, 0);
+      appendMessage("PAP calculation", `${result.pap.intervals[0].available_kw} kW additional now · ${total.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")} kWh across 12 hours. Solar surplus only; battery discharge budget 0 kWh. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Evaluation baseline with synthetic weather.`);
+    } else appendMessage("PAP withheld", result.validation.join(". "));
+    selectTab(byId("tab-context"));
+  } else appendMessage("Service", "Calculation unavailable; inspect Trace.");
+  byId("calculate-pap").disabled = false;
 });
