@@ -20,6 +20,9 @@ migrate:
 seed:
 	uv run --locked python -m pap_agent.seed
 
+memory-index:
+	uv run --locked python -m pap_agent.memory
+
 dev:
 	uv run --locked uvicorn pap_agent.main:app --host 127.0.0.1 --port 8000
 

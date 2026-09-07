@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
 Read-only power availability decision support, built one PR at a time.
-**Current increment: PR07, outcome evaluation and confidence feedback.** Model nodes arrive later.
+**Current increment: PR08, local pgvector semantic memory.** Chat-agent nodes arrive later.
 
 ## Run locally
 
@@ -22,7 +22,7 @@ make dev
 Open <http://127.0.0.1:8000>. Stop the service with Ctrl-C; `make db-down` stops
 PostgreSQL and preserves `.cache/postgres/`. `make db-up` initializes and starts this
 project's native database on first use. Initial setup downloads Python packages and Chromium.
-Runtime and verification need no cloud service or model.
+Core PAP calculation and verification need no cloud service or model; semantic memory uses local Ollama.
 
 `.env` is optional; [.env.example](.env.example) documents the local default. Environment
 variables override it. `DATABASE_URL` is the PAP database, never the source telemetry database.
@@ -36,6 +36,8 @@ The bundled credentials are for synthetic local development. A separate PAP clus
 | `/api/v1/version` | Package version, read-only status, and local mode; no DB dependency |
 | `/api/v1/scenarios` | Available local development fixtures |
 | `/api/v1/scenarios/sunny` | Persisted voltage, solar/load power, weather intervals, and demo policy |
+| `POST /api/v1/memory/index` | Index guidance and validated outcome records |
+| `/api/v1/memory/search?query=...&source_kind=live` | Ranked eligible records with scores and provenance |
 | `POST /api/v1/pap/{id}/evaluate` | Evaluate a newer live reading, or the fixture’s cloudy demo outcome |
 | `/api/v1/pap/latest` | Latest persisted publication, or null before the first run |
 | `/api/v1/pap/{id}` | Canonical profile, provenance, constraints, and validation reason |
@@ -76,6 +78,16 @@ Evaluate cloudy demo creates a labeled synthetic outcome; later sunny runs keep 
 show low confidence. The demo threshold is mean solar overestimation above 0.25 kW. Feedback
 cannot change physical arithmetic or voltage policy. See [PR07](docs/pr/PR-07.md).
 
+Memory supports Index memory and Search memory. `make memory-index` offers the same indexing
+from the command line. Three concise project-guidance records and up to 100 validated outcome
+comparisons are embedded with local [Ollama](https://docs.ollama.com/api/embed)
+`nomic-embed-text:latest` (768 dimensions). The model digest is stored with each record.
+[pgvector](https://github.com/pgvector/pgvector) performs exact cosine search for up to five
+eligible results; scores are not probabilities. No approximate index or separate vector DB is
+needed. Real/synthetic outcomes and embedding versions are filtered independently.
+The local Ollama runtime/model is required for real memory operations; core PAP calculation
+still needs no model. Automated tests use a named deterministic embedding double.
+
 ## Code map
 
 - `src/pap_agent/config.py`: typed local settings.
@@ -97,7 +109,7 @@ Use `make format` to format code. Missing DB/browser dependencies fail verificat
 The console follows the reference's conversation/inspector layout. Check service makes
 real health/version requests and shows their status, timing, and JSON in Trace.
 Reset view clears only the browser view. Context shows loaded evidence and Tools shows MCP
-activity. Memory and Subagent have empty states until their capabilities are connected.
+activity. Memory shows retrieval and outcome feedback. Subagent remains unconnected until its lesson.
 Load sunny fixture reads PostgreSQL and displays its evidence in Context. Fixture values
 and the voltage-floor/power-cap policy are synthetic examples, not DragonWings ratings.
 The fixture uses a fixed UTC replay clock. Repeated `make seed` preserves existing rows.

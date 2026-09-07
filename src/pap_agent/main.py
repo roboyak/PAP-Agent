@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -15,6 +15,7 @@ from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.domain import Scenario
 from pap_agent.evidence import Evidence, acquire
+from pap_agent.memory import index_memory, retrieve
 from pap_agent.outcomes import evaluate_publication
 from pap_agent.publisher import PublishedPAP
 from pap_agent.store import (
@@ -77,6 +78,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/scenarios")
     def scenarios() -> list[dict]:
         return list_scenarios(app.state.database)
+
+    @app.post("/api/v1/memory/index")
+    def index_knowledge() -> dict:
+        return index_memory(app.state.database)
+
+    @app.get("/api/v1/memory/search")
+    def search_memory(
+        query: str = Query(min_length=1, max_length=500),
+        source_kind: Literal["live", "synthetic"] = "live",
+    ) -> dict:
+        return retrieve(app.state.database, query, source_kind)
 
     @app.get("/api/v1/evidence/current")
     async def current_evidence(scenario: Literal["sunny", "mysolark"] = "sunny") -> Evidence:

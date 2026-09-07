@@ -219,3 +219,17 @@ byId("evaluate-outcome").addEventListener("click", async () => {
   selectTab(byId("tab-memory"));
   byId("evaluate-outcome").disabled = false;
 });
+
+byId("index-memory").addEventListener("click", async () => {
+  byId("index-memory").disabled = true;
+  const result = await readApi("/api/v1/memory/index", {});
+  byId("memory-results").textContent = JSON.stringify(result.body, null, 2);
+  byId("index-memory").disabled = false;
+});
+byId("search-memory").addEventListener("click", async () => {
+  byId("search-memory").disabled = true;
+  const source = currentScenario === "sunny" ? "synthetic" : "live";
+  const result = await readApi(`/api/v1/memory/search?source_kind=${source}&query=${encodeURIComponent(byId("memory-query").value)}`);
+  byId("memory-results").textContent = JSON.stringify(result.body, null, 2);
+  byId("search-memory").disabled = false;
+});
