@@ -1,0 +1,176 @@
+{
+  "recorded_at": "2026-09-08T01:20:25.286091+00:00",
+  "description": "Real persisted MySolArk replay. Functional verification, not forecast accuracy.",
+  "hourly_recording_run": {
+    "wing": "1.21",
+    "starts_at": "2026-08-30T19:00:00Z",
+    "ends_at": "2026-09-06T07:00:00Z",
+    "step_minutes": 60,
+    "id": "a7ff32a6-a5cd-4349-b4e6-167939a220c5",
+    "created_at": "2026-09-08T01:18:29.324022Z",
+    "status": "paused",
+    "completed_steps": 11,
+    "message": "",
+    "total_steps": 156,
+    "next_at": "2026-08-31T06:00:00Z",
+    "results": [
+      {
+        "publication_id": "e0b8b352-9691-5620-b96e-c752e94aad86",
+        "episode_id": "c5a875fc-c527-5023-8698-9c2abe7a6713",
+        "replay_at": "2026-08-30T19:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 8.797
+      },
+      {
+        "publication_id": "fa0a68ee-f4be-5f1a-8e00-f3ff37a1c205",
+        "episode_id": "36b548b6-4699-545d-ad77-735b78513ec2",
+        "replay_at": "2026-08-30T20:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 5.866
+      },
+      {
+        "publication_id": "0bfab879-08f6-5ed8-88be-5a60943d70ed",
+        "episode_id": "98292dcb-a041-5ec9-8c38-3ec3d31c17d0",
+        "replay_at": "2026-08-30T21:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.744
+      },
+      {
+        "publication_id": "72bd3181-be79-5813-9325-8310f94a03d1",
+        "episode_id": "57b08a20-1c30-5b56-86b5-48803af9cc42",
+        "replay_at": "2026-08-30T22:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.462
+      },
+      {
+        "publication_id": "7a670962-33ba-5134-89ea-e8630a430e04",
+        "episode_id": "7f82d850-df58-54a2-9779-1997b4b0f202",
+        "replay_at": "2026-08-30T23:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.373
+      },
+      {
+        "publication_id": "3cdf2a67-38c7-5ca8-a08e-135275d93712",
+        "episode_id": "5eff17bd-4521-54a1-9fc7-463bf7b0e6b5",
+        "replay_at": "2026-08-31T00:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.32
+      },
+      {
+        "publication_id": "e051c703-0421-5345-9b02-11d5e342f073",
+        "episode_id": "e07fdbe3-1eef-554e-b7b4-f64248efc812",
+        "replay_at": "2026-08-31T01:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.0
+      },
+      {
+        "publication_id": "f9233207-5a97-5f26-8a89-cfefc4d9876f",
+        "episode_id": "a3c5d743-4f0f-5116-b5d8-8dc81696024d",
+        "replay_at": "2026-08-31T02:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.0
+      },
+      {
+        "publication_id": "0798fba6-f946-567c-a847-34e206009603",
+        "episode_id": "cdf574a4-8d99-5d2e-8860-67d1c237d1f3",
+        "replay_at": "2026-08-31T03:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.0
+      },
+      {
+        "publication_id": "84432fa4-7695-5375-a615-12ac01fe6e9b",
+        "episode_id": "1e1f158c-fcea-5a9d-93d8-e9d606c88c6f",
+        "replay_at": "2026-08-31T04:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.0
+      },
+      {
+        "publication_id": "04721bc9-1ffb-5771-9d0a-c3741eacd325",
+        "episode_id": "5fb02c56-2324-534d-9a3d-18620a64c6d8",
+        "replay_at": "2026-08-31T05:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.0
+      }
+    ]
+  },
+  "quarter_hour_completed_run": {
+    "wing": "1.25",
+    "starts_at": "2026-08-30T19:00:00Z",
+    "ends_at": "2026-08-30T19:45:00Z",
+    "step_minutes": 15,
+    "id": "e5425885-895a-4d65-95c0-8e9e347b071c",
+    "created_at": "2026-09-08T01:20:20.636725Z",
+    "status": "completed",
+    "completed_steps": 3,
+    "message": "",
+    "total_steps": 3,
+    "next_at": null,
+    "results": [
+      {
+        "publication_id": "0910ec53-051f-573b-8074-fb0db3713587",
+        "episode_id": "665e3c9e-2036-5019-abfe-90326abddf15",
+        "replay_at": "2026-08-30T19:00:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.525
+      },
+      {
+        "publication_id": "e3c55477-6285-5c62-95c1-af5a2b54715d",
+        "episode_id": "5c1b6d36-810b-5d41-b5bd-a6de74e4a49e",
+        "replay_at": "2026-08-30T19:15:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.448
+      },
+      {
+        "publication_id": "562d9c03-0584-5ae3-8fae-3d841e68d925",
+        "episode_id": "deee2ae3-7b81-5d40-9e02-62fca19e892e",
+        "replay_at": "2026-08-30T19:30:00Z",
+        "status": "valid",
+        "reason": "T6 passed; evaluation baseline",
+        "confidence": "reduced",
+        "available_kw": 0.454
+      }
+    ]
+  },
+  "verification": {
+    "backend_checks": 52,
+    "playwright_checks": 18,
+    "browser_errors": [],
+    "desktop_fit": [
+      "1366x768",
+      "1440x900",
+      "1920x1080"
+    ],
+    "mobile_width": "390x844"
+  },
+  "recording": {
+    "script": "scripts/record_simulator_demo.py",
+    "local_output": "output/recordings/simulator_20260908_011828",
+    "audio": "none"
+  }
+}

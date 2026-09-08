@@ -15,6 +15,12 @@ Correlate:
 - T6 validation;
 - stop reason.
 
+The replay simulator adds a simulation ID, selected wing/window/cadence, completed-step count
+and current status. Its Results list links each time step to its canonical episode and PAP.
+Inspector stays fixed on that episode while the simulator continues. Valid/withheld counts
+measure workflow outcomes, not forecast accuracy; overlapping twelve-hour predictions are
+not added into a weekly energy figure. Model inputs and budgets remain visible per episode.
+
 ## LangSmith
 Optional for development/evaluation.
 

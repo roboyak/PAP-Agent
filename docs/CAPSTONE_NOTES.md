@@ -87,3 +87,11 @@ automatically lowering any floor or inferring an SOC curve. The scan is retrospe
 Replay checks age at the selected time at T3/calculation/T7 and cannot update live feedback.
 Live feedback is per wing; recorded runs retain their source, selection and actual save time.
 Submission decks/videos remain labeled snapshots of their original runs, not new replay evals.
+
+## PR20: automatic historical replay
+
+The user asked for a simulator that starts and advances on its own. Start/Pause/Resume runs
+one selected wing through the remaining recorded week in 15/60-minute steps. Each step uses
+the existing durable PAP workflow and retains its own Inspector record. PostgreSQL stores
+progress; browser navigation does not stop the runner. Restart leaves it paused for Resume.
+The simple single-process runner adds no hardware control, physics model or accuracy claim.

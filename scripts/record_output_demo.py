@@ -34,8 +34,11 @@ async def main():
         page.set_default_timeout(30000)
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
-        await page.goto(args.url)
-        await expect(page.get_by_role("button", name="Run PAP", exact=True)).to_be_enabled()
+        latest = await (await context.request.get(f"{args.url}/api/v1/pap/latest")).json()
+        # Open a fixed result so an older simulator does not replace the recording controls.
+        query = f"?episode={latest['episode_id']}" if latest else ""
+        await page.goto(args.url + query)
+        await expect(page.locator("#source")).to_be_enabled()
         await page.locator("#source").select_option("sunny")
         await page.locator("#source").select_option("mysolark")
         await page.locator("#wing").select_option("1.24")

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -44,3 +46,28 @@ def test_sessions_commit_success_and_roll_back_failure(database):
             raise RuntimeError("abort")
     with database.session() as session:
         assert session.execute(text("SELECT id FROM session_probe")).scalars().all() == [1]
+
+
+def test_simulator_upgrade_preserves_existing_episodes(empty_database_url, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", empty_database_url)
+    config = Config("alembic.ini")
+    command.upgrade(config, "0009_reasoning_records")
+    db = Database(Settings())
+    episode_id = uuid4()
+    try:
+        with db.session() as session:
+            session.execute(
+                text(
+                    'INSERT INTO episode_records (id, payload) VALUES (:id, \'{"status":"valid"}\')'
+                ),
+                {"id": episode_id},
+            )
+        command.upgrade(config, "head")
+        command.upgrade(config, "head")
+        with db.session() as session:
+            assert (
+                session.execute(text("SELECT id FROM episode_records")).scalar_one() == episode_id
+            )
+            assert session.execute(text("SELECT count(*) FROM simulations")).scalar_one() == 0
+    finally:
+        db.close()

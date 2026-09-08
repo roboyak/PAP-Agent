@@ -23,6 +23,9 @@ from pap_agent.publisher import PublishedPAP
 from pap_agent.reasoning import episode_records
 from pap_agent.runtime import readiness
 from pap_agent.selection import RunSelection, Wing
+from pap_agent.simulator import SimulationRequest, Simulator
+from pap_agent.simulator import get as get_simulation
+from pap_agent.simulator import view as simulation_view
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -60,9 +63,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.database = Database(settings)
+        app.state.simulator = Simulator(app.state.database)
         try:
             yield
         finally:
+            await app.state.simulator.close()
             app.state.database.close()
 
     app = FastAPI(title="DragonWings PAP Forecaster", version=__version__, lifespan=lifespan)
@@ -116,6 +121,48 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/scenarios")
     def scenarios() -> list[dict]:
         return list_scenarios(app.state.database)
+
+    def simulator() -> Simulator:
+        app.state.simulator.recover()
+        return app.state.simulator
+
+    def selected_simulation(run_id: UUID):
+        simulator()
+        run = get_simulation(app.state.database, run_id)
+        if run is None:
+            raise HTTPException(404, "Simulation not found")
+        return run
+
+    @app.post("/api/v1/simulations")
+    async def start_simulation(request: SimulationRequest) -> dict:
+        try:
+            run = simulator().start(request)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from None
+        return simulation_view(app.state.database, run)
+
+    @app.get("/api/v1/simulations/latest")
+    async def latest_simulation() -> dict | None:
+        simulator()
+        run = get_simulation(app.state.database)
+        return simulation_view(app.state.database, run) if run else None
+
+    @app.get("/api/v1/simulations/{run_id}")
+    async def simulation(run_id: UUID) -> dict:
+        return simulation_view(app.state.database, selected_simulation(run_id))
+
+    @app.post("/api/v1/simulations/{run_id}/pause")
+    async def pause_simulation(run_id: UUID) -> dict:
+        run = simulator().pause(selected_simulation(run_id))
+        return simulation_view(app.state.database, run)
+
+    @app.post("/api/v1/simulations/{run_id}/resume")
+    async def resume_simulation(run_id: UUID) -> dict:
+        try:
+            run = simulator().resume(selected_simulation(run_id))
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from None
+        return simulation_view(app.state.database, run)
 
     @app.post("/api/v1/memory/index")
     def index_knowledge() -> dict:

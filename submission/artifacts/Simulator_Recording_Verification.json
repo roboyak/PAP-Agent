@@ -1,0 +1,23 @@
+{
+  "artifact": "DragonWings_Simulator_Demo.mp4",
+  "sha256": "ebd847ce085b7b48556ff0397ff2a1eff3d3a7e0a4657e188ac06568fecfe5cc",
+  "duration_seconds": 32.76,
+  "width": 1366,
+  "height": 768,
+  "audio": "none",
+  "recorded_simulation_id": "a7ff32a6-a5cd-4349-b4e6-167939a220c5",
+  "evidence": "docs/data/simulator-run-verification.json",
+  "source": "DW 1.21 real persisted MySolArk replay, Aug 30 2026, one-hour increments",
+  "automated_verification": [
+    "FFmpeg full decode",
+    "Start/Pause/Resume",
+    "six Inspector tabs",
+    "no browser errors"
+  ],
+  "visual_review": [
+    "first forecast screenshot",
+    "paused desktop screenshot",
+    "video frames at 5s and 18s"
+  ],
+  "human_verified": false
+}

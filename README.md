@@ -31,13 +31,24 @@ Do not point PAP migrations at the source database.
 [Quick start and debugging guide](howto.md).
 **Forecast** (`/`) puts the result first: additional kW, twelve-hour kWh, the hourly chart,
 source age and agent guidance. **Inspect this run** opens **Inspector** (`/inspector`)
-with the same episode. The navigation links retain that episode in both directions.
+with the same episode. **View forecast** returns to that fixed result;
+**Back to simulation** follows the simulator's latest result when replay is running.
 
 Choose a **wing** and **Latest scrape**, or **Aug 30–Sep 6, 2026** for recorded history.
 The week runs from Sunday midnight to Sunday midnight, Pacific time, excluding the end.
-Choose a replay time and step with **1 hour / 15 min** and the arrow buttons. **Run PAP**
-runs one snapshot at that time; it does not batch the week. The forecast remains twelve
-hourly intervals. Scrapes must be at most five minutes old relative to the selected time.
+Choose a starting time and **1 hour / 15 min**, then **Start simulation**. PAP advances
+through the week automatically, showing each result and a progress counter. **Pause** finishes
+the current step; **Resume** continues. **Results → Inspect** opens a fixed episode while the
+simulation continues; **Back to simulation** returns to its latest result. **Run once** still
+evaluates a single snapshot. Forecasts remain twelve hourly intervals. Scrapes must be at
+most five minutes old relative to the selected time; stale/missing steps are withheld.
+
+The simulator runs one selected wing in one foreground service process, with a one-second
+visual pause between steps. PostgreSQL saves progress; refreshing or leaving the page does
+not stop it. Server restarts leave it paused until Resume. Use a single `make run`, without
+multiple Uvicorn workers. The home page restores the latest simulation; save its URL for
+later review. Results count valid/withheld steps, not accuracy or cumulative weekly energy.
+This is recorded-telemetry replay, not a physical battery simulation.
 
 **Run PAP** reads the selected source and runs the durable workflow. **Load sunny fixture**
 and **Read MySolArk now** select/inspect a source; **Calculate PAP** runs the numerical core.
