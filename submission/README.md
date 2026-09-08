@@ -10,6 +10,7 @@ the content and scripts that produced them.
 | Main presentation | [PowerPoint](artifacts/DragonWings_Final_Presentation.pptx), [PDF](artifacts/DragonWings_Final_Presentation.pdf) |
 | 90-second pitch | [PowerPoint](artifacts/DragonWings_90_Second_Pitch.pptx), [PDF](artifacts/DragonWings_90_Second_Pitch.pdf) |
 | Speaking preparation | [Main script](artifacts/DragonWings_Presentation_Plan_and_Script.docx), [faculty Q&A](artifacts/DragonWings_Faculty_Showcase_Preparation.docx) |
+| Slides plus both demos | [9:10 recording script](artifacts/DragonWings_9_Minute_Recording_Script.md), 12 separately recordable clips |
 | App walkthroughs | [2:30 MP4](artifacts/DragonWings_App_Walkthrough_short.mp4), [9:00 MP4](artifacts/DragonWings_App_Walkthrough_full.mp4), [narration guide](artifacts/Narration_Guide.md) |
 | Simulator demo | [33-second MP4](artifacts/DragonWings_Simulator_Demo.mp4), [first forecast](examples/simulator/first-forecast.png) |
 | Recorded week | [Seven-day playback MP4](artifacts/DragonWings_Recorded_Week_Demo.mp4), [first day](examples/recorded-week/first-day.png), [verification](artifacts/Recorded_Week_Verification.json) |
@@ -17,6 +18,31 @@ the content and scripts that produced them.
 
 The app walkthroughs are silent browser recordings. Add your narration before using them
 as a presentation submission. The 2:30 app walkthrough is separate from the 90-second pitch.
+
+For the combined presentation, use the **9:10 recording script** above. It replaces the
+longer slide-only narration for this recording and includes the PAP and six-tab Inspector
+demos. Record each numbered clip separately with the same screen size and microphone.
+The script gives each slide's words, screen actions, filename and target duration.
+Its slide 9 narration identifies the earlier on-slide test counts and gives the latest results.
+
+Edit `narration.json` and regenerate the reading copy independently of the decks:
+
+```bash
+uv run python submission/build_narration.py
+```
+
+Once the twelve narrated MOV/MP4 clips exist, give Codex their folder or assemble them:
+
+```bash
+uv run python scripts/assemble_presentation.py --clips /path/to/your/clips
+```
+
+This requires FFmpeg/FFprobe and creates a fresh folder under `output/recordings/` with a
+1080p/30 fps MP4 and duration/decode receipt. It keeps source clips unchanged. Each clip
+must have video and an audio track; actual voice clarity still needs listening. Trims default
+to zero; set `trim_start`/`trim_end` in seconds after reviewing each recording. The script
+joins clips with direct cuts and checks the 8–10-minute duration. It does not record the
+speaker, upload a video, adjust vocal volume or claim the resulting narration is reviewed.
 
 Edit `content.json`, then regenerate all deliverables:
 
