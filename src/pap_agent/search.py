@@ -232,7 +232,8 @@ def build_search(database, checkpointer=None, interrupt_after=None):
                         "observed_at": evidence.scenario.telemetry.observed_at.isoformat(),
                         "battery_voltage_v": evidence.scenario.telemetry.battery_voltage_v,
                         "voltage_floor_v": evidence.scenario.policy.min_battery_voltage_v,
-                        "forecast": "Solar persistence; synthetic weather; no battery discharge",
+                        "forecast": f"Solar persistence; {evidence.scenario.weather_source}; "
+                        "no battery discharge",
                         "checks": "T3 and T6 passed; power arithmetic cannot be changed",
                     },
                 },

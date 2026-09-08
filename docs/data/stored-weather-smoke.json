@@ -1,0 +1,137 @@
+{
+  "checked_at": "2026-09-08T05:11:36.677653+00:00",
+  "scope": "Read-only source smoke: five individual replay horizons, not a week replay or accuracy evaluation. No PAP records written.",
+  "replay": [
+    {
+      "wing": "1.21",
+      "replay_at": "2026-08-30T19:00:00+00:00",
+      "weather_status": "ok",
+      "source": "Open-Meteo stored observations",
+      "T3": "valid",
+      "interval_count": 12,
+      "zero_factor_intervals": 4,
+      "factors": [
+        1.0,
+        1.0,
+        1.0,
+        0.9758620689655172,
+        0.8275862068965517,
+        0.6252873563218391,
+        0.39195402298850573,
+        0.14597701149425288,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reason": ""
+    },
+    {
+      "wing": "1.22",
+      "replay_at": "2026-08-30T19:00:00+00:00",
+      "weather_status": "ok",
+      "source": "Open-Meteo stored observations",
+      "T3": "valid",
+      "interval_count": 12,
+      "zero_factor_intervals": 4,
+      "factors": [
+        1.0,
+        1.0,
+        1.0,
+        0.9758620689655172,
+        0.8275862068965517,
+        0.6252873563218391,
+        0.39195402298850573,
+        0.14597701149425288,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reason": ""
+    },
+    {
+      "wing": "1.23",
+      "replay_at": "2026-08-30T19:00:00+00:00",
+      "weather_status": "ok",
+      "source": "Open-Meteo stored observations",
+      "T3": "valid",
+      "interval_count": 12,
+      "zero_factor_intervals": 4,
+      "factors": [
+        1.0,
+        1.0,
+        1.0,
+        0.9758620689655172,
+        0.8275862068965517,
+        0.6252873563218391,
+        0.39195402298850573,
+        0.14597701149425288,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reason": ""
+    },
+    {
+      "wing": "1.24",
+      "replay_at": "2026-08-30T19:00:00+00:00",
+      "weather_status": "ok",
+      "source": "Open-Meteo stored observations",
+      "T3": "valid",
+      "interval_count": 12,
+      "zero_factor_intervals": 4,
+      "factors": [
+        1.0,
+        1.0,
+        1.0,
+        0.9758620689655172,
+        0.8275862068965517,
+        0.6252873563218391,
+        0.39195402298850573,
+        0.14597701149425288,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reason": ""
+    },
+    {
+      "wing": "1.25",
+      "replay_at": "2026-08-30T19:00:00+00:00",
+      "weather_status": "ok",
+      "source": "Open-Meteo stored observations",
+      "T3": "valid",
+      "interval_count": 12,
+      "zero_factor_intervals": 4,
+      "factors": [
+        1.0,
+        1.0,
+        1.0,
+        0.9758620689655172,
+        0.8275862068965517,
+        0.6252873563218391,
+        0.39195402298850573,
+        0.14597701149425288,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reason": ""
+    }
+  ],
+  "live": {
+    "wing": "1.24",
+    "telemetry_time": "2026-09-08T05:10:39.413094+00:00",
+    "weather_status": "ok",
+    "source": "Open-Meteo stored forecast",
+    "interval_count": 12,
+    "model_versions": [
+      "solarcast-xgb-1"
+    ],
+    "reason": ""
+  }
+}

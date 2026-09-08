@@ -119,7 +119,7 @@ def calibration(database: Database, source_kind: str, forecast_version: str) -> 
 if __name__ == "__main__":
     import argparse
 
-    from pap_agent.core import FORECAST_VERSION
+    from pap_agent.core import FORECAST_VERSION, STORED_WEATHER_VERSION
     from pap_agent.selection import WING_FLOORS, RunSelection
 
     parser = argparse.ArgumentParser(description="Read-only preview of current calibration policy.")
@@ -129,6 +129,7 @@ if __name__ == "__main__":
     database = Database(Settings())
     try:
         source = RunSelection(wing=args.wing).feedback_scope(args.source)
-        print(json.dumps(calibration_report(database, source, FORECAST_VERSION), indent=2))
+        version = FORECAST_VERSION if args.source == "synthetic" else STORED_WEATHER_VERSION
+        print(json.dumps(calibration_report(database, source, version), indent=2))
     finally:
         database.close()

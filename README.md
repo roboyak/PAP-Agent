@@ -54,13 +54,15 @@ multiple Uvicorn workers. The home page restores the latest simulation; save its
 later review. **Chart day** reviews any completed day; **Follow playback** returns to the
 advancing day. Its chart and source values share the same shown step. Results count valid/withheld steps, not accuracy or cumulative weekly energy.
 This is recorded-telemetry replay, not a physical battery simulation.
-The future baseline uses the current solar reading and demo weather; it does not model
-sunrise or sunset. Leftover solar is `max(0, solar − site usage)`, before battery charging
+The future baseline scales the current solar reading with stored Open-Meteo weather.
+Its conservative factor stays between zero and one: it cannot amplify a morning reading
+or predict sunrise from zero PV. Leftover solar is `max(0, solar − site usage)`, before battery charging
 or other constraints. It is separate from the bounded forecast allocation.
 [Week audit](docs/data/MYSOLARK_WEEK.md): 24,113 MySolArk scrapes across all 35 wing-days,
 with morning generation on each. Some days have source gaps.
 [Playback verification](docs/data/WEEK_PLAYBACK.md): all five wings completed 168 hourly
 steps on Fast, including Pause/Reload/Resume; 840 steps total.
+Those saved playback results predate the stored-weather change and used synthetic weather.
 
 **Run PAP** reads the selected source and runs the durable workflow. **Load sunny fixture**
 and **Read MySolArk now** select/inspect a source; **Calculate PAP** runs the numerical core.
@@ -115,11 +117,41 @@ The scan includes data after the replay week, so replay uses retrospective polic
 and is not an unbiased historical accuracy benchmark. Real-time freshness uses wall-clock time.
 SOC is not a measured input, and no voltage-to-SOC curve is inferred.
 
-The current profile uses measured PV/load power with **synthetic weather factors**, constant
+The MySolArk profile uses measured PV/load power with **stored Open-Meteo weather**, constant
 demand, and **zero battery-discharge budget**. kW is power; kWh is power multiplied by hours.
 Live equipment capability is unconfigured; future battery voltage is not predicted. This
 is evaluation-only guidance. It never commands a battery, inverter, generator or load.
 The sunny fixture has its own synthetic 48 V floor / 5 kW cap and 10.600 kWh baseline.
+
+### Stored weather
+
+PAP reads the source database only; it never fetches weather over HTTP. Replay uses
+`weather_observations` for the selected wing: the nearest Open-Meteo observation at or
+before each of the twelve interval starts, at most **90 minutes old**. Its factor is
+`min(1, interval_irradiance / reference_irradiance)`. The reference is the observation
+at/before the telemetry time; zero reference produces zero factors. Irradiance already
+contains cloud effects, so cloud cover is not applied a second time. Replay uses actual
+weather across the future horizon and is a retrospective scenario, **not an as-of
+forecast accuracy benchmark**.
+
+Live runs prefer all twelve `solar_forecast_hours` buckets containing the interval starts,
+using the same ratio with stored capacity factors. Each row must have been updated at/before
+the telemetry time within **24 hours**. The stored model version (currently SolarCast in
+the local source) and input/update times appear in the MCP result. Hours remain UTC in
+storage; the display remains Pacific. Forecasts are not interpolated between hour buckets.
+
+If the full forecast is missing, stale or invalid, PAP tries the whole observation horizon.
+Live observations may not come from after the telemetry time. A recent observation alone
+cannot cover twelve future hours within the 90-minute tolerance, so an incomplete forecast
+withholds the run. Missing weather is **unavailable**, never a made-up zero or a synthetic fallback.
+Context, Tools, and published evidence identify **Open-Meteo stored observations** or
+**Open-Meteo stored forecast**. The sunny demo and saved pre-change episodes still identify
+**synthetic weather**. No historical episodes, outcomes, or playback metrics are rewritten.
+New weather runs use forecast version `solar-persistence-stored-weather-v1`; calibration
+and outcome memory exclude feedback from the earlier synthetic-weather predictor. The
+current live-calibration view/CLI follow this version. Saved runs keep their original feedback.
+Evaluating an existing profile still accepts fresh measured telemetry when future weather
+is missing; a new forecast remains withheld until its weather horizon is complete.
 
 ## Agents and comparison
 

@@ -1,6 +1,8 @@
 """T1/T2 acquire through MCP; T3 validates before numerical work."""
 
 import asyncio
+import hashlib
+import json
 import sys
 from datetime import UTC, datetime
 from time import perf_counter
@@ -29,6 +31,27 @@ class Evidence(BaseModel):
     selection: RunSelection = Field(default_factory=RunSelection)
 
 
+def validate_telemetry(
+    telemetry: SourceResult,
+    now: datetime,
+    selection: RunSelection,
+) -> TelemetrySnapshot:
+    """Shared T3 checks; measuring an outcome does not require future weather."""
+    if telemetry.status != "ok":
+        raise ValueError("Source unavailable")
+    snapshot = TelemetrySnapshot.model_validate(telemetry.data)
+    if snapshot.observed_at != telemetry.source_time:
+        raise ValueError("Source timestamps disagree")
+    if not 0 <= (now - snapshot.observed_at).total_seconds() <= 300:
+        raise ValueError("Telemetry stale or ahead of evaluation clock")
+    if snapshot.data_mode == "live" and (
+        snapshot.source != f"DW {selection.wing} MySolArk persisted scrape"
+        or telemetry.clock != ("replay" if selection.replay_at else "wall")
+    ):
+        raise ValueError("Telemetry selection or evaluation clock disagrees")
+    return snapshot
+
+
 def validate_sources(
     telemetry: SourceResult,
     weather: SourceResult,
@@ -36,36 +59,35 @@ def validate_sources(
     selection: RunSelection | None = None,
 ) -> Scenario:
     selection = selection or RunSelection()
-    if telemetry.status != "ok" or weather.status != "ok":
+    snapshot = validate_telemetry(telemetry, now, selection)
+    if weather.status != "ok":
         raise ValueError("Source unavailable")
-    snapshot = TelemetrySnapshot.model_validate(telemetry.data)
-    if (
-        snapshot.observed_at != telemetry.source_time
-        or weather.source_time != telemetry.source_time
-    ):
+    if weather.source_time != telemetry.source_time:
         raise ValueError("Source timestamps disagree")
-    if not 0 <= (now - snapshot.observed_at).total_seconds() <= 300:
-        raise ValueError("Telemetry stale or ahead of evaluation clock")
     intervals = [WeatherForecastInterval.model_validate(item) for item in weather.data["intervals"]]
     if len(intervals) != 12 or intervals[0].starts_at != weather.source_time:
         raise ValueError("Weather does not cover the twelve-hour horizon")
+    if any(item.source != weather.source for item in intervals):
+        raise ValueError("Weather interval source disagrees with result provenance")
     for index, item in enumerate(intervals):
         if (item.ends_at - item.starts_at).total_seconds() != 3600 or (
             index and intervals[index - 1].ends_at != item.starts_at
         ):
             raise ValueError("Weather intervals must be contiguous hours")
     live = snapshot.data_mode == "live"
-    if live and (
-        snapshot.source != f"DW {selection.wing} MySolArk persisted scrape"
-        or telemetry.clock != ("replay" if selection.replay_at else "wall")
-    ):
-        raise ValueError("Telemetry selection or evaluation clock disagrees")
+    if live and weather.clock != telemetry.clock:
+        raise ValueError("Weather evaluation clock disagrees")
     floor = Settings().battery_floor_v if selection.wing == "1.24" else WING_FLOORS[selection.wing]
     replay_suffix = f"-r{int(selection.replay_at.timestamp())}" if selection.replay_at else ""
     mode = "historical replay" if selection.replay_at else "live scrape"
+    # Source data can change at the same telemetry timestamp. Keep each weather
+    # version separate; INSERT ... DO NOTHING must never reuse the old fixture.
+    weather_id = hashlib.sha256(json.dumps(weather.data, sort_keys=True).encode()).hexdigest()[:16]
     return Scenario(
-        name=f"mysolark-{snapshot.id.hex[:8]}-{floor}{replay_suffix}" if live else "sunny",
-        label=f"DW {selection.wing} MySolArk {mode} + synthetic weather"
+        name=f"mysolark-{snapshot.id.hex[:8]}-{floor}{replay_suffix}-w{weather_id}"
+        if live
+        else "sunny",
+        label=f"DW {selection.wing} MySolArk {mode} + {weather.source}"
         if live
         else "Sunny demo (synthetic)",
         telemetry=snapshot,
@@ -94,6 +116,7 @@ async def acquire(
 ) -> Evidence:
     selection = selection or RunSelection()
     calls, tools, age = [], [], None
+    source_reason = ""
     try:
         async with (
             asyncio.timeout(10),
@@ -137,8 +160,14 @@ async def acquire(
                 "get_solar_forecast",
                 {
                     "starts_at": telemetry.source_time.isoformat(),
+                    "scenario": scenario,
+                    **selection.model_dump(mode="json"),
                 },
             )
+            for result in (telemetry, weather):
+                if result.status != "ok":
+                    source_reason = f"T3 withheld: {result.source}: {result.reason}"
+                    break
         record = validate_sources(telemetry, weather, now, selection)
         if persist:
             save_scenario(database, record)
@@ -155,7 +184,7 @@ async def acquire(
             status="withheld",
             reason=f"T3 withheld: scrape is {age:g} seconds old at evaluation time (maximum 300)"
             if age is not None and age > 300
-            else "Source unavailable or T3 validation failed",
+            else source_reason or "Source unavailable or T3 validation failed",
             observed_age_seconds=age,
             tools=tools,
             calls=calls,

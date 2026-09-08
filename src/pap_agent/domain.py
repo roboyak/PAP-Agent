@@ -43,6 +43,10 @@ class Scenario(BaseModel):
     weather: list[WeatherForecastInterval]
     policy: ReservePolicy
 
+    @property
+    def weather_source(self) -> str:
+        return " + ".join(dict.fromkeys(item.source for item in self.weather))
+
 
 class ForecastInterval(Interval):
     generation_kw: float = Field(ge=0, allow_inf_nan=False)

@@ -16,7 +16,7 @@
   <header>
     <div class="title-row"><h1>Run inspector</h1><span class="badge">READ ONLY</span></div>
     <p>Follow one result through its evidence, memory, tools and model decisions.</p>
-    <div class="status-row"><span>Local telemetry · synthetic weather</span><span id="service-status" role="status">Service not checked</span></div>
+    <div class="status-row"><span id="weather-status">Weather source appears with each run</span><span id="service-status" role="status">Service not checked</span></div>
   </header>
 
   <section class="run-overview" aria-labelledby="run-heading">
@@ -58,7 +58,7 @@
         <div id="empty-session" class="empty-session">
           <h3>Ready to calculate availability</h3>
           <p>Run PAP to read the source and calculate solar surplus.</p>
-          <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
+          <p class="muted">Twelve-hour evaluation. Context and Tools identify the weather used.</p>
         </div>
         <div id="messages"></div>
       </div>

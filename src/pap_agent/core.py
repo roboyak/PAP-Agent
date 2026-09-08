@@ -11,6 +11,7 @@ from pap_agent.domain import PAP, ForecastInterval, PowerAvailabilityInterval, S
 from pap_agent.evidence import Evidence
 
 FORECAST_VERSION = "solar-persistence-demo-v1"
+STORED_WEATHER_VERSION = "solar-persistence-stored-weather-v1"
 
 
 class Calculation(BaseModel):
@@ -86,6 +87,8 @@ def calculate(evidence: Evidence, calculation_id: UUID | None = None) -> Calcula
     if evidence.status != "valid" or scenario is None:
         result.validation = ["T3 did not accept the evidence"]
         return result
+    if scenario.weather_source != "synthetic weather":
+        result.forecast_version = STORED_WEATHER_VERSION
     if (
         scenario.telemetry.data_mode == "live"
         and not 0
@@ -108,9 +111,15 @@ def calculate(evidence: Evidence, calculation_id: UUID | None = None) -> Calcula
         intervals=intervals if result.status == "valid" else [],
         confidence="reduced",
         explanation=(
-            "Evaluation baseline: synthetic weather; constant measured demand; solar surplus only; "
+            f"Evaluation baseline: {scenario.weather_source}; "
+            "constant measured demand; solar surplus only; "
             "zero battery discharge. Voltage floor gates additional power. "
             "Future voltage and equipment capability are not predicted."
+            + (
+                " Replay uses actual weather across the horizon, not an as-of forecast."
+                if evidence.selection.replay_at and scenario.weather_source != "synthetic weather"
+                else ""
+            )
         ),
     )
     return result

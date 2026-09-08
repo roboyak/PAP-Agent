@@ -12,6 +12,7 @@ function selectionLabel() {
     : `DW ${currentSelection.wing} · ${currentSelection.replay_at ? `Replay ${currentSelection.replay_at}` : "Latest MySolArk scrape"}`;
 }
 const runRequest = () => ({scenario:currentScenario, ...currentSelection});
+const weatherSource = scenario => [...new Set((scenario?.weather ?? []).map(row => row.source))].join(" + ") || "Weather unavailable";
 selectionLabel();
 
 for (const id of ["model-context", "agent-comparison", "evidence-context", "calculation-result",
@@ -75,6 +76,7 @@ function inspectList(id, rows, empty) {
 
 function clearSelection(title = "No run selected. Run PAP to begin.") {
   currentPublication = null;
+  byId("weather-status").textContent = "Weather source appears with each run";
   history.replaceState(null, "", location.pathname + (simulationQuery ? "?" + simulationQuery : ""));
   byId("published-profile").hidden = true;
   byId("view-output").hidden = true;
@@ -103,13 +105,16 @@ function renderEvidence(evidence) {
   byId("evidence-context").textContent = JSON.stringify(evidence.scenario, null, 2);
   byId("evidence-note").textContent = evidence.scenario?.label ?? evidence.reason;
   const telemetry = evidence.scenario?.telemetry;
+  const weather = evidence.calls?.find(call => call.tool === "get_solar_forecast")?.result;
+  byId("weather-status").textContent = evidence.scenario ? weatherSource(evidence.scenario)
+    : weather ? `${weather.source}: ${weather.status}` : "Weather unavailable";
   byId("evidence-summary").textContent = telemetry
-    ? `${evidence.selection?.replay_at ? "Historical scrape" : telemetry.data_mode === "live" ? "Live scrape" : "Synthetic replay"}: ${telemetry.battery_voltage_v} V battery, ${telemetry.solar_power_kw} kW solar, ${telemetry.load_power_kw} kW load. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Source time ${telemetry.observed_at}. Weather is synthetic.`
+    ? `${evidence.selection?.replay_at ? "Historical scrape" : telemetry.data_mode === "live" ? "Live scrape" : "Synthetic replay"}: ${telemetry.battery_voltage_v} V battery, ${telemetry.solar_power_kw} kW solar, ${telemetry.load_power_kw} kW load. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Source time ${telemetry.observed_at}. Weather: ${weatherSource(evidence.scenario)}.`
     : evidence.reason;
   byId("tool-calls").textContent = JSON.stringify({available: evidence.tools, calls: evidence.calls}, null, 2);
   inspectList("tool-summary", (evidence.calls ?? []).map(call => [
     `${call.tool}: ${call.result?.status ?? "unavailable"} (${call.duration_ms} ms)`,
-    `Read-only source call. ${call.result?.reason ?? ""}`,
+    `Read-only source call. ${call.result?.source ?? "Source unavailable"}. ${call.result?.reason ?? ""} ${call.result?.data?.fallback_reason ?? ""}`,
   ]), "No MCP calls recorded.");
 }
 
@@ -190,7 +195,7 @@ function renderPublication(publication) {
   const live = evidence?.telemetry.data_mode === "live" && !replay;
   const age = live ? Math.round((Date.now() - Date.parse(evidence.telemetry.observed_at)) / 1000) : null;
   byId("profile-provenance").textContent = evidence
-    ? `${evidence.telemetry.source} · ${evidence.telemetry.observed_at} · ${replay ? `historical replay at ${replay}; ${publication.observed_age_seconds} seconds old at replay time` : live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
+    ? `${evidence.telemetry.source} · ${weatherSource(evidence)} · ${evidence.telemetry.observed_at} · ${replay ? `historical replay at ${replay}; ${publication.observed_age_seconds} seconds old at replay time` : live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
     : publication.reason;
   byId("profile-explanation").textContent = [publication.profile?.explanation ?? "No validated profile is available.",
     publication.interpretation?.advice?.explanation ?? "", publication.search?.guidance?.summary ?? ""].join(" ");
@@ -337,7 +342,7 @@ action("load-mysolark", async () => {
     byId("evidence-note").textContent = evidence.scenario.label;
     byId("tool-calls").textContent = JSON.stringify({ available: evidence.tools, calls: evidence.calls }, null, 2);
     const telemetry = evidence.scenario.telemetry;
-    appendMessage("MCP evidence", `${telemetry.battery_voltage_v} V battery · ${telemetry.solar_power_kw} kW solar · ${telemetry.load_power_kw} kW load. Scraped ${evidence.observed_age_seconds} seconds ago at ${telemetry.observed_at}; weather is synthetic.`);
+    appendMessage("MCP evidence", `${telemetry.battery_voltage_v} V battery · ${telemetry.solar_power_kw} kW solar · ${telemetry.load_power_kw} kW load. Scraped ${evidence.observed_age_seconds} seconds ago at ${telemetry.observed_at}; weather: ${weatherSource(evidence.scenario)}.`);
     selectTab(byId("tab-tools"));
   } else appendMessage("Evidence withheld", evidence.reason ?? "Source unavailable.");
   byId("load-mysolark").disabled = false;
@@ -378,7 +383,7 @@ action("calculate-pap", async () => {
     byId("evidence-note").textContent = evidence.scenario?.label ?? evidence.reason;
     if (result.status === "valid") {
       const total = result.pap.intervals.reduce((sum, item) => sum + item.energy_kwh, 0);
-      appendMessage("PAP calculation", `${result.pap.intervals[0].available_kw} kW additional now · ${total.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")} kWh across 12 hours. Solar surplus only; battery discharge budget 0 kWh. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Evaluation baseline with synthetic weather.`);
+      appendMessage("PAP calculation", `${result.pap.intervals[0].available_kw} kW additional now · ${total.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")} kWh across 12 hours. Solar surplus only; battery discharge budget 0 kWh. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Evaluation baseline with ${weatherSource(evidence.scenario)}.`);
     } else appendMessage("PAP withheld", result.validation.join(". "));
     selectTab(byId("tab-context"));
   } else appendMessage("Service", "Calculation unavailable; inspect Trace.");

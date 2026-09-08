@@ -84,6 +84,12 @@ def test_live_durable_workflow(browser, live_service, database_url, source_datab
             expect(page.locator("#profile-provenance")).to_contain_text("floor 305.2 V")
             publication = page.request.get(f"{url}/api/v1/pap/{episode['publication_id']}").json()
             assert publication["evidence_id"] == episode["evidence_id"]
+            assert {row["source"] for row in publication["evidence"]["weather"]} == {
+                "Open-Meteo stored forecast"
+            }
+            expect(page.locator("#profile-provenance")).to_contain_text(
+                "Open-Meteo stored forecast"
+            )
             page.reload()
             expect(page.locator("#profile-intervals tr")).to_have_count(12)
             assert (
@@ -135,13 +141,40 @@ def test_live_mysolark_mcp(browser, live_service, database_url, source_database)
             page.goto(url + "/inspector")
             page.get_by_role("button", name="Read MySolArk now").click()
             expect(page.locator("#evidence-note")).to_have_text(
-                "DW 1.24 MySolArk live scrape + synthetic weather", timeout=15000
+                "DW 1.24 MySolArk live scrape + Open-Meteo stored forecast", timeout=15000
             )
             expect(page.locator("#tool-calls")).to_contain_text("get_current_telemetry")
             expect(page.locator("#tool-calls")).to_contain_text("get_solar_forecast")
+            expect(page.locator("#tool-summary")).to_contain_text("Open-Meteo stored forecast")
             page.get_by_role("tab", name="Context", exact=True).click()
             expect(page.locator("#evidence-context")).to_contain_text('"data_mode": "live"')
+            expect(page.locator("#evidence-summary")).to_contain_text("Open-Meteo stored forecast")
             expect(page.locator("#messages")).to_contain_text("seconds ago")
+        finally:
+            page.close()
+
+
+def test_missing_weather_explains_withholding_in_inspector(
+    browser, live_service, database, database_url, source_database
+):
+    with database.session() as session:
+        session.execute(text("DELETE FROM source_fixture.solar_forecast_hours"))
+    with live_service(database_url) as url:
+        page = browser.new_page()
+        try:
+            page.goto(url + "/inspector")
+            page.get_by_role("button", name="Read MySolArk now").click()
+            expect(page.locator("#evidence-summary")).to_contain_text("Stored forecast incomplete")
+            expect(page.locator("#weather-status")).to_have_text(
+                "Open-Meteo stored observations: unavailable"
+            )
+            page.get_by_role("tab", name="Tools", exact=True).click()
+            expect(page.locator("#tool-summary")).to_contain_text("get_solar_forecast: unavailable")
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#publication-status")).to_have_text("withheld")
+            expect(page.locator("#profile-summary")).to_contain_text("Stored forecast incomplete")
+            expect(page.locator("#profile-intervals tr")).to_have_count(0)
+            expect(page.locator("#model-calls")).to_have_text("0")
         finally:
             page.close()
 
@@ -177,7 +210,7 @@ def test_live_home_health_and_version(browser, live_service, database_url):
             expect(page.get_by_role("heading", name="Run inspector")).to_be_visible()
             expect(page.get_by_text("READ ONLY", exact=True)).to_be_visible()
             expect(
-                page.get_by_text("Local telemetry · synthetic weather", exact=True)
+                page.get_by_text("Weather source appears with each run", exact=True)
             ).to_be_visible()
             page.get_by_role("button", name="Check service", exact=True).click()
             expect(page.get_by_role("status")).to_have_text("Service healthy")

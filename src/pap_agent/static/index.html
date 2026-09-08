@@ -54,7 +54,7 @@
       </section>
       <section class="assumptions">
         <h2>Forecast assumptions</h2>
-        <ul><li>Demo weather, not a weather service</li><li>Site usage held constant</li><li>No battery discharge</li></ul>
+        <ul><li>Weather source shown with result</li><li>Site usage held constant</li><li>No battery discharge</li></ul>
         <details><summary>Model limits</summary><p class="small">Voltage checks the recorded battery floor. Future voltage and equipment capability are not predicted.</p></details>
       </section>
     </aside>
@@ -92,7 +92,7 @@
           <div class="chart-heading"><h3>Future estimate / next twelve hours</h3><span>Extra power / kW</span></div>
           <div id="forecast-chart" class="forecast-chart"></div>
           <p id="chart-period" class="small"></p>
-          <p id="forecast-limit" class="small">Uses the current reading and demo weather. This baseline does not predict sunrise or sunset.</p>
+          <p id="forecast-limit" class="small">Uses the current solar reading, scaled by this run’s weather. Weather sources are saved with each result.</p>
           <details id="hourly-details"><summary>View the hourly numbers</summary>
             <p class="small chart-note">Zero means no additional solar power is allocated. The energy total is spread across twelve hours.</p>
             <table><thead><tr><th>Hour starting (Pacific)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead><tbody id="profile-intervals"></tbody></table>

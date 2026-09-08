@@ -1,7 +1,7 @@
 """T8 compares point power samples, not completed-hour energy or calibrated probabilities."""
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4, uuid5
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
@@ -13,8 +13,9 @@ from typing_extensions import TypedDict
 from pap_agent.calibration import calibration
 from pap_agent.database import Database
 from pap_agent.domain import ForecastInterval, TelemetrySnapshot
-from pap_agent.evidence import acquire
+from pap_agent.evidence import acquire, validate_telemetry
 from pap_agent.selection import RunSelection
+from pap_agent.sources import SourceResult
 from pap_agent.store import get_calculation, get_publication
 
 
@@ -117,9 +118,21 @@ async def evaluate_publication(database: Database, publication_id: UUID) -> dict
             sample.source = "Synthetic cloudy outcome"
         else:
             evidence = await acquire(database, "mysolark", selection=selection)
-            if evidence.status != "valid":
+            # T8 measures telemetry, even if T3 withheld a new weather forecast.
+            # Reuse the recorded MCP call and apply the same telemetry checks.
+            telemetry = next(
+                (
+                    call["result"]
+                    for call in evidence.calls
+                    if call["tool"] == "get_current_telemetry"
+                ),
+                None,
+            )
+            if telemetry is None:
                 raise ValueError("No fresh observed outcome is available")
-            sample = evidence.scenario.telemetry
+            sample = validate_telemetry(
+                SourceResult.model_validate(telemetry), datetime.now(UTC), selection
+            )
             if sample.observed_at <= datetime.fromisoformat(
                 publication["evidence"]["telemetry"]["observed_at"]
             ):

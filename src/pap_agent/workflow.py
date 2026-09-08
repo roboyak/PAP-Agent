@@ -191,7 +191,8 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
             "telemetry": evidence.scenario.telemetry.model_dump(mode="json"),
             "selection": evidence.selection.model_dump(mode="json"),
             "policy": evidence.scenario.policy.model_dump(mode="json"),
-            "forecast": "12-hour solar persistence with synthetic weather; battery budget 0 kWh",
+            "forecast": f"12-hour solar persistence with {evidence.scenario.weather_source}; "
+            "battery budget 0 kWh",
             "validated_facts": {
                 "battery_above_floor": evidence.scenario.telemetry.battery_voltage_v
                 > evidence.scenario.policy.min_battery_voltage_v,

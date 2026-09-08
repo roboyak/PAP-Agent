@@ -12,6 +12,7 @@ from pap_agent.evidence import Evidence, validate_sources
 from pap_agent.memory import index_memory
 from pap_agent.outcomes import evaluate_publication
 from pap_agent.runtime import readiness
+from pap_agent.selection import RunSelection
 from pap_agent.sources import telemetry_source, weather_source
 from pap_agent.store import save_evidence
 from pap_agent.workflow import run_episode
@@ -28,7 +29,7 @@ async def demo(database: Database) -> dict:
     try:
         validate_sources(
             telemetry,
-            weather_source(telemetry.source_time),
+            weather_source(RunSelection(), telemetry.source_time, scenario="sunny"),
             telemetry.source_time + timedelta(minutes=10),
         )
     except ValueError:

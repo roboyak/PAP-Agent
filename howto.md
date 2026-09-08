@@ -15,7 +15,8 @@ Ctrl-C stops the app. No Docker. `.env.example` lists optional settings.
 4. Use **Inspect this run** to see the evidence behind that exact result.
 
 kW is power; kWh is energy across time. Zero means no extra solar allocation.
-The baseline uses synthetic weather, constant load and no battery discharge.
+MySolArk uses stored Open-Meteo weather, constant load and no battery discharge.
+Missing/stale weather withholds the run. Sunny and older saved runs retain synthetic weather.
 It checks the voltage floor and never commands equipment. Withheld means no
 validated profile; inspect the reason before running again.
 
@@ -27,8 +28,9 @@ validated profile; inspect the reason before running again.
 3. **Recorded day** shows solar coming in, site usage and solar left over. Night readings
    usually show zero solar while usage continues. Morning solar can be positive with no
    surplus when the site uses it all. Missing readings leave gaps; future hours stay blank.
-   **Future estimate** is separate: twelve hours using the current reading and demo weather.
-   It does not model sunrise or sunset.
+   **Future estimate** is separate: twelve hours scaling the current solar reading with stored
+   weather. Scaling only reduces solar; it cannot forecast sunrise from a zero reading.
+   Replay uses historical weather across the horizon, not an as-of forecast backtest.
 4. **Pause** finishes the current step. **Resume** continues. **Results → Inspect** opens
    any saved step; **Back to simulation** returns to the progressing run.
 

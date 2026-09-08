@@ -35,12 +35,23 @@ def source_database(database, monkeypatch):
             device_id text, message_type text, timestamp timestamp,
             battery1_voltage float, solar_power_w float, load_power_w float)""")
         )
+        session.execute(
+            text("""CREATE TABLE source_fixture.weather_observations (
+            device_id text, observed_at timestamp, shortwave_radiation_wm2 float,
+            source text DEFAULT 'open-meteo')""")
+        )
+        session.execute(
+            text("""CREATE TABLE source_fixture.solar_forecast_hours (
+            device_id text, hour_utc timestamp, cf float, updated_at timestamp,
+            model_version text)""")
+        )
         session.execute(text("INSERT INTO source_fixture.sites VALUES ('DW 1.24', 'test-device')"))
         session.execute(
             text("""INSERT INTO source_fixture.telemetry_snapshots VALUES
             ('test-device', 'solark_cloud', CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 393, 1560, 697)
         """)
         )
+        seed_weather(session, "test-device")
     url = database.engine.url
     monkeypatch.setenv(
         "SOURCE_DATABASE_DSN",
@@ -55,6 +66,25 @@ def source_database(database, monkeypatch):
     )
 
 
+def seed_weather(session, device):
+    """Weather-shaped deterministic rows only in the disposable PAP test database."""
+    session.execute(
+        text("""INSERT INTO source_fixture.solar_forecast_hours
+        SELECT :device, date_trunc('hour', CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+        + hour * interval '1 hour', 0.5,
+        CURRENT_TIMESTAMP AT TIME ZONE 'UTC' - interval '1 hour', 'test-open-meteo'
+        FROM generate_series(0, 11) AS hour"""),
+        {"device": device},
+    )
+    session.execute(
+        text("""INSERT INTO source_fixture.weather_observations
+        SELECT :device, at, 400, 'open-meteo'
+        FROM generate_series(timestamp '2026-08-30 06:00:00',
+        timestamp '2026-09-06 19:00:00', interval '15 minutes') AS at"""),
+        {"device": device},
+    )
+
+
 @pytest.fixture
 def wing_history(database, source_database):
     """Two recorded points per wing plus latest readings; no production data."""
@@ -62,6 +92,7 @@ def wing_history(database, source_database):
         for index, wing in enumerate(("1.21", "1.22", "1.23", "1.24", "1.25")):
             device = "test-device" if wing == "1.24" else f"test-{wing}"
             if wing != "1.24":
+                seed_weather(session, device)
                 session.execute(
                     text("INSERT INTO source_fixture.sites VALUES (:name, :device)"),
                     {"name": f"DW {wing}", "device": device},
