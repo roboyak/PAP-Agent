@@ -1,9 +1,16 @@
 const byId = (id) => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 let currentScenario = document.body.dataset.defaultSource;
+let currentSelection = {wing:"1.24", replay_at:null};
 let currentPublication = null;
 let busyTimer = null;
 const actionButtons = [...document.querySelectorAll(".controls button, #evaluate-outcome")];
+function selectionLabel() {
+  byId("selected-source").textContent = currentScenario === "sunny" ? "Sunny synthetic fixture"
+    : `DW ${currentSelection.wing} · ${currentSelection.replay_at ? `Replay ${currentSelection.replay_at}` : "Latest MySolArk scrape"}`;
+}
+const runRequest = () => ({scenario:currentScenario, ...currentSelection});
+selectionLabel();
 
 for (const id of ["model-context", "agent-comparison", "evidence-context", "calculation-result",
   "run-memory-results", "memory-results", "outcome-feedback", "tool-calls", "agent-activity", "graph-trace", "readiness-result"]) {
@@ -30,7 +37,7 @@ function endAction() {
   busyTimer = null;
   byId("run-progress").hidden = true;
   actionButtons.forEach(button => { button.disabled = false; });
-  byId("evaluate-outcome").disabled = currentPublication?.status !== "valid";
+  byId("evaluate-outcome").disabled = currentPublication?.status !== "valid" || !!currentPublication?.selection?.replay_at;
 }
 
 function action(id, callback) {
@@ -90,7 +97,7 @@ function renderEvidence(evidence) {
   byId("evidence-note").textContent = evidence.scenario?.label ?? evidence.reason;
   const telemetry = evidence.scenario?.telemetry;
   byId("evidence-summary").textContent = telemetry
-    ? `${telemetry.data_mode === "live" ? "Live scrape" : "Synthetic replay"}: ${telemetry.battery_voltage_v} V battery, ${telemetry.solar_power_kw} kW solar, ${telemetry.load_power_kw} kW load. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Source time ${telemetry.observed_at}. Weather is synthetic.`
+    ? `${evidence.selection?.replay_at ? "Historical scrape" : telemetry.data_mode === "live" ? "Live scrape" : "Synthetic replay"}: ${telemetry.battery_voltage_v} V battery, ${telemetry.solar_power_kw} kW solar, ${telemetry.load_power_kw} kW load. Floor ${evidence.scenario.policy.min_battery_voltage_v} V. Source time ${telemetry.observed_at}. Weather is synthetic.`
     : evidence.reason;
   byId("tool-calls").textContent = JSON.stringify({available: evidence.tools, calls: evidence.calls}, null, 2);
   inspectList("tool-summary", (evidence.calls ?? []).map(call => [
@@ -129,13 +136,15 @@ async function renderSelectedRun(episode, publication = null) {
     throw error;
   }
   currentScenario = episode.scenario;
+  currentSelection = episode.selection ?? {wing:"1.24", replay_at:null};
+  selectionLabel();
   renderInspection(episode, records);
   renderPublication(publication);
   renderEvidence(evidence);
   if (calculation) renderCalculation(calculation);
   byId("graph-trace").textContent = JSON.stringify(episode, null, 2);
   inspectList("node-summary", (episode.trace ?? []).map(node => [node.node.replaceAll("_", " "), `${node.status}${node.duration_ms === undefined ? "" : ` · ${node.duration_ms} ms`}`]), "No completed nodes.");
-  byId("run-status").textContent = `${publication.status === "valid" ? "Published evaluation" : "Withheld"}. ${publication.reason}`;
+  byId("run-status").textContent = `${publication.status === "valid" ? publication.selection?.replay_at ? "Historical replay" : "Published evaluation" : "Withheld"}. ${publication.reason}`;
   byId("run-meta").append(document.createTextNode(` · ${publication.generated_at}`));
   byId("empty-session").hidden = true;
   byId("messages").replaceChildren();
@@ -148,8 +157,8 @@ async function renderSelectedRun(episode, publication = null) {
 function renderPublication(publication) {
   if (!publication) return;
   currentPublication = publication;
-  byId("evaluate-outcome").disabled = publication.status !== "valid";
-  byId("evaluate-outcome").textContent = publication.evidence?.telemetry.data_mode === "synthetic"
+  byId("evaluate-outcome").disabled = publication.status !== "valid" || !!publication.selection?.replay_at;
+  byId("evaluate-outcome").textContent = publication.selection?.replay_at ? "Replay / feedback disabled" : publication.evidence?.telemetry.data_mode === "synthetic"
     ? "Evaluate cloudy demo" : "Evaluate latest reading";
   if (publication.feedback) byId("outcome-feedback").textContent = JSON.stringify(publication.feedback, null, 2);
   byId("published-profile").hidden = false;
@@ -162,10 +171,11 @@ function renderPublication(publication) {
     ? `${intervals[0].available_kw} kW additional · ${energy.toFixed(3)} kWh over 12 hours · ${publication.profile.confidence} confidence`
     : `Additional power withheld: ${publication.reason}`;
   const evidence = publication.evidence;
-  const live = evidence?.telemetry.data_mode === "live";
+  const replay = publication.selection?.replay_at;
+  const live = evidence?.telemetry.data_mode === "live" && !replay;
   const age = live ? Math.round((Date.now() - Date.parse(evidence.telemetry.observed_at)) / 1000) : null;
   byId("profile-provenance").textContent = evidence
-    ? `${evidence.telemetry.source} · ${evidence.telemetry.observed_at} · ${live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
+    ? `${evidence.telemetry.source} · ${evidence.telemetry.observed_at} · ${replay ? `historical replay at ${replay}; ${publication.observed_age_seconds} seconds old at replay time` : live ? `${age} seconds old${age > 300 ? " (stale; run again)" : ""}` : "synthetic replay clock"} · battery ${evidence.telemetry.battery_voltage_v} V · floor ${evidence.policy.min_battery_voltage_v} V. Published ${publication.generated_at}.`
     : publication.reason;
   byId("profile-explanation").textContent = [publication.profile?.explanation ?? "No validated profile is available.",
     publication.interpretation?.advice?.explanation ?? "", publication.search?.guidance?.summary ?? ""].join(" ");
@@ -268,6 +278,8 @@ action("check-service", async () => {
 action("reset-view", () => {
   clearSelection();
   currentScenario = document.body.dataset.defaultSource;
+  currentSelection = {wing:"1.24", replay_at:null};
+  selectionLabel();
   currentPublication = null;
   byId("outcome-feedback").textContent = "No outcome evaluated yet.";
   byId("agent-activity").textContent = "No subagent has run.";
@@ -298,8 +310,10 @@ action("reset-view", () => {
 action("load-mysolark", async () => {
   clearSelection("MySolArk source preview. No workflow selected.");
   currentScenario = "mysolark";
+  currentSelection.replay_at = null;
+  selectionLabel();
   byId("load-mysolark").disabled = true;
-  const result = await readApi("/api/v1/evidence/current?scenario=mysolark");
+  const result = await readApi(`/api/v1/evidence/current?scenario=mysolark&wing=${currentSelection.wing}`);
   const evidence = result.body;
   renderEvidence(evidence);
   if (evidence.status === "valid") {
@@ -317,6 +331,8 @@ action("load-mysolark", async () => {
 action("load-fixture", async () => {
   clearSelection("Sunny synthetic source preview. No workflow selected.");
   currentScenario = "sunny";
+  currentSelection = {wing:"1.24", replay_at:null};
+  selectionLabel();
   byId("load-fixture").disabled = true;
   const result = await readApi("/api/v1/scenarios/sunny");
   if (result.status === 200) {
@@ -336,7 +352,7 @@ action("load-fixture", async () => {
 action("calculate-pap", async () => {
   clearSelection("Calculation preview. No published workflow selected.");
   byId("calculate-pap").disabled = true;
-  const response = await readApi("/api/v1/pap/calculate", { scenario: currentScenario });
+  const response = await readApi("/api/v1/pap/calculate", runRequest());
   const result = response.body;
   if (response.status === 200) {
     renderCalculation(result);
@@ -357,7 +373,7 @@ action("calculate-pap", async () => {
 action("run-workflow", async () => {
   clearSelection("Running a new workflow…");
   byId("run-workflow").disabled = true;
-  const response = await readApi("/api/v1/pap/run", { scenario: currentScenario });
+  const response = await readApi("/api/v1/pap/run", runRequest());
   if (response.status === 200) {
     const episode = response.body;
     await renderSelectedRun(episode);
@@ -397,7 +413,7 @@ function renderInspection(episode, records) {
 action("compare-agents", async () => {
   byId("compare-agents").disabled = byId("run-workflow").disabled = true;
   appendMessage("Comparison", "Running the same evidence with interpretation off, then on.");
-  const response = await readApi("/api/v1/pap/compare", {scenario: currentScenario});
+  const response = await readApi("/api/v1/pap/compare", runRequest());
   if (response.status === 200) {
     const episode = response.body.runs[1].episode;
     await renderSelectedRun(episode);
@@ -452,8 +468,8 @@ action("index-memory", async () => {
 });
 action("search-memory", async () => {
   byId("search-memory").disabled = true;
-  const source = currentScenario === "sunny" ? "synthetic" : "live";
-  const result = await readApi(`/api/v1/memory/search?source_kind=${source}&query=${encodeURIComponent(byId("memory-query").value)}`);
+  const source = currentScenario === "sunny" ? "synthetic" : currentSelection.replay_at ? "general" : "live";
+  const result = await readApi(`/api/v1/memory/search?source_kind=${source}&wing=${currentSelection.wing}&query=${encodeURIComponent(byId("memory-query").value)}`);
   byId("memory-results").textContent = JSON.stringify(result.body, null, 2);
   byId("memory-search-summary").textContent = result.status === 200
     ? `${result.body.candidates.length} manual search results. Similarity ranks relevance; it is not a probability.`

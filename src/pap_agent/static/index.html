@@ -17,16 +17,21 @@
     <div><h1>Power availability</h1><p>A twelve-hour view of additional solar power.</p></div>
     <span class="badge">Read only / evaluation</span>
   </header>
+  <section class="run-controls" aria-label="Source and run controls">
+    <div><label for="source">Telemetry</label><select id="source"><option value="mysolark">MySolArk / real data</option><option value="sunny">Sunny demo / synthetic</option></select></div>
+    <div id="wing-control"><label for="wing">Wing</label><select id="wing"><option value="1.21">DW 1.21</option><option value="1.22">DW 1.22</option><option value="1.23">DW 1.23</option><option value="1.24" selected>DW 1.24</option><option value="1.25">DW 1.25</option></select></div>
+    <div id="window-control"><label for="time-window">Run from</label><select id="time-window"><option value="live">Latest scrape</option><option value="week">Aug 30–Sep 6, 2026</option></select></div>
+    <div id="replay-controls" hidden>
+      <div><label for="replay-time">Replay time / Pacific</label><input id="replay-time" type="datetime-local" min="2026-08-30T00:00" max="2026-09-05T23:00" step="3600" value="2026-08-30T12:00"></div>
+      <div><span class="control-label">Step by</span><div class="step-options" role="group" aria-label="Replay increment"><button type="button" id="step-hour" aria-pressed="true">1 hour</button><button type="button" id="step-quarter" aria-pressed="false">15 min</button></div></div>
+      <div class="step-navigation"><button id="previous-time" aria-label="Previous replay time">←</button><button id="next-time" aria-label="Next replay time">→</button></div>
+    </div>
+    <button id="run-workflow" class="primary" disabled>Run PAP</button>
+    <p id="run-progress" role="status" hidden></p>
+  </section>
+  <p id="selection-note" class="small">Reads the selected wing's latest persisted scrape.</p>
   <div class="forecast-layout">
-    <aside class="source-rail" aria-label="Source and run controls">
-      <section>
-        <h2>Run a forecast</h2>
-        <label for="source">Telemetry source</label>
-        <select id="source"><option value="mysolark">MySolArk / DW 1.24</option><option value="sunny">Sunny demo / synthetic</option></select>
-        <p class="small">Reads the latest snapshot.</p>
-        <button id="run-workflow" class="primary" disabled>Run PAP</button>
-        <p id="run-progress" role="status" hidden></p>
-      </section>
+    <aside class="source-rail" aria-label="Source facts and assumptions">
       <section>
         <h2>Recorded source</h2>
         <p id="source-state" class="small">No source loaded.</p>

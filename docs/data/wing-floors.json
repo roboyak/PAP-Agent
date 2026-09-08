@@ -1,0 +1,57 @@
+{
+  "scanned_at": "2026-09-08 00:22:08.666564+00:00",
+  "source": "Authorized local MySolArk persisted scrapes; read-only query",
+  "week": {
+    "start": "2026-08-30 07:00:00+00:00",
+    "end_exclusive": "2026-09-06 07:00:00+00:00",
+    "timezone": "America/Los_Angeles"
+  },
+  "policy": "Fixed positive minima; approximate 30% reserve is the owner assumption. Not an SOC conversion. Floors are retrospectively calibrated and never lowered automatically.",
+  "wings": [
+    {
+      "wing": "DW 1.21",
+      "scrape_count": 6544,
+      "first_scrape": "2026-08-28 21:57:45.154150-07:00",
+      "latest_scrape": "2026-09-07 17:20:28.055919-07:00",
+      "minimum_positive_voltage_v": 313.2,
+      "maximum_voltage_v": 393.3,
+      "requested_week_scrapes": 4772
+    },
+    {
+      "wing": "DW 1.22",
+      "scrape_count": 6451,
+      "first_scrape": "2026-08-28 21:57:46.144890-07:00",
+      "latest_scrape": "2026-09-07 17:20:28.599739-07:00",
+      "minimum_positive_voltage_v": 310.3,
+      "maximum_voltage_v": 393.2,
+      "requested_week_scrapes": 4754
+    },
+    {
+      "wing": "DW 1.23",
+      "scrape_count": 6464,
+      "first_scrape": "2026-08-28 21:57:46.644235-07:00",
+      "latest_scrape": "2026-09-07 12:18:16.764771-07:00",
+      "minimum_positive_voltage_v": 319.0,
+      "maximum_voltage_v": 389.2,
+      "requested_week_scrapes": 4871
+    },
+    {
+      "wing": "DW 1.24",
+      "scrape_count": 6640,
+      "first_scrape": "2026-08-28 21:57:47.115406-07:00",
+      "latest_scrape": "2026-09-07 17:20:29.625434-07:00",
+      "minimum_positive_voltage_v": 305.2,
+      "maximum_voltage_v": 394.3,
+      "requested_week_scrapes": 4856
+    },
+    {
+      "wing": "DW 1.25",
+      "scrape_count": 6616,
+      "first_scrape": "2026-08-28 21:57:47.641199-07:00",
+      "latest_scrape": "2026-09-07 17:20:30.156904-07:00",
+      "minimum_positive_voltage_v": 309.8,
+      "maximum_voltage_v": 393.5,
+      "requested_week_scrapes": 4860
+    }
+  ]
+}

@@ -1,0 +1,244 @@
+{
+  "verified_at": "2026-09-08T00:31:08.197918+00:00",
+  "method": "Chromium Playwright against the local app and authorized real MySolArk database; one run per wing/mode",
+  "runs": [
+    {
+      "mode": "live",
+      "wing": "1.21",
+      "episode_id": "33840d62-9034-4fe2-9d2d-3a24006ff671",
+      "selection": {
+        "wing": "1.21",
+        "replay_at": null
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:29:33.953397Z",
+      "observed_age_seconds": 88.8,
+      "model_calls": 0,
+      "source_time": "2026-09-08T00:28:05.168505Z",
+      "solar_power_kw": 0.81,
+      "load_power_kw": 0.228,
+      "battery_voltage_v": 393.0,
+      "floor_v": 313.2,
+      "first_hour_kw": 0.582,
+      "twelve_hour_kwh": 2.616
+    },
+    {
+      "mode": "live",
+      "wing": "1.22",
+      "episode_id": "66578c27-9d4f-498d-a6fb-63743f30db14",
+      "selection": {
+        "wing": "1.22",
+        "replay_at": null
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:29:34.571993Z",
+      "observed_age_seconds": 88.9,
+      "model_calls": 0,
+      "source_time": "2026-09-08T00:28:05.698828Z",
+      "solar_power_kw": 1.05,
+      "load_power_kw": 0.583,
+      "battery_voltage_v": 393.1,
+      "floor_v": 310.3,
+      "first_hour_kw": 0.467,
+      "twelve_hour_kwh": 1.705
+    },
+    {
+      "mode": "live",
+      "wing": "1.23",
+      "episode_id": "36ea42aa-def3-4a85-8ed0-0b51d3f2b7a8",
+      "selection": {
+        "wing": "1.23",
+        "replay_at": null
+      },
+      "status": "withheld",
+      "reason": "T3 withheld: scrape is 18678.3 seconds old at evaluation time (maximum 300)",
+      "generated_at": "2026-09-08T00:29:35.165091Z",
+      "observed_age_seconds": 18678.3,
+      "model_calls": 0
+    },
+    {
+      "mode": "live",
+      "wing": "1.24",
+      "episode_id": "c4c62621-ae0a-45b0-b8c2-1b018b621290",
+      "selection": {
+        "wing": "1.24",
+        "replay_at": null
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:02.630085Z",
+      "observed_age_seconds": 175.9,
+      "model_calls": 5,
+      "source_time": "2026-09-08T00:28:06.685472Z",
+      "solar_power_kw": 1.04,
+      "load_power_kw": 0.475,
+      "battery_voltage_v": 393.0,
+      "floor_v": 305.2,
+      "first_hour_kw": 0.565,
+      "twelve_hour_kwh": 2.246
+    },
+    {
+      "mode": "live",
+      "wing": "1.25",
+      "episode_id": "7d07a979-fcbc-46d1-9a51-c6f272970b8d",
+      "selection": {
+        "wing": "1.25",
+        "replay_at": null
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:03.863556Z",
+      "observed_age_seconds": 30.3,
+      "model_calls": 0,
+      "source_time": "2026-09-08T00:30:33.580869Z",
+      "solar_power_kw": 3.1,
+      "load_power_kw": 2.841,
+      "battery_voltage_v": 393.4,
+      "floor_v": 309.8,
+      "first_hour_kw": 0.259,
+      "twelve_hour_kwh": 0.518
+    },
+    {
+      "mode": "week",
+      "wing": "1.21",
+      "episode_id": "9cab36fa-0fe1-417b-8f6b-fc791bbaa3c5",
+      "selection": {
+        "wing": "1.21",
+        "replay_at": "2026-08-30T19:00:00Z"
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:04.852114Z",
+      "observed_age_seconds": 109.0,
+      "model_calls": 0,
+      "source_time": "2026-08-30T18:58:10.977152Z",
+      "solar_power_kw": 13.69,
+      "load_power_kw": 4.893,
+      "battery_voltage_v": 376.7,
+      "floor_v": 313.2,
+      "first_hour_kw": 8.797,
+      "twelve_hour_kwh": 37.723
+    },
+    {
+      "mode": "week",
+      "wing": "1.22",
+      "episode_id": "aa1d8f1a-1755-472b-9f60-f1951fa609cc",
+      "selection": {
+        "wing": "1.22",
+        "replay_at": "2026-08-30T19:00:00Z"
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:05.601585Z",
+      "observed_age_seconds": 108.3,
+      "model_calls": 0,
+      "source_time": "2026-08-30T18:58:11.685801Z",
+      "solar_power_kw": 2.07,
+      "load_power_kw": 0.682,
+      "battery_voltage_v": 393.2,
+      "floor_v": 310.3,
+      "first_hour_kw": 1.388,
+      "twelve_hour_kwh": 6.051
+    },
+    {
+      "mode": "week",
+      "wing": "1.23",
+      "episode_id": "b9c3b8b1-9511-4997-a375-f2baf0fec04f",
+      "selection": {
+        "wing": "1.23",
+        "replay_at": "2026-08-30T19:00:00Z"
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:06.398950Z",
+      "observed_age_seconds": 107.7,
+      "model_calls": 0,
+      "source_time": "2026-08-30T18:58:12.347218Z",
+      "solar_power_kw": 0.14,
+      "load_power_kw": 0.16,
+      "battery_voltage_v": 374.9,
+      "floor_v": 319.0,
+      "first_hour_kw": 0.0,
+      "twelve_hour_kwh": 0.0
+    },
+    {
+      "mode": "week",
+      "wing": "1.24",
+      "episode_id": "6c477cb8-e562-4e14-a2c3-1558383ccbc1",
+      "selection": {
+        "wing": "1.24",
+        "replay_at": "2026-08-30T19:00:00Z"
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:07.167498Z",
+      "observed_age_seconds": 106.9,
+      "model_calls": 0,
+      "source_time": "2026-08-30T18:58:13.102394Z",
+      "solar_power_kw": 2.15,
+      "load_power_kw": 1.526,
+      "battery_voltage_v": 389.9,
+      "floor_v": 305.2,
+      "first_hour_kw": 0.624,
+      "twelve_hour_kwh": 1.851
+    },
+    {
+      "mode": "week",
+      "wing": "1.25",
+      "episode_id": "a8cc639d-be46-4b56-8104-14088630bcb6",
+      "selection": {
+        "wing": "1.25",
+        "replay_at": "2026-08-30T19:00:00Z"
+      },
+      "status": "valid",
+      "reason": "T6 passed; evaluation baseline",
+      "generated_at": "2026-09-08T00:31:07.899197Z",
+      "observed_age_seconds": 106.2,
+      "model_calls": 0,
+      "source_time": "2026-08-30T18:58:13.818443Z",
+      "solar_power_kw": 1.33,
+      "load_power_kw": 0.805,
+      "battery_voltage_v": 385.3,
+      "floor_v": 309.8,
+      "first_hour_kw": 0.525,
+      "twelve_hour_kwh": 1.827
+    }
+  ],
+  "page_errors": [],
+  "paired_historical_comparison": {
+    "provider": "ollama",
+    "model": "gemma3:4b",
+    "evidence_id": "cbe8c7c5-ea86-4918-aa79-4443a352b36e",
+    "same_available_power": true,
+    "runs": [
+      {
+        "interpretation_enabled": false,
+        "elapsed_ms": 34,
+        "model_calls": 0,
+        "confidence": "reduced",
+        "episode_id": "d3b65fd2-1267-40ff-8206-bc380140cf63",
+        "status": "valid",
+        "selection": {
+          "wing": "1.21",
+          "replay_at": "2026-08-30T19:00:00Z"
+        },
+        "advice_accepted": null
+      },
+      {
+        "interpretation_enabled": true,
+        "elapsed_ms": 8841,
+        "model_calls": 1,
+        "confidence": "low",
+        "episode_id": "1a365ba8-71f9-42be-8b66-765bab6d3b65",
+        "status": "valid",
+        "selection": {
+          "wing": "1.21",
+          "replay_at": "2026-08-30T19:00:00Z"
+        },
+        "advice_accepted": false
+      }
+    ]
+  }
+}

@@ -135,7 +135,7 @@ def test_live_mysolark_mcp(browser, live_service, database_url, source_database)
             page.goto(url + "/inspector")
             page.get_by_role("button", name="Read MySolArk now").click()
             expect(page.locator("#evidence-note")).to_have_text(
-                "MySolArk live scrape + synthetic weather", timeout=15000
+                "DW 1.24 MySolArk live scrape + synthetic weather", timeout=15000
             )
             expect(page.locator("#tool-calls")).to_contain_text("get_current_telemetry")
             expect(page.locator("#tool-calls")).to_contain_text("get_solar_forecast")
@@ -415,6 +415,7 @@ def test_live_forecast_and_inspector_share_run(
                 "panel => { panel.scrollTop = panel.scrollHeight; }"
             )
             expect(page.get_by_role("tablist")).to_be_in_viewport(ratio=1)
+            expect(page.locator("#details-evidence-context summary")).to_be_in_viewport()
             expect(page.locator("#run-workflow")).to_be_in_viewport(ratio=1)
             assert page.evaluate("document.documentElement.scrollHeight <= innerHeight")
             page.get_by_role("link", name="Forecast", exact=True).click()
@@ -427,6 +428,57 @@ def test_live_forecast_and_inspector_share_run(
             page.reload()
             expect(page.locator("#floor-value")).to_have_text("305.2 V")
             assert errors == []
+        finally:
+            page.close()
+
+
+def test_wing_replay_steps_and_inspector(browser, live_service, database_url, wing_history):
+    with live_service(database_url) as url:
+        page = browser.new_page(viewport={"width": 1366, "height": 768})
+        try:
+            page.goto(url)
+            page.locator("#source").select_option("mysolark")
+            expect(page.locator("#wing option")).to_have_count(5)
+            page.locator("#wing").select_option("1.21")
+            page.locator("#time-window").select_option("week")
+            page.locator("#replay-time").fill("2026-08-30T12:00")
+            page.get_by_role("button", name="15 min", exact=True).click()
+            page.get_by_role("button", name="Next replay time").click()
+            expect(page.locator("#replay-time")).to_have_value("2026-08-30T12:15")
+            with page.expect_response("**/api/v1/pap/run") as response:
+                page.get_by_role("button", name="Run PAP", exact=True).click()
+            episode = response.value.json()
+            assert episode["selection"] == {"wing": "1.21", "replay_at": "2026-08-30T19:15:00Z"}
+            expect(page.locator("#publication-status")).to_have_text("Historical replay")
+            expect(page.locator("#power-value")).to_have_text("1.2")
+            expect(page.locator("#floor-value")).to_have_text("313.2 V")
+            expect(page.locator("#source-age")).to_contain_text("120 sec old at replay time")
+            expect(page.locator("#view-inspector")).to_be_in_viewport(ratio=1)
+            assert page.evaluate("document.documentElement.scrollHeight <= innerHeight")
+            page.get_by_role("link", name="Inspect this run", exact=True).click()
+            expect(page.locator("#selected-source")).to_contain_text("DW 1.21")
+            expect(page.locator("#evaluate-outcome")).to_be_disabled()
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#run-status")).to_contain_text("Historical replay", timeout=15000)
+            expect(page.locator("#graph-trace")).to_contain_text("2026-08-30T19:15:00Z")
+            page.get_by_role("link", name="Forecast", exact=True).click()
+            expect(page.locator("#wing")).to_have_value("1.21")
+            expect(page.locator("#replay-time")).to_have_value("2026-08-30T12:15")
+            page.get_by_role("button", name="1 hour", exact=True).click()
+            expect(page.locator("#replay-time")).to_have_value("2026-08-30T12:00")
+            page.get_by_role("button", name="Next replay time").click()
+            expect(page.locator("#replay-time")).to_have_value("2026-08-30T13:00")
+            page.locator("#replay-time").fill("2026-09-05T23:00")
+            expect(page.locator("#next-time")).to_be_disabled()
+            page.locator("#time-window").select_option("live")
+            with page.expect_response("**/api/v1/pap/run") as response:
+                page.get_by_role("button", name="Run PAP", exact=True).click()
+            assert response.value.json()["selection"] == {"wing": "1.21", "replay_at": None}
+            expect(page.locator("#publication-status")).to_have_text("Published evaluation")
+            page.set_viewport_size({"width": 390, "height": 844})
+            page.locator("#time-window").select_option("week")
+            expect(page.locator("#step-quarter")).to_be_visible()
+            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         finally:
             page.close()
 

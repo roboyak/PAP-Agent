@@ -30,8 +30,9 @@ only the service port. The bundled PAP password is for this local development cl
 | macmini-replay | Sunny synthetic fixture | Configured provider; Ollama by default |
 | test | Sunny fixture | Tests explicitly select deterministic doubles |
 
-Set `PAP_PROFILE` before starting. The UI's source buttons can explicitly select another
-source. Tests set `AGENT_BACKEND=test` and `EMBEDDING_BACKEND=test`; those results are labeled
+Set `PAP_PROFILE` before starting. Forecast selects DW 1.21–1.25 and either latest data or
+one time in August 30–September 6, with 1-hour/15-minute stepping; see [howto](../howto.md).
+Tests set `AGENT_BACKEND=test` and `EMBEDDING_BACKEND=test`; those results are labeled
 test doubles, never real model measurements.
 
 Set `AGENT_BACKEND` and `AGENT_MODEL` together to switch between local Ollama, OpenAI,
@@ -42,20 +43,25 @@ Embeddings still require Ollama. Cloud readiness checks configuration, not accou
 MySolArk is read from `pubnub_development` through `/tmp` by default. Configure its existing
 connection using `SOURCE_DATABASE_DSN`, independently of PAP's `DATABASE_URL`. Source reads
 use read-only transactions. Scrape timestamps are Rails UTC; they are not verified device
-measurement times. Scrapes older than five minutes are rejected. No raw source JSON or
+measurement times. Scrapes older than five minutes relative to the live or selected replay
+clock are rejected. No raw source JSON or
 device identifiers are copied into PAP responses.
 
-`BATTERY_FLOOR_V=305.2` is fixed from the user-approved observed minimum. It represents their
+`BATTERY_FLOOR_V=305.2` is DW 1.24's fixed user-approved observed minimum. Other wings use
+their [fixed scanned floors](../README.md#voltage-and-available-power). These represent the user's
 approximately 30% reserve convention; the service does not derive SOC or battery capacity.
 Weather is synthetic, battery discharge is budgeted as zero, and live equipment cap is unknown.
 
 ## A short walkthrough
 
-1. Open http://127.0.0.1:8000 and click Check service. Health should show readiness checks true.
-2. Click Run PAP. Inspect source timestamp, floor, hourly kW/kWh and the six debug tabs.
+1. Open http://127.0.0.1:8000/inspector and click Check service. Health shows current readiness.
+2. Open Forecast, select a wing and Run PAP. Inspect the result, then Inspect this run for the six tabs.
 3. Wait for a newer MySolArk scrape, then Evaluate latest reading. Memory shows point-power errors.
 4. Index memory to include new outcomes. Compare agent off / on to inspect one paired run.
 5. For a repeatable synthetic case, load sunny, run, evaluate cloudy, then run/compare again.
+
+Historical replay evaluates one selected snapshot, uses generic guidance and disables outcome
+feedback. Live feedback and memory remain separate by wing. Replay reuses retrospective floors.
 
 `ENABLE_INTERPRETATION_AGENT=false` is the default. Set it true before startup to add the
 third interpretation role to normal Run PAP requests. Comparison explicitly tests both.
