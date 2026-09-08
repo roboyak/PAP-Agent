@@ -24,21 +24,13 @@
     <p id="run-status">No run selected. Run PAP to begin.</p>
     <p id="run-meta" class="muted session-note"></p>
     <a id="view-output" href="/" hidden>View forecast</a>
-    <p id="next-step" class="session-note">Choose a source, then inspect one completed run across all six tabs.</p>
+    <details class="run-help"><summary>Run guidance</summary><p id="next-step" class="session-note">Choose a source, then inspect one completed run across all six tabs.</p></details>
     <p id="run-progress" aria-live="polite" hidden></p>
   </section>
 
   <div class="workspace">
     <section class="session" aria-labelledby="session-heading">
       <h2 id="session-heading">PAP session</h2>
-      <div class="conversation" role="log" aria-label="Session activity" aria-live="polite">
-        <div id="empty-session" class="empty-session">
-          <h3>Ready to calculate availability</h3>
-          <p>Run PAP to read the source and calculate solar surplus.</p>
-          <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
-        </div>
-        <div id="messages"></div>
-      </div>
       <div class="controls">
         <button id="run-workflow" class="primary">Run PAP</button>
         <button id="compare-agents">Compare agent off / on</button>
@@ -48,6 +40,7 @@
         <button id="calculate-pap">Calculate PAP</button>
         <button id="reset-view">Reset view</button>
       </div>
+      <p id="action-notice" role="alert" hidden></p>
       <p id="evidence-note" class="muted session-note">Run PAP or select a source to inspect its evidence.</p>
       <section id="published-profile" hidden>
         <h2>Power availability <span id="publication-status" class="badge"></span></h2>
@@ -58,6 +51,16 @@
         <p id="profile-explanation" class="muted session-note"></p></details>
         <button id="evaluate-outcome">Evaluate latest reading</button>
       </section>
+      <details class="session-history"><summary>Session activity</summary>
+      <div class="conversation" role="log" aria-label="Session activity" aria-live="polite">
+        <div id="empty-session" class="empty-session">
+          <h3>Ready to calculate availability</h3>
+          <p>Run PAP to read the source and calculate solar surplus.</p>
+          <p class="muted">Twelve-hour evaluation baseline with synthetic weather.</p>
+        </div>
+        <div id="messages"></div>
+      </div>
+      </details>
     </section>
 
     <section class="inspector" aria-label="Run inspector">

@@ -10,3 +10,51 @@ main{max-width:1540px;margin:auto;padding:30px}.page-heading{display:flex;justif
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
 @media(max-width:760px){.forecast-chart{overflow-x:auto}.forecast-chart svg{min-width:580px}}
+
+/* Keep the operational result together on desktop; details expand on demand. */
+.flow-section > summary { font-size:12px; color:var(--muted); }
+.flow-section .system-flow { margin-top:18px; }
+@media (min-width:1100px) {
+  .site-nav { min-height:56px; padding-left:20px; }
+  .brand { font-size:18px; }
+  main { max-width:1840px; padding:12px 20px 8px; }
+  .page-heading { margin-bottom:12px; }
+  h1 { font-size:25px; }
+  .page-heading p { margin-top:4px; font-size:12px; }
+  .forecast-layout { grid-template-columns:234px minmax(0,1fr); }
+  .source-rail section { padding:10px 16px; }
+  .source-rail h2 { font-size:14px; margin-bottom:9px; }
+  .source-rail section > p { margin:7px 0; }
+  .source-rail .primary { margin-top:5px; }
+  .source-values { grid-template-columns:1fr auto; align-items:baseline; gap:9px 8px; margin:12px 0; }
+  .source-values dd, .source-values dd:last-child { font-size:15px; margin:0; text-align:right; }
+  .source-values dt { font-size:10px; }
+  .assumptions ul { margin:8px 0; }
+  #source-time, #source-age { font-size:10px; }
+  #published-profile { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px 20px; padding:16px 20px 0; }
+  .result-heading, #run-status, .profile-summary, .result-footer { grid-column:1/-1; }
+  .result-heading { margin:0; }
+  #run-status { margin:0; }
+  #valid-output { display:contents; }
+  .profile-summary { margin:0; padding:11px 0; gap:20px; }
+  .profile-summary > div { gap:5px; }
+  .profile-summary .primary-metric strong { font-size:44px; }
+  .profile-summary strong { font-size:31px; }
+  #confidence-value { font-size:23px; }
+  .hourly-profile { min-width:0; }
+  .chart-heading { flex-wrap:wrap; gap:4px; }
+  .forecast-chart { min-height:0; margin-top:8px; }
+  .forecast-chart svg { height:clamp(195px,25vh,250px); }
+  .axis-label { font-size:14px; }
+  .bar-label { font-size:15px; }
+  #chart-period, .chart-note { font-size:10px; line-height:1.55; }
+  .chart-note { margin-bottom:10px; }
+  .guidance-panel { margin:0; padding:15px; align-self:start; }
+  .guidance-panel p { font-size:13px; line-height:1.6; }
+  .guidance-panel .small { font-size:11px; }
+  #published-profile:has(#valid-output[hidden]) .guidance-panel { grid-column:1/-1; }
+  .result-footer { padding:8px 0; border-top:1px solid var(--line); }
+  .flow-section { padding:11px 20px; }
+  .empty-result { min-height:420px; padding:55px 35px; }
+  footer { padding:12px 0 0; }
+}

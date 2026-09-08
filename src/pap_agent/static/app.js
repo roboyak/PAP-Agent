@@ -16,6 +16,7 @@ for (const id of ["model-context", "agent-comparison", "evidence-context", "calc
 }
 
 function beginAction(label) {
+  byId("action-notice").hidden = true;
   const started = performance.now();
   actionButtons.forEach(button => { button.disabled = true; });
   byId("run-progress").hidden = false;
@@ -37,9 +38,17 @@ function action(id, callback) {
     if (busyTimer !== null) return;
     beginAction(byId(id).textContent);
     try { await callback(); }
-    catch { appendMessage("Service", "The view could not be completed. Inspect the request in Trace."); }
+    catch {
+      showFailure("The view could not be completed. Inspect the request in Trace.");
+      appendMessage("Service", byId("action-notice").textContent);
+    }
     finally { endAction(); }
   });
+}
+
+function showFailure(message) {
+  byId("action-notice").textContent = message;
+  byId("action-notice").hidden = false;
 }
 
 function inspectList(id, rows, empty) {
@@ -227,6 +236,7 @@ async function readApi(path, body) {
   }
   summary.textContent = `${body ? "POST" : "GET"} ${path} · ${result.status} · ${Math.round(performance.now() - started)} ms`;
   output.textContent = JSON.stringify(result.body, null, 2);
+  if (result.status !== 200) showFailure(`Request failed: ${body ? "POST" : "GET"} ${path} (${result.status}). Inspect Trace.`);
   return result;
 }
 
@@ -353,7 +363,10 @@ action("run-workflow", async () => {
     await renderSelectedRun(episode);
     appendMessage("Workflow", `${episode.status} · ${episode.stop_reason}. Episode ${episode.episode_id}`);
     selectTab(byId("tab-trace"));
-  } else appendMessage("Workflow", "Run unavailable; inspect Trace.");
+  } else {
+    byId("run-status").textContent = "Run unavailable.";
+    appendMessage("Workflow", "Run unavailable; inspect Trace.");
+  }
   byId("run-workflow").disabled = false;
 });
 

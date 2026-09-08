@@ -21,7 +21,7 @@ function sourceAge() {
   if (!telemetry) return;
   const age = Math.max(0, Math.round((Date.now() - Date.parse(telemetry.observed_at)) / 1000));
   byId("source-age").textContent = telemetry.data_mode === "live"
-    ? `Recorded scrape: ${age < 60 ? `${age} seconds` : `${Math.floor(age / 60)} minutes`} old.${age > 300 ? " Stale now; run again for a fresh check." : ""}`
+    ? `Scrape: ${age < 60 ? `${age} sec` : `${Math.floor(age / 60)} min`} old.${age > 300 ? " Stale; run again." : ""}`
     : "Synthetic replay clock; not a live measurement.";
 }
 

@@ -23,7 +23,7 @@
         <h2>Run a forecast</h2>
         <label for="source">Telemetry source</label>
         <select id="source"><option value="mysolark">MySolArk / DW 1.24</option><option value="sunny">Sunny demo / synthetic</option></select>
-        <p class="small">Run PAP reads a new snapshot and saves the result with its evidence.</p>
+        <p class="small">Reads the latest snapshot.</p>
         <button id="run-workflow" class="primary" disabled>Run PAP</button>
         <p id="run-progress" role="status" hidden></p>
       </section>
@@ -42,7 +42,7 @@
       <section class="assumptions">
         <h2>Forecast assumptions</h2>
         <ul><li>Synthetic weather factors</li><li>Existing load held constant</li><li>No battery discharge</li></ul>
-        <p class="small">Voltage checks the recorded battery floor. Future voltage and equipment capability are not predicted.</p>
+        <details><summary>Model limits</summary><p class="small">Voltage checks the recorded battery floor. Future voltage and equipment capability are not predicted.</p></details>
       </section>
     </aside>
     <div class="result-workspace">
@@ -61,6 +61,7 @@
             <div><span>Energy / twelve hours</span><strong><span id="energy-value">—</span> <small>kWh</small></strong></div>
             <div><span>Confidence</span><strong id="confidence-value">—</strong><small>Qualitative, not a probability</small></div>
           </div>
+          <div class="hourly-profile">
           <div class="chart-heading"><h3>Hourly solar surplus</h3><span>Additional power / kW</span></div>
           <div id="forecast-chart" class="forecast-chart"></div>
           <p id="chart-period" class="small"></p>
@@ -68,6 +69,7 @@
           <details id="hourly-details"><summary>View the hourly numbers</summary>
             <table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead><tbody id="profile-intervals"></tbody></table>
           </details>
+          </div>
         </div>
         <section class="guidance-panel">
           <h3 id="guidance-heading">What the agent says</h3>
@@ -76,15 +78,15 @@
         </section>
         <div class="result-footer"><p id="run-meta" class="small"></p><a id="view-inspector" class="button-link" href="/inspector">Inspect this run</a></div>
       </section>
-      <section class="flow-section" aria-label="How the result is produced">
-        <h2>From reading to result</h2>
+      <details class="flow-section">
+        <summary>How the result is produced</summary>
         <div class="system-flow">
           <div class="flow-node source-node"><span>Read</span><strong>Telemetry + weather</strong><small>MCP source snapshots</small></div><span class="connector" aria-hidden="true">→</span>
           <div class="flow-node agent-node"><span>Reason</span><strong>Bounded workflow</strong><small>Models advise; Python checks</small></div><span class="connector" aria-hidden="true">→</span>
           <div class="flow-node output-node"><span>Publish</span><strong>Hourly profile</strong><small>Or withhold with a reason</small></div><span class="connector" aria-hidden="true">→</span>
           <div class="flow-node human-node"><span>Review</span><strong>Operator decision</strong><small>No equipment commands</small></div>
         </div>
-      </section>
+      </details>
     </div>
   </div>
   <footer><span>DragonWings / capstone MVP</span><span>Saved evaluations retain their original source time.</span><a href="/docs">API documentation</a></footer>
