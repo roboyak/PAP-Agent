@@ -13,6 +13,7 @@ from pap_agent.domain import PAP, Scenario
 from pap_agent.evidence import Evidence
 from pap_agent.outcomes import calibration
 from pap_agent.reasoning import get_record
+from pap_agent.selection import RunSelection
 from pap_agent.store import get_calculation, get_evidence, get_publication, save_publication
 
 
@@ -31,6 +32,7 @@ class PublishedPAP(BaseModel):
     feedback: dict | None = None
     interpretation: dict | None = None
     search: dict | None = None
+    selection: RunSelection = Field(default_factory=RunSelection)
 
 
 def publish(
@@ -56,12 +58,16 @@ def publish(
         status="withheld",
         evidence=evidence.scenario,
         reason=evidence.reason,
+        selection=evidence.selection,
+        observed_age_seconds=evidence.observed_age_seconds,
     )
     if calculation_id and evidence.scenario:
         calculation = Calculation.model_validate(get_calculation(database, calculation_id))
         result.reason = "; ".join(calculation.validation) or "T6 passed; evaluation baseline"
         scenario = evidence.scenario
-        age = (result.generated_at - scenario.telemetry.observed_at).total_seconds()
+        age = (
+            (evidence.selection.replay_at or result.generated_at) - scenario.telemetry.observed_at
+        ).total_seconds()
         result.observed_age_seconds = (
             round(age, 1) if scenario.telemetry.data_mode == "live" else None
         )
@@ -78,7 +84,9 @@ def publish(
             else:
                 result.status, result.profile = "valid", calculation.pap
                 result.feedback = calibration(
-                    database, scenario.telemetry.data_mode, calculation.forecast_version
+                    database,
+                    evidence.selection.feedback_scope(scenario.telemetry.data_mode),
+                    calculation.forecast_version,
                 )
                 if result.feedback:
                     result.profile.confidence = result.feedback["confidence"]

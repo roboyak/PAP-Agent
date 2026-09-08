@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import model_validator
 from sqlalchemy.exc import SQLAlchemyError
 
 from pap_agent import __version__
@@ -22,6 +22,7 @@ from pap_agent.outcomes import evaluate_publication
 from pap_agent.publisher import PublishedPAP
 from pap_agent.reasoning import episode_records
 from pap_agent.runtime import readiness
+from pap_agent.selection import RunSelection, Wing
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -36,8 +37,20 @@ from pap_agent.workflow import PAPGraphState, run_episode
 STATIC_DIR = Path(__file__).with_name("static")
 
 
-class RunRequest(BaseModel):
+class RunRequest(RunSelection):
     scenario: Literal["sunny", "mysolark"] | None = None
+
+    @model_validator(mode="after")
+    def replay_uses_recorded_source(self):
+        if self.scenario == "sunny" and self.replay_at:
+            raise ValueError("Historical replay requires MySolArk telemetry")
+        return self
+
+    def selection(self) -> RunSelection:
+        return RunSelection.model_validate(self.model_dump())
+
+    def source(self, default: str) -> str:
+        return self.scenario or ("mysolark" if self.replay_at else default)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -111,13 +124,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/memory/search")
     def search_memory(
         query: str = Query(min_length=1, max_length=500),
-        source_kind: Literal["live", "synthetic"] = "live",
+        source_kind: Literal["live", "synthetic", "general"] = "live",
+        wing: Wing = "1.24",
     ) -> dict:
-        return retrieve(app.state.database, query, source_kind)
+        return retrieve(
+            app.state.database,
+            query,
+            "general"
+            if source_kind == "general"
+            else RunSelection(wing=wing).feedback_scope(source_kind),
+        )
 
     @app.get("/api/v1/evidence/current")
-    async def current_evidence(scenario: Literal["sunny", "mysolark"] = "sunny") -> Evidence:
-        return await acquire(app.state.database, scenario)
+    async def current_evidence(
+        scenario: Literal["sunny", "mysolark"] = "sunny", wing: Wing = "1.24"
+    ) -> Evidence:
+        return await acquire(app.state.database, scenario, selection=RunSelection(wing=wing))
 
     @app.get("/api/v1/scenarios/{name}")
     def scenario(name: str) -> Scenario:
@@ -135,7 +157,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/v1/pap/calculate")
     async def calculate_pap(request: RunRequest) -> Calculation:
-        evidence = await acquire(app.state.database, request.scenario or default_source)
+        evidence = await acquire(
+            app.state.database, request.source(default_source), selection=request.selection()
+        )
         result = calculate(evidence)
         save_calculation(app.state.database, result.model_dump(mode="json"))
         return result
@@ -149,13 +173,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/v1/pap/run")
     async def run_pap(request: RunRequest, background: BackgroundTasks) -> PAPGraphState:
-        result = await run_episode(app.state.database, request.scenario or default_source)
+        result = await run_episode(
+            app.state.database, request.source(default_source), selection=request.selection()
+        )
         background.add_task(export_summary, result)
         return result
 
     @app.post("/api/v1/pap/compare")
     async def compare_pap(request: RunRequest, background: BackgroundTasks) -> dict:
-        result = await compare_agents(app.state.database, request.scenario or default_source)
+        result = await compare_agents(
+            app.state.database, request.source(default_source), selection=request.selection()
+        )
         for run in result["runs"]:
             background.add_task(export_summary, run["episode"])
         return result

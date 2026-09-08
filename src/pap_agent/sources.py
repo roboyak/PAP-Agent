@@ -10,6 +10,7 @@ from pydantic import AwareDatetime, BaseModel, Field
 
 from pap_agent.config import Settings
 from pap_agent.seed import sunny_fixture
+from pap_agent.selection import RunSelection
 
 
 class SourceResult(BaseModel):
@@ -22,7 +23,10 @@ class SourceResult(BaseModel):
     reason: str = ""
 
 
-def telemetry_source(scenario: Literal["sunny", "mysolark"]) -> SourceResult:
+def telemetry_source(
+    scenario: Literal["sunny", "mysolark"], selection: RunSelection | None = None
+) -> SourceResult:
+    selection = selection or RunSelection()
     if scenario == "sunny":
         snapshot = sunny_fixture().telemetry
         return SourceResult(
@@ -31,7 +35,11 @@ def telemetry_source(scenario: Literal["sunny", "mysolark"]) -> SourceResult:
             clock="replay",
             data=snapshot.model_dump(mode="json"),
         )
-    source = "DW 1.24 MySolArk persisted scrape"
+    source = f"DW {selection.wing} MySolArk persisted scrape"
+    site = f"%{selection.wing}%"
+    cutoff = (
+        selection.replay_at.astimezone(UTC).replace(tzinfo=None) if selection.replay_at else None
+    )
     try:
         with psycopg.connect(
             Settings().source_database_dsn.get_secret_value(),
@@ -41,7 +49,7 @@ def telemetry_source(scenario: Literal["sunny", "mysolark"]) -> SourceResult:
             connection.read_only = True
             connection.execute("SET LOCAL statement_timeout = 3000")
             count = connection.execute(
-                "SELECT count(*) AS n FROM sites WHERE name ILIKE %s", ("%1.24%",)
+                "SELECT count(*) AS n FROM sites WHERE name ILIKE %s", (site,)
             ).fetchone()["n"]
             if count != 1:
                 raise ValueError("Expected one source site")
@@ -54,18 +62,22 @@ def telemetry_source(scenario: Literal["sunny", "mysolark"]) -> SourceResult:
                 FROM telemetry_snapshots
                 WHERE message_type = 'solark_cloud'
                   AND device_id = (SELECT device_id FROM sites WHERE name ILIKE %s)
+                  AND (%s::timestamp IS NULL OR timestamp <= %s)
                 ORDER BY timestamp DESC LIMIT 1
             """,
-                ("%1.24%",),
+                (site, cutoff, cutoff),
             ).fetchone()
         if row is None or any(value is None for value in row.values()):
             raise ValueError("Required scrape fields missing")
         observed_at = row.pop("observed_at").astimezone(UTC)
+        # Keep existing DW 1.24 snapshot/outcome identities stable across this upgrade.
+        identity = "pap:mysolark:" + ("" if selection.wing == "1.24" else f"{selection.wing}:")
         return SourceResult(
             source=source,
             source_time=observed_at,
+            clock="replay" if selection.replay_at else "wall",
             data={
-                "id": str(uuid5(NAMESPACE_URL, f"pap:mysolark:{observed_at.isoformat()}")),
+                "id": str(uuid5(NAMESPACE_URL, identity + observed_at.isoformat())),
                 "observed_at": observed_at.isoformat(),
                 **row,
                 "source": source,

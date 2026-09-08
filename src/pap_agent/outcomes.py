@@ -1,7 +1,7 @@
 """T8 compares point power samples, not completed-hour energy or calibrated probabilities."""
 
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4, uuid5
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 from pap_agent.database import Database
 from pap_agent.domain import ForecastInterval, TelemetrySnapshot
 from pap_agent.evidence import acquire
+from pap_agent.selection import RunSelection
 from pap_agent.store import get_calculation, get_publication
 
 
@@ -31,6 +32,14 @@ def calibration(database: Database, source_kind: str, forecast_version: str) -> 
 
 
 def evaluate_sample(database: Database, publication: dict, sample: TelemetrySnapshot) -> dict:
+    selection = RunSelection.model_validate(publication.get("selection", {}))
+    if selection.replay_at:
+        raise ValueError("Historical snapshot replay does not update live outcome feedback")
+    expected = publication["evidence"]["telemetry"]
+    if sample.data_mode != expected["data_mode"] or (
+        sample.data_mode == "live" and sample.source != expected["source"]
+    ):
+        raise ValueError("Outcome must come from the same wing and source")
     calculation = get_calculation(database, publication["calculation_id"])
     forecasts = [ForecastInterval.model_validate(item) for item in calculation["forecast"]]
     index = next(
@@ -66,7 +75,7 @@ def evaluate_sample(database: Database, publication: dict, sample: TelemetrySnap
         "publication_id": publication["id"],
         "sample": sample.model_dump(mode="json"),
     }
-    version, source = calculation["forecast_version"], sample.data_mode
+    version, source = calculation["forecast_version"], selection.feedback_scope(sample.data_mode)
     with database.session() as session:
         session.execute(
             text("""INSERT INTO outcome_records VALUES (:id, :publication, CAST(:payload AS jsonb))
@@ -115,6 +124,9 @@ async def evaluate_publication(database: Database, publication_id: UUID) -> dict
     publication = get_publication(database, publication_id)
     if publication is None or publication["status"] != "valid":
         raise ValueError("A validated publication is required")
+    selection = RunSelection.model_validate(publication.get("selection", {}))
+    if selection.replay_at:
+        raise ValueError("Historical snapshot replay does not update live outcome feedback")
 
     async def observe_and_evaluate(state: EvaluationState):
         source = publication["evidence"]["telemetry"]["data_mode"]
@@ -126,11 +138,13 @@ async def evaluate_publication(database: Database, publication_id: UUID) -> dict
             sample.solar_power_kw *= 0.5
             sample.source = "Synthetic cloudy outcome"
         else:
-            evidence = await acquire(database, "mysolark")
+            evidence = await acquire(database, "mysolark", selection=selection)
             if evidence.status != "valid":
                 raise ValueError("No fresh observed outcome is available")
             sample = evidence.scenario.telemetry
-            if str(sample.id) == publication["evidence"]["telemetry"]["id"]:
+            if sample.observed_at <= datetime.fromisoformat(
+                publication["evidence"]["telemetry"]["observed_at"]
+            ):
                 raise ValueError("No newer MySolArk scrape yet; evaluate after the next scrape")
         result = evaluate_sample(database, publication, sample)
         return {"outcome_id": result["outcome"]["id"]}
@@ -161,6 +175,8 @@ async def evaluate_publication(database: Database, publication_id: UUID) -> dict
     return {
         **row,
         "calibration": calibration(
-            database, row["outcome"]["sample"]["data_mode"], calculation["forecast_version"]
+            database,
+            selection.feedback_scope(row["outcome"]["sample"]["data_mode"]),
+            calculation["forecast_version"],
         ),
     }

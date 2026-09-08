@@ -5,19 +5,26 @@ from time import perf_counter
 from pap_agent.config import Settings
 from pap_agent.database import Database
 from pap_agent.evidence import acquire
+from pap_agent.selection import RunSelection
 from pap_agent.store import get_calculation, get_publication
 from pap_agent.workflow import run_episode
 
 
-async def compare_agents(database: Database, scenario="mysolark") -> dict:
+async def compare_agents(
+    database: Database, scenario="mysolark", *, selection: RunSelection | None = None
+) -> dict:
     settings = Settings()
-    evidence = await acquire(database, scenario)
+    evidence = await acquire(database, scenario, selection=selection)
     runs = []
     intervals = []
     for enabled in (False, True):
         started = perf_counter()
         episode = await run_episode(
-            database, scenario, evidence_id=evidence.id, interpretation_enabled=enabled
+            database,
+            scenario,
+            evidence_id=evidence.id,
+            interpretation_enabled=enabled,
+            selection=selection,
         )
         elapsed = round((perf_counter() - started) * 1000)
         calculation = (

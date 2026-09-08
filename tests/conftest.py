@@ -51,6 +51,31 @@ def source_database(database, monkeypatch):
 
 
 @pytest.fixture
+def wing_history(database, source_database):
+    """Two recorded points per wing plus latest readings; no production data."""
+    with database.session() as session:
+        for index, wing in enumerate(("1.21", "1.22", "1.23", "1.24", "1.25")):
+            device = "test-device" if wing == "1.24" else f"test-{wing}"
+            if wing != "1.24":
+                session.execute(
+                    text("INSERT INTO source_fixture.sites VALUES (:name, :device)"),
+                    {"name": f"DW {wing}", "device": device},
+                )
+                session.execute(
+                    text("""INSERT INTO source_fixture.telemetry_snapshots VALUES
+                    (:device, 'solark_cloud', CURRENT_TIMESTAMP AT TIME ZONE 'UTC',
+                     380, 2400, 500)"""),
+                    {"device": device},
+                )
+            session.execute(
+                text("""INSERT INTO source_fixture.telemetry_snapshots VALUES
+                (:device, 'solark_cloud', '2026-08-30 18:58:00', 380, :solar, 500),
+                (:device, 'solark_cloud', '2026-08-30 19:13:00', 381, :later_solar, 600)"""),
+                {"device": device, "solar": 2100 + index * 100, "later_solar": 1800 + index * 100},
+            )
+
+
+@pytest.fixture
 def empty_database_url():
     """Own a disposable database; never migrate or clear the development database."""
     admin = Database(Settings())

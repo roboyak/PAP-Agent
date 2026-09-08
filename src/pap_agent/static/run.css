@@ -14,11 +14,32 @@ main{max-width:1540px;margin:auto;padding:30px}.page-heading{display:flex;justif
 /* Keep the operational result together on desktop; details expand on demand. */
 .flow-section > summary { font-size:12px; color:var(--muted); }
 .flow-section .system-flow { margin-top:18px; }
+.run-controls { display:flex; flex-wrap:wrap; align-items:end; gap:10px; padding:10px 14px; border:1px solid var(--ink); background:#cec49c; }
+.run-controls label, .control-label { display:block; font-size:10px; margin-bottom:4px; color:var(--muted); }
+.run-controls select, .run-controls input, .run-controls button { height:34px; font:inherit; font-size:11px; padding:6px 8px; border:1px solid var(--ink); color:var(--ink); background:var(--panel); border-radius:0; }
+.run-controls input { width:190px; }
+.run-controls .primary { width:auto; min-width:105px; margin:0 0 0 auto; color:var(--panel); background:var(--ink); }
+#replay-controls { display:flex; align-items:end; gap:10px; }
+.step-options, .step-navigation { display:flex; }
+.step-options button + button, .step-navigation button + button { border-left:0; }
+.step-options button[aria-pressed="true"] { background:var(--ink); color:var(--panel); }
+.step-navigation button { width:30px; }
+#selection-note { margin:5px 0 8px; font-size:10px; max-width:none; }
+.run-controls #run-progress { flex-basis:100%; margin:0; }
+@media(max-width:760px) {
+  #replay-controls { flex-wrap:wrap; width:100%; }
+  .run-controls > div:first-child { flex:1 0 100%; }
+  .run-controls #source { width:100%; }
+  .source-rail { display:block; }
+  .source-rail section:first-child { border-right:0; }
+}
 @media (min-width:1100px) {
   .site-nav { min-height:56px; padding-left:20px; }
   .brand { font-size:18px; }
   main { max-width:1840px; padding:12px 20px 8px; }
-  .page-heading { margin-bottom:12px; }
+  .page-heading { margin-bottom:8px; }
+  .page-heading > div { display:flex; align-items:baseline; gap:20px; }
+  .run-controls { padding:6px 14px; }
   h1 { font-size:25px; }
   .page-heading p { margin-top:4px; font-size:12px; }
   .forecast-layout { grid-template-columns:234px minmax(0,1fr); }
@@ -31,12 +52,12 @@ main{max-width:1540px;margin:auto;padding:30px}.page-heading{display:flex;justif
   .source-values dt { font-size:10px; }
   .assumptions ul { margin:8px 0; }
   #source-time, #source-age { font-size:10px; }
-  #published-profile { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:12px 20px; padding:16px 20px 0; }
+  #published-profile { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px 20px; padding:12px 20px 0; }
   .result-heading, #run-status, .profile-summary, .result-footer { grid-column:1/-1; }
   .result-heading { margin:0; }
-  #run-status { margin:0; }
+  #run-status { margin:0; max-width:none; }
   #valid-output { display:contents; }
-  .profile-summary { margin:0; padding:11px 0; gap:20px; }
+  .profile-summary { margin:0; padding:8px 0; gap:20px; }
   .profile-summary > div { gap:5px; }
   .profile-summary .primary-metric strong { font-size:44px; }
   .profile-summary strong { font-size:31px; }
@@ -44,7 +65,7 @@ main{max-width:1540px;margin:auto;padding:30px}.page-heading{display:flex;justif
   .hourly-profile { min-width:0; }
   .chart-heading { flex-wrap:wrap; gap:4px; }
   .forecast-chart { min-height:0; margin-top:8px; }
-  .forecast-chart svg { height:clamp(195px,25vh,250px); }
+  .forecast-chart svg { height:clamp(160px,20vh,220px); }
   .axis-label { font-size:14px; }
   .bar-label { font-size:15px; }
   #chart-period, .chart-note { font-size:10px; line-height:1.55; }
@@ -53,8 +74,8 @@ main{max-width:1540px;margin:auto;padding:30px}.page-heading{display:flex;justif
   .guidance-panel p { font-size:13px; line-height:1.6; }
   .guidance-panel .small { font-size:11px; }
   #published-profile:has(#valid-output[hidden]) .guidance-panel { grid-column:1/-1; }
-  .result-footer { padding:8px 0; border-top:1px solid var(--line); }
-  .flow-section { padding:11px 20px; }
+  .result-footer { padding:5px 0; border-top:1px solid var(--line); }
+  .flow-section { padding:7px 20px; }
   .empty-result { min-height:420px; padding:55px 35px; }
   footer { padding:12px 0 0; }
 }

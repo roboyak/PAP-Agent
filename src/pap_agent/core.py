@@ -86,7 +86,11 @@ def calculate(evidence: Evidence, calculation_id: UUID | None = None) -> Calcula
         return result
     if (
         scenario.telemetry.data_mode == "live"
-        and not 0 <= (datetime.now(UTC) - scenario.telemetry.observed_at).total_seconds() <= 300
+        and not 0
+        <= (
+            (evidence.selection.replay_at or datetime.now(UTC)) - scenario.telemetry.observed_at
+        ).total_seconds()
+        <= 300
     ):
         result.validation = ["Evidence became stale before calculation"]
         return result

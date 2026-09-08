@@ -38,6 +38,8 @@ async def main():
         await expect(page.get_by_role("button", name="Run PAP", exact=True)).to_be_enabled()
         await page.locator("#source").select_option("sunny")
         await page.locator("#source").select_option("mysolark")
+        await page.locator("#wing").select_option("1.24")
+        await page.locator("#time-window").select_option("live")
         await page.evaluate("""() => {
           const caption = document.createElement('div'); caption.id = 'demo-caption';
           caption.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:999;
@@ -72,6 +74,7 @@ async def main():
         ).json()
         assert publication["status"] == "valid", "This output lesson requires a published example"
         assert publication["evidence"]["telemetry"]["data_mode"] == "live"
+        assert publication["selection"] == {"wing": "1.24", "replay_at": None}
         records = await (
             await context.request.get(
                 f"{args.url}/api/v1/episodes/{episode['episode_id']}/inspection"

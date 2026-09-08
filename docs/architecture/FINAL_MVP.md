@@ -25,9 +25,16 @@ source envelopes, UTC scrape freshness and the twelve-hour weather horizon. Dete
 Python owns T4 forecasting, T5 power/energy math, T6 voltage/cap checks and T7 publication.
 It rechecks freshness and constraints after model work. No hardware-control tools exist.
 
-The fixed live voltage floor is 305.2 V, mapped by the user to their approximate 30% reserve.
-No dynamic minimum can lower it. The observed scan range was 305.2–394.3 V. Measured SOC,
+DW 1.24's fixed voltage floor is 305.2 V, mapped by the user to their approximate 30% reserve.
+DW 1.21–1.25 each use a [fixed scanned floor](../../README.md#voltage-and-available-power).
+No dynamic minimum can lower these floors. DW 1.24's observed range was 305.2–394.3 V. Measured SOC,
 battery capacity, discharge energy and a voltage/SOC curve are not inferred.
+
+Latest source selection uses wall time. The August 30–September 6 snapshot replay uses an
+explicit Pacific-time selection for freshness at acquisition, calculation and publication.
+Original scrape and actual save times are retained. Graph state, evidence and publication
+preserve the wing/time selection. Replay uses generic guidance and cannot update live feedback;
+live feedback stays with its wing. Fixed floors are retrospectively calibrated.
 
 The minimal forecast uses current PV power times synthetic hourly factors and constant
 measured load. Available kW is nonnegative solar surplus, capped only when a cap is configured;

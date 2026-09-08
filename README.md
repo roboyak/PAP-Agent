@@ -1,7 +1,7 @@
 # DragonWings PAP Agent
 
-A read-only capstone MVP, built in twelve small PRs. It reads DW 1.24's persisted
-MySolArk scrape, calculates a twelve-hour solar-surplus profile, and exposes the evidence,
+A read-only capstone MVP, developed in small teaching PRs. It reads DW 1.21–1.25's persisted
+MySolArk scrapes, calculates a twelve-hour solar-surplus profile, and exposes the evidence,
 memory, tool calls and agent decisions behind it. No Docker or Gradio.
 
 ## Run
@@ -33,10 +33,20 @@ Do not point PAP migrations at the source database.
 source age and agent guidance. **Inspect this run** opens **Inspector** (`/inspector`)
 with the same episode. The navigation links retain that episode in both directions.
 
-**Run PAP** reads the latest source and runs the durable workflow. **Load sunny fixture**
+Choose a **wing** and **Latest scrape**, or **Aug 30–Sep 6, 2026** for recorded history.
+The week runs from Sunday midnight to Sunday midnight, Pacific time, excluding the end.
+Choose a replay time and step with **1 hour / 15 min** and the arrow buttons. **Run PAP**
+runs one snapshot at that time; it does not batch the week. The forecast remains twelve
+hourly intervals. Scrapes must be at most five minutes old relative to the selected time.
+
+**Run PAP** reads the selected source and runs the durable workflow. **Load sunny fixture**
 and **Read MySolArk now** select/inspect a source; **Calculate PAP** runs the numerical core.
 **Evaluate latest reading** compares a newer scrape with the forecast. The sunny fixture's
 **Evaluate cloudy demo** creates clearly labeled synthetic feedback.
+Inspector reruns and comparisons retain the selected wing/time. Live feedback and memory
+are separated by wing. Historical replay uses generic guidance only and cannot update live
+feedback; this avoids using later outcomes as earlier knowledge. The recorded source still
+has `data_mode=live` (real origin); `selection.replay_at` distinguishes its historical clock.
 
 | Inspector | What it shows |
 | --- | --- |
@@ -60,9 +70,21 @@ results. Long actions show elapsed time and a pending request while conflicting 
 
 ## Voltage and available power
 
-The fixed live battery floor is **305.2 V**, the scanned minimum that the user maps to their
-approximately 30% SOC reserve. The scanned maximum was **394.3 V**. Future lower readings
-do not lower this configured floor. At/below the floor, additional power is withheld.
+Each wing uses a fixed observed-minimum voltage floor. The user maps this to approximately
+30% SOC reserve. [The read-only scan](docs/data/wing-floors.json) records the source ranges:
+
+| Wing | Fixed floor | Observed maximum |
+| --- | ---: | ---: |
+| DW 1.21 | 313.2 V | 393.3 V |
+| DW 1.22 | 310.3 V | 393.2 V |
+| DW 1.23 | 319.0 V | 389.2 V |
+| DW 1.24 | 305.2 V | 394.3 V |
+| DW 1.25 | 309.8 V | 393.5 V |
+
+`BATTERY_FLOOR_V` remains the DW 1.24 override; other fixed floors are in `selection.py`.
+Future lower readings do not lower these floors. At/below the floor, additional power is withheld.
+The scan includes data after the replay week, so replay uses retrospective policy calibration
+and is not an unbiased historical accuracy benchmark. Real-time freshness uses wall-clock time.
 SOC is not a measured input, and no voltage-to-SOC curve is inferred.
 
 The current profile uses measured PV/load power with **synthetic weather factors**, constant

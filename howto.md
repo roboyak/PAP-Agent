@@ -9,7 +9,7 @@ Ctrl-C stops the app. No Docker. `.env.example` lists optional settings.
 
 ## Run and read the result
 
-1. Open **Forecast**, choose **MySolArk / DW 1.24**, then **Run PAP**.
+1. Open **Forecast**, choose **MySolArk**, a **wing**, and **Latest scrape**, then **Run PAP**.
 2. Read the first-hour **kW**, twelve-hour **kWh**, confidence and hourly chart.
 3. Read the agent's guidance and source timestamp. Saved results can become stale.
 4. Use **Inspect this run** to see the evidence behind that exact result.
@@ -18,6 +18,11 @@ kW is power; kWh is energy across time. Zero means no extra solar allocation.
 The baseline uses synthetic weather, constant load and no battery discharge.
 It checks the voltage floor and never commands equipment. Withheld means no
 validated profile; inspect the reason before running again.
+
+For history, choose **Aug 30–Sep 6, 2026**, pick a **Pacific** time, then **1 hour / 15 min**
+and the arrows to step through the week. **Run PAP** evaluates that one snapshot; the output
+stays hourly. Sunday midnight September 6 is excluded. **Historical replay** is labeled and
+uses the preceding scrape (maximum five minutes old). Change back to **Latest scrape** for now.
 
 ## Debug in Inspector
 
@@ -38,6 +43,8 @@ On desktop, the main forecast fits one screen. Inspector keeps its six tabs visi
 while details scroll; expand **Session activity** for prior actions.
 **Evaluate latest reading** records feedback; **Index memory** makes eligible feedback
 retrievable. Manual memory search does not change the selected run.
+Inspector keeps the chosen wing/time. Replay uses generic guidance and disables outcome
+feedback; live feedback stays with its wing.
 
 For a reproducible demo, load the sunny fixture in Inspector. **Compare agent off / on**
 uses one snapshot for both modes. Provider switches require restarting the app:

@@ -6,6 +6,7 @@ from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 from pydantic import AwareDatetime
 
+from pap_agent.selection import RunSelection, Wing
 from pap_agent.sources import SourceResult, telemetry_source, weather_source
 
 server = MCPServer("PAP read-only sources")
@@ -13,9 +14,13 @@ READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_wo
 
 
 @server.tool(annotations=READ_ONLY)
-def get_current_telemetry(scenario: Literal["sunny", "mysolark"] = "sunny") -> SourceResult:
-    """Read latest persisted MySolArk scrape with its real timestamp, or a synthetic fixture."""
-    return telemetry_source(scenario)
+def get_current_telemetry(
+    scenario: Literal["sunny", "mysolark"] = "sunny",
+    wing: Wing = "1.24",
+    replay_at: AwareDatetime | None = None,
+) -> SourceResult:
+    """Read a wing's latest scrape at/before replay_at, or now; preserve its recorded time."""
+    return telemetry_source(scenario, RunSelection(wing=wing, replay_at=replay_at))
 
 
 @server.tool(annotations=READ_ONLY)

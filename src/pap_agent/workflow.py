@@ -22,6 +22,7 @@ from pap_agent.outcomes import calibration
 from pap_agent.publisher import publish
 from pap_agent.reasoning import get_record, save_record
 from pap_agent.search import build_search
+from pap_agent.selection import RunSelection
 from pap_agent.store import (
     get_calculation,
     get_episode,
@@ -50,6 +51,7 @@ class PAPGraphState(TypedDict):
     search_id: NotRequired[str]
     search_round: NotRequired[int]
     search_done: NotRequired[bool]
+    selection: NotRequired[dict]
 
 
 def checkpoint_dsn(database: Database) -> str:
@@ -75,7 +77,12 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
         evidence = (
             Evidence.model_validate(stored)
             if stored
-            else await acquire(database, state["scenario"], record_id)
+            else await acquire(
+                database,
+                state["scenario"],
+                record_id,
+                selection=RunSelection.model_validate(state.get("selection", {})),
+            )
         )
         return {
             "evidence_id": str(evidence.id),
@@ -118,7 +125,9 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
             evidence = Evidence.model_validate(get_evidence(database, state["evidence_id"]))
             result = get_calculation(database, state["calculation_id"])
             feedback = calibration(
-                database, evidence.scenario.telemetry.data_mode, result["forecast_version"]
+                database,
+                evidence.selection.feedback_scope(evidence.scenario.telemetry.data_mode),
+                result["forecast_version"],
             )
             ambiguous = bool(feedback and feedback["mean_solar_bias_kw"] > 0.25)
             record = {
@@ -130,6 +139,8 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
                 "evidence_id": state["evidence_id"],
                 "reason": "Observed solar overestimation: persistence vs refresh guidance"
                 if ambiguous
+                else "Historical replay uses generic guidance only; no later outcomes"
+                if evidence.selection.replay_at
                 else "No grounded ambiguity signal",
                 "demo_threshold_kw": 0.25,
             }
@@ -154,7 +165,7 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
                     "kind": "retrieval",
                     **select_context(
                         database,
-                        evidence.scenario.telemetry.data_mode,
+                        evidence.selection.feedback_scope(evidence.scenario.telemetry.data_mode),
                         calculation["forecast_version"],
                     ),
                 }
@@ -179,6 +190,7 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
             "support an advisory recommendation.",
             "evidence_id": state["evidence_id"],
             "telemetry": evidence.scenario.telemetry.model_dump(mode="json"),
+            "selection": evidence.selection.model_dump(mode="json"),
             "policy": evidence.scenario.policy.model_dump(mode="json"),
             "forecast": "12-hour solar persistence with synthetic weather; battery budget 0 kWh",
             "validated_facts": {
@@ -314,6 +326,7 @@ async def run_episode(
     *,
     evidence_id=None,
     interpretation_enabled: bool | None = None,
+    selection: RunSelection | None = None,
 ) -> PAPGraphState:
     episode_id = episode_id or uuid4()
     config = {"configurable": {"thread_id": str(episode_id)}, "recursion_limit": 24}
@@ -329,6 +342,7 @@ async def run_episode(
             else {
                 "episode_id": str(episode_id),
                 "scenario": scenario,
+                "selection": (selection or RunSelection()).model_dump(mode="json"),
                 "evidence_id": str(evidence_id) if evidence_id else "",
                 "interpretation_enabled": Settings().enable_interpretation_agent
                 if interpretation_enabled is None

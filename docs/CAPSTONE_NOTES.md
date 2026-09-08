@@ -75,3 +75,15 @@ The three-role comparison measures identical-evidence latency/call counts and ex
 for review; the observed real-model pair did not establish a quality improvement. The fixed
 305.2 V floor and optional-third-role default remain unchanged. LangSmith is summary-only,
 optional and disabled; no remote tracing was exercised during the build.
+
+## PR19: wing selection and snapshot replay
+
+The user authorized all wings' live MySolArk data, the August 30–September 6 Sunday-to-Sunday
+week, and 1-hour/15-minute stepping. The UI runs one selected snapshot at a time. The period
+is midnight Pacific to midnight Pacific, end excluded; persisted timestamps remain UTC.
+The five wings are DW 1.21–1.25. Fixed positive minima and source coverage are recorded in
+`docs/data/wing-floors.json`; this extends the user's observed-minimum policy, without
+automatically lowering any floor or inferring an SOC curve. The scan is retrospective.
+Replay checks age at the selected time at T3/calculation/T7 and cannot update live feedback.
+Live feedback is per wing; recorded runs retain their source, selection and actual save time.
+Submission decks/videos remain labeled snapshots of their original runs, not new replay evals.
