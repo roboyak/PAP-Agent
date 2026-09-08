@@ -14,7 +14,7 @@
 </nav>
 <main>
   <header class="page-heading">
-    <div><h1>Power availability</h1><p>Watch PAP turn recorded sunlight into a power forecast.</p></div>
+    <div><h1>Follow the power</h1><p>Solar coming in. Power being used. What’s left.</p></div>
     <span class="badge">Read only / evaluation</span>
   </header>
   <section class="run-controls" aria-label="Source and run controls">
@@ -22,7 +22,9 @@
     <div id="wing-control"><label for="wing">Wing</label><select id="wing"><option value="1.21">DW 1.21</option><option value="1.22">DW 1.22</option><option value="1.23">DW 1.23</option><option value="1.24" selected>DW 1.24</option><option value="1.25">DW 1.25</option></select></div>
     <div id="window-control"><label for="time-window">Run from</label><select id="time-window"><option value="live">Latest scrape</option><option value="week">Aug 30–Sep 6, 2026</option></select></div>
     <div id="replay-controls" hidden>
-      <div><label for="replay-time">Start time / Pacific</label><input id="replay-time" type="datetime-local" min="2026-08-30T00:00" max="2026-09-05T23:00" step="3600" value="2026-08-30T00:00"></div>
+      <div><label for="replay-day">Start day / Pacific</label><select id="replay-day"><option value="2026-08-30">Sun Aug 30</option><option value="2026-08-31">Mon Aug 31</option><option value="2026-09-01">Tue Sep 1</option><option value="2026-09-02">Wed Sep 2</option><option value="2026-09-03">Thu Sep 3</option><option value="2026-09-04">Fri Sep 4</option><option value="2026-09-05">Sat Sep 5</option></select></div>
+      <div><label for="replay-end-day">End day / included</label><select id="replay-end-day"><option value="2026-08-30">Sun Aug 30</option><option value="2026-08-31">Mon Aug 31</option><option value="2026-09-01">Tue Sep 1</option><option value="2026-09-02">Wed Sep 2</option><option value="2026-09-03">Thu Sep 3</option><option value="2026-09-04">Fri Sep 4</option><option value="2026-09-05" selected>Sat Sep 5</option></select></div>
+      <div><label for="replay-time">Start time</label><input id="replay-time" type="time" min="00:00" max="23:00" step="3600" value="00:00"></div>
       <div><span class="control-label">Step by</span><div class="step-options" role="group" aria-label="Replay increment"><button type="button" id="step-hour" aria-pressed="true">1 hour</button><button type="button" id="step-quarter" aria-pressed="false">15 min</button></div></div>
       <div class="step-navigation"><button id="previous-time" aria-label="Previous replay time">←</button><button id="next-time" aria-label="Next replay time">→</button></div>
     </div>
@@ -34,7 +36,7 @@
   <section id="simulator" class="simulator" aria-label="Simulation progress" hidden>
     <div class="simulation-clock"><span id="simulation-status" class="badge">Ready</span><strong id="simulation-time">—</strong><span>Pacific / simulated time</span></div>
     <div class="simulation-progress"><div><strong id="simulation-count">0 steps</strong><span id="simulation-summary">Read data → forecast → advance clock</span></div><progress id="simulation-progress" value="0" max="1" aria-label="Simulation completion"></progress><p id="simulation-explanation">Press Start. Each step runs PAP automatically through the end of the week.</p></div>
-    <div class="simulator-controls"><button id="pause-simulation" hidden>Pause</button><button id="resume-simulation" hidden>Resume</button><button id="simulation-history" disabled>Results</button></div>
+    <div class="simulator-controls"><div><label for="playback-speed">Playback speed</label><select id="playback-speed" title="Pause between completed steps: Fast 0 sec, Normal 1 sec, Slow 3 sec. Agent processing still takes time."><option value="0">Fast</option><option value="1" selected>Normal</option><option value="3">Slow</option></select></div><button id="pause-simulation" hidden>Pause</button><button id="resume-simulation" hidden>Resume</button><button id="simulation-history" disabled>Results</button></div>
   </section>
   <div class="forecast-layout">
     <aside class="source-rail" aria-label="Source facts and assumptions">
@@ -42,8 +44,8 @@
         <h2>Recorded source</h2>
         <p id="source-state" class="small">No source loaded.</p>
         <dl class="source-values">
-          <dt>Solar generation</dt><dd id="solar-value">—</dd>
-          <dt>Existing load</dt><dd id="load-value">—</dd>
+          <dt>Solar coming in</dt><dd id="solar-value">—</dd>
+          <dt>Site using</dt><dd id="load-value">—</dd>
           <dt>Battery voltage</dt><dd id="voltage-value">—</dd>
           <dt>Voltage floor</dt><dd id="floor-value">—</dd>
         </dl>
@@ -52,39 +54,55 @@
       </section>
       <section class="assumptions">
         <h2>Forecast assumptions</h2>
-        <ul><li>Synthetic weather factors</li><li>Existing load held constant</li><li>No battery discharge</li></ul>
+        <ul><li>Demo weather, not a weather service</li><li>Site usage held constant</li><li>No battery discharge</li></ul>
         <details><summary>Model limits</summary><p class="small">Voltage checks the recorded battery floor. Future voltage and equipment capability are not predicted.</p></details>
       </section>
     </aside>
     <div class="result-workspace">
       <section id="empty-result" class="empty-result">
-        <div class="empty-diagram" aria-hidden="true"><span>Source</span><b>→</b><span>Agent</span><b>→</b><span>Profile</span></div>
-        <h2>See the power available beyond the existing load.</h2>
-        <p>Choose the recorded week and press Start simulation. PAP reads each time step and updates the forecast here. For a single reading, use Run once.</p>
+        <div class="empty-diagram" aria-hidden="true"><span>Solar in</span><b>−</b><span>Site use</span><b>=</b><span>Solar left</span></div>
+        <h2>Watch a real day of solar power.</h2>
+        <p>Choose a wing and the recorded week. Start at midnight and press Start simulation to watch the day unfold. For a single reading, use Run once.</p>
       </section>
       <p id="request-error" role="alert" hidden></p>
       <section id="published-profile" hidden aria-labelledby="output-heading">
-        <div class="result-heading"><h2 id="output-heading">Forecast output</h2><span id="publication-status" class="badge"></span></div>
+        <div class="result-heading"><h2 id="output-heading">Power forecast</h2><div class="view-options" role="group" aria-label="Output view"><button id="view-recorded" aria-pressed="false">Recorded day</button><button id="view-forecast" aria-pressed="true">Future estimate</button></div><span id="publication-status" class="badge"></span></div>
         <p id="run-status" class="small"></p>
+        <div id="recorded-output" hidden>
+          <div class="power-story" aria-label="Recorded power balance">
+            <div><span>Solar coming in</span><strong id="solar-current">—</strong></div><b aria-hidden="true">−</b>
+            <div><span>Site using</span><strong id="load-current">—</strong></div><b aria-hidden="true">→</b>
+            <div><span>Solar left over</span><strong id="surplus-current">—</strong></div>
+          </div>
+          <div class="recorded-timeline">
+            <div class="chart-heading"><h3 id="recorded-day-heading">Recorded day / Pacific time</h3><div class="chart-day-control"><label for="chart-day">Chart day</label><select id="chart-day"><option value="follow">Follow playback</option></select></div></div>
+            <div class="chart-legend"><span class="solar-key">Solar coming in</span><span class="load-key">Site using</span><span class="surplus-key">Solar left over</span></div>
+            <div id="recorded-chart" class="recorded-chart"></div>
+            <p id="recorded-period" class="small"></p>
+            <p class="small recorded-note">Power in kW. Gaps mean missing readings. Future hours stay blank.</p>
+          </div>
+        </div>
         <div id="valid-output">
           <div id="profile-summary" class="profile-summary">
-            <div class="primary-metric"><span>Additional power / first hour</span><strong><span id="power-value">—</span> <small>kW</small></strong></div>
-            <div><span>Energy / twelve hours</span><strong><span id="energy-value">—</span> <small>kWh</small></strong></div>
+            <div class="primary-metric"><span>Estimated extra power / first hour</span><strong><span id="power-value">—</span> <small>kW</small></strong></div>
+            <div><span>Estimated energy / twelve hours</span><strong><span id="energy-value">—</span> <small>kWh</small></strong></div>
             <div><span>Confidence</span><strong id="confidence-value">—</strong><small>Qualitative, not a probability</small></div>
           </div>
           <div class="hourly-profile">
-          <div class="chart-heading"><h3>Hourly solar surplus</h3><span>Additional power / kW</span></div>
+          <div class="chart-heading"><h3>Future estimate / next twelve hours</h3><span>Extra power / kW</span></div>
           <div id="forecast-chart" class="forecast-chart"></div>
           <p id="chart-period" class="small"></p>
+          <p id="forecast-limit" class="small">Uses the current reading and demo weather. This baseline does not predict sunrise or sunset.</p>
           <details id="hourly-details"><summary>View the hourly numbers</summary>
             <p class="small chart-note">Zero means no additional solar power is allocated. The energy total is spread across twelve hours.</p>
-            <table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead><tbody id="profile-intervals"></tbody></table>
+            <table><thead><tr><th>Hour starting (Pacific)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead><tbody id="profile-intervals"></tbody></table>
           </details>
           </div>
         </div>
         <section class="guidance-panel">
           <h3 id="guidance-heading">What the agent says</h3>
           <p id="agent-guidance"></p>
+          <p id="power-definition" class="small" hidden>kW is power at this moment. Leftover solar is before battery charging or other limits.</p>
           <details><summary>Calculation assumptions</summary><p id="profile-explanation" class="small"></p></details>
         </section>
         <div class="result-footer"><p id="run-meta" class="small"></p><a id="view-inspector" class="button-link" href="/inspector">Inspect this run</a></div>

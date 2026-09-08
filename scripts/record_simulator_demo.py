@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,8 +18,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:8000")
     parser.add_argument("--wing", choices=["1.21", "1.22", "1.23", "1.24", "1.25"], default="1.21")
-    parser.add_argument("--start", default="2026-08-30T12:00", help="Pacific time")
+    parser.add_argument("--start", default="2026-08-30T00:00", help="Pacific time")
     parser.add_argument("--step", type=int, choices=[15, 60], default=60)
+    parser.add_argument("--end-day", help="Included Pacific day; defaults to the starting day")
+    parser.add_argument(
+        "--complete",
+        "--whole-day",
+        dest="complete",
+        action="store_true",
+        help="Finish the selected dates after Inspector",
+    )
     args = parser.parse_args()
     folder = ROOT / "output/recordings" / datetime.now(UTC).strftime("simulator_%Y%m%d_%H%M%S")
     folder.mkdir(parents=True)
@@ -41,21 +50,41 @@ def main():
             page.locator("#source").select_option("mysolark")
             page.locator("#wing").select_option(args.wing)
             page.locator("#time-window").select_option("week")
-            page.locator("#replay-time").fill(args.start)
+            page.locator("#replay-day").select_option(args.start[:10])
+            page.locator("#replay-end-day").select_option(args.end_day or args.start[:10])
+            page.locator("#replay-time").fill(args.start[11:16])
             page.get_by_role(
                 "button", name="15 min" if args.step == 15 else "1 hour", exact=True
             ).click()
             with page.expect_response("**/api/v1/simulations") as response:
                 page.get_by_role("button", name="Start simulation", exact=True).click()
             assert response.value.status == 200, "Pause any existing simulation before recording."
-            run_id = response.value.json()["id"]
+            run = response.value.json()
+            run_id = run["id"]
+            print(f"{args.url}/?simulation={run_id}", flush=True)
             expect(page.locator("#published-profile")).to_be_visible()
             expect(page.locator("#publication-status")).to_have_text("Historical replay")
             page.screenshot(path=folder / "first-forecast.png")
-            page.wait_for_timeout(10000)
-            page.get_by_role("button", name="Pause", exact=True).click()
-            expect(page.locator("#simulation-status")).to_have_text("Paused", timeout=600000)
+            if args.complete:
+                page.wait_for_function(
+                    """steps => Number(document.getElementById('simulation-count')
+                        .textContent.split(' / ')[0]) >= steps""",
+                    arg=run["total_steps"] // 2 + 1,
+                    timeout=600000,
+                )
+            else:
+                page.wait_for_timeout(10000)
+            if page.get_by_role("button", name="Pause", exact=True).is_visible():
+                page.get_by_role("button", name="Pause", exact=True).click()
+            expect(page.locator("#simulation-status")).to_have_text(
+                re.compile("Paused|Finished"), timeout=600000
+            )
+            expect(page.locator("#run-progress")).to_be_hidden()
             page.screenshot(path=folder / "paused.png")
+            page.get_by_role("button", name="Future estimate", exact=True).click()
+            page.wait_for_timeout(2500)
+            page.screenshot(path=folder / "future-estimate.png")
+            page.get_by_role("button", name="Recorded day", exact=True).click()
             page.get_by_role("button", name="Results", exact=True).click()
             page.wait_for_timeout(3500)
             page.locator("#simulation-results a").first.click()
@@ -64,12 +93,30 @@ def main():
                 page.get_by_role("tab", name=tab, exact=True).click()
                 page.wait_for_timeout(1000)
             page.get_by_role("link", name="Back to simulation", exact=True).click()
-            page.get_by_role("button", name="Resume", exact=True).click()
-            page.wait_for_timeout(5000)
-            page.get_by_role("button", name="Pause", exact=True).click()
-            expect(page.locator("#simulation-status")).to_have_text("Paused", timeout=600000)
+            expect(page.locator("#simulation-status")).to_have_text(
+                re.compile("Paused|Finished"), timeout=600000
+            )
+            expect(page.locator("#run-progress")).to_be_hidden()
+            if page.get_by_role("button", name="Resume", exact=True).is_visible():
+                page.get_by_role("button", name="Resume", exact=True).click()
+            if args.complete:
+                expect(page.locator("#simulation-status")).to_have_text("Finished", timeout=600000)
+            else:
+                page.wait_for_timeout(5000)
+                if page.get_by_role("button", name="Pause", exact=True).is_visible():
+                    page.get_by_role("button", name="Pause", exact=True).click()
+                expect(page.locator("#simulation-status")).to_have_text(
+                    re.compile("Paused|Finished"), timeout=600000
+                )
             result = context.request.get(f"{args.url}/api/v1/simulations/{run_id}").json()
-            assert result["completed_steps"] > 1 and not errors
+            assert result["completed_steps"] >= 1 and not errors
+            if args.complete:
+                page.locator("#chart-day").select_option(args.start[:10])
+                expect(page.locator("#run-progress")).to_be_hidden()
+                page.screenshot(path=folder / "first-day.png", full_page=True)
+                page.wait_for_timeout(3000)
+                page.locator("#chart-day").select_option("follow")
+                expect(page.locator("#run-progress")).to_be_hidden()
             (folder / "run.json").write_text(json.dumps(result, indent=2) + "\n")
             page.screenshot(path=folder / "desktop.png", full_page=True)
             page.wait_for_timeout(3000)

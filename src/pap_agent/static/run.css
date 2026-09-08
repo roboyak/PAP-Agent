@@ -17,7 +17,7 @@ main{max-width:1540px;margin:auto;padding:30px}.page-heading{display:flex;justif
 .run-controls { display:flex; flex-wrap:wrap; align-items:end; gap:10px; padding:10px 14px; border:1px solid var(--ink); background:#cec49c; }
 .run-controls label, .control-label { display:block; font-size:10px; margin-bottom:4px; color:var(--muted); }
 .run-controls select, .run-controls input, .run-controls button { height:34px; font:inherit; font-size:11px; padding:6px 8px; border:1px solid var(--ink); color:var(--ink); background:var(--panel); border-radius:0; }
-.run-controls input { width:190px; }
+.run-controls input { width:100px; }
 .run-controls .primary { width:auto; min-width:105px; margin:0 0 0 auto; color:var(--panel); background:var(--ink); }
 #replay-controls { display:flex; align-items:end; gap:10px; }
 .step-options, .step-navigation { display:flex; }
@@ -95,10 +95,58 @@ progress::-webkit-progress-value { background:#3b5b43; }
   .guidance-panel { margin:0; padding:15px; align-self:start; }
   .guidance-panel p { font-size:13px; line-height:1.6; }
   .guidance-panel .small { font-size:11px; }
-  #published-profile:has(#valid-output[hidden]) .guidance-panel { grid-column:1/-1; }
+  #published-profile:has(#valid-output[hidden]):has(#recorded-output[hidden]) .guidance-panel { grid-column:1/-1; }
   .result-footer { padding:4px 0; border-top:1px solid var(--line); }
   .result-footer .button-link { padding:5px 9px; }
   .flow-section { padding:4px 20px; }
   .empty-result { min-height:420px; padding:55px 35px; }
   footer { padding:12px 0 0; }
+}
+
+/* A recorded day leads with a power balance, then its observed solar/load timeline. */
+.view-options { display:flex; margin-left:auto; }
+.view-options button { padding:5px 9px; font-size:11px; }
+.view-options button + button { border-left:0; }
+.view-options button[aria-pressed="true"] { background:var(--ink); color:var(--panel); }
+.power-story { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:16px; border-block:1px solid var(--line); margin:14px 0; padding:16px 0; }
+.power-story > div { display:flex; flex-direction:column; gap:5px; }
+.power-story span { font-size:12px; }
+.power-story strong { font-size:36px; line-height:1.15; font-weight:500; letter-spacing:-1px; white-space:nowrap; }
+.power-story b { font-size:24px; font-weight:400; color:var(--muted); }
+.power-story > div:first-child strong { color:#805714; }
+.power-story > div:last-child strong { color:#315c43; }
+.chart-legend { display:flex; flex-wrap:wrap; gap:12px; font-size:10px; margin:8px 0 0; }
+.chart-legend span::before { content:""; display:inline-block; width:20px; border-top:3px solid #946617; margin:0 6px 3px 0; }
+.chart-legend .load-key::before { border-color:#45473f; border-top-style:dashed; }
+.chart-legend .surplus-key::before { border-color:#38694d; border-top-style:dotted; }
+.recorded-chart svg { width:100%; display:block; }
+#recorded-period, .recorded-note, #forecast-limit { margin:4px 0; max-width:none; font-size:10px; }
+.simulator-controls { align-items:end; }
+.simulator-controls label { display:block; font-size:9px; }
+.simulator-controls select { padding:5px 7px; font-size:11px; }
+.recorded-timeline { min-width:0; }
+.chart-day-control { display:flex; align-items:center; gap:7px; }
+.chart-day-control label { font-size:10px; }
+.chart-day-control select { font-size:10px; padding:2px 4px; }
+@media(min-width:1100px) {
+  #published-profile { row-gap:4px; }
+  #recorded-output { display:contents; }
+  .power-story { grid-column:1/-1; margin:0; padding:5px 0; }
+  .power-story strong { font-size:36px; }
+  .recorded-chart svg { height:clamp(160px,20vh,220px); }
+  .recorded-timeline { grid-column:1; }
+  .guidance-panel:has(#power-definition:not([hidden])) { padding:13px; }
+  .guidance-panel #power-definition { font-size:10px; }
+  .profile-summary { padding:3px 0; }
+  footer { padding-top:6px; }
+}
+@media(max-width:760px) {
+  .view-options { margin:0; }
+  .result-heading { gap:10px; }
+  .power-story { gap:7px; padding:15px 0; }
+  .power-story strong { font-size:19px; letter-spacing:-.5px; }
+  .power-story span { font-size:10px; }
+  .power-story b { font-size:17px; }
+  .recorded-chart { overflow-x:auto; }
+  .recorded-chart svg { min-width:580px; }
 }

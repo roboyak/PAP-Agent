@@ -5,7 +5,15 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from pap_agent import simulator
-from pap_agent.simulator import Simulation, SimulationRequest, Simulator, get, save, view
+from pap_agent.simulator import (
+    PlaybackSpeed,
+    Simulation,
+    SimulationRequest,
+    Simulator,
+    get,
+    save,
+    view,
+)
 from pap_agent.store import get_episode
 
 
@@ -30,6 +38,9 @@ def test_simulator_runs_real_workflow_to_end(database, wing_history):
         assert result["next_at"] is None
         assert [row["status"] for row in result["results"]] == ["valid", "valid", "withheld"]
         assert [row["available_kw"] for row in result["results"]] == [1.6, 1.2, None]
+        assert [row["solar_kw"] for row in result["results"]] == [2.1, 1.8, None]
+        assert [row["load_kw"] for row in result["results"]] == [0.5, 0.6, None]
+        assert result["results"][0]["observed_at"] == "2026-08-30T18:58:00Z"
         for index, row in enumerate(result["results"]):
             episode = get_episode(database, run.episode_id(index))
             assert row["episode_id"] == episode["episode_id"]
@@ -58,11 +69,14 @@ def test_pause_finishes_step_and_resume_keeps_progress(database, wing_history, m
         run = runner.start(request())
         await entered.wait()
         assert runner.pause(get(database, run.id)).status == "pausing"
+        changed = runner.speed(get(database, run.id), PlaybackSpeed(delay_seconds=0))
+        assert changed.completed_steps == 0 and changed.status == "pausing"
         finish.set()
         await runner.task
         paused = get(database, run.id)
         assert paused.status == "paused"
         assert paused.completed_steps == 1
+        assert paused.delay_seconds == 0
         runner.resume(paused)
         await runner.task
         assert get(database, run.id).status == "completed"

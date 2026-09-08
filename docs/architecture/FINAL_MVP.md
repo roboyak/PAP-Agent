@@ -42,6 +42,13 @@ each step calls the existing LangGraph with a deterministic episode ID. Replay a
 interruption reuses that thread and its canonical publication. Pause finishes a step, while
 server restart requires explicit Resume. No multi-worker queue is included. The UI polls
 progress; Results opens fixed Inspector records while the simulator continues in the background.
+The main view defaults to a recorded day, using telemetry already saved in completed PAPs.
+Solar, site usage and nonnegative leftover solar are distinct traces in Pacific time; missing
+readings break the trace and future hours stay blank. The twelve-hour baseline has a separate
+Future estimate view. Start/end day selectors default to all seven days, with the end day included. A chart-day
+selector reviews completed days while the background clock continues. Fast/Normal/Slow
+persists a 0/1/3-second inter-step delay in the existing simulation JSON; changing it never
+skips work or changes the graph. Older saved runs default to one second.
 
 The minimal forecast uses current PV power times synthetic hourly factors and constant
 measured load. Available kW is nonnegative solar surplus, capped only when a cap is configured;

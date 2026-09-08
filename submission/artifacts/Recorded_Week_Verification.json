@@ -1,0 +1,29 @@
+{
+  "automated": true,
+  "silent": true,
+  "source_folder": "output/recordings/simulator_20260908_020135",
+  "simulation_id": "64a72cba-bcc7-42a2-84b1-b78fb1dd35a3",
+  "wing": "1.24",
+  "status": "completed",
+  "starts_at": "2026-08-30T07:00:00Z",
+  "ends_at": "2026-09-06T07:00:00Z",
+  "step_minutes": 60,
+  "completed_steps": 168,
+  "outcomes": {
+    "valid": 162,
+    "withheld": 6
+  },
+  "day_steps": {
+    "2026-08-30": 24,
+    "2026-08-31": 24,
+    "2026-09-01": 24,
+    "2026-09-02": 24,
+    "2026-09-03": 24,
+    "2026-09-04": 24,
+    "2026-09-05": 24
+  },
+  "duration_seconds": 308.28,
+  "sha256": "3d461285bba843f0cb0a94a14edfad3b4991b7c54de1620d5dffbc44c7cb2dce",
+  "decode_verified": true,
+  "notes": "Normal-speed recording before the speed selector was added. Inclusive dates, separate recorded/forecast views, six Inspector tabs, pause/resume and earlier-day review use real MySolArk data. Not forecast-accuracy evidence."
+}

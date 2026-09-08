@@ -22,14 +22,21 @@ validated profile; inspect the reason before running again.
 ## Watch the simulator
 
 1. Choose **MySolArk**, a **wing**, and **Aug 30–Sep 6, 2026**.
-2. Pick a starting **Pacific** time and **1 hour / 15 min**, then **Start simulation**.
-3. Watch the clock, progress and forecast update automatically. Each step estimates twelve
-   hours; the selected increment advances the replay clock, not the forecast interval.
+2. Choose **Start day** and **End day** (included). Defaults cover August 30–September 5.
+   Keep **12:00 AM Pacific**, choose **1 hour / 15 min**, then **Start simulation**.
+3. **Recorded day** shows solar coming in, site usage and solar left over. Night readings
+   usually show zero solar while usage continues. Morning solar can be positive with no
+   surplus when the site uses it all. Missing readings leave gaps; future hours stay blank.
+   **Future estimate** is separate: twelve hours using the current reading and demo weather.
+   It does not model sunrise or sunset.
 4. **Pause** finishes the current step. **Resume** continues. **Results → Inspect** opens
    any saved step; **Back to simulation** returns to the progressing run.
 
-One wing runs at a time, through September 6 midnight (end excluded). The replay runs faster
-than real time, with a one-second pause between steps. It continues across page changes;
+One wing runs at a time through midnight after the selected end day. Choose the same
+start/end day to replay just that day. **Chart day** reviews any completed day; choose
+**Follow playback** to return to the advancing day. The replay runs faster
+than real time. Change **Playback speed** while running: Fast has no added pause, Normal
+adds one second, Slow adds three. Agent processing still takes time. It continues across page changes;
 after stopping/restarting the server, explicitly **Resume**. Use one `make run` process.
 **Run once** evaluates only the selected starting snapshot. **Start new** begins another run.
 The latest simulator is restored on the home page; keep its URL to revisit an older run.
@@ -42,10 +49,26 @@ battery physics simulator or a forecast-accuracy score. Choose **Latest scrape**
 To regenerate a short silent walkthrough (app running, simulator paused, FFmpeg installed):
 
 ```bash
-uv run python scripts/record_simulator_demo.py --wing 1.21 --step 60
+uv run python scripts/record_simulator_demo.py --wing 1.24 --step 60 --complete
+# To record all seven days as well:
+uv run python scripts/record_simulator_demo.py --wing 1.24 --end-day 2026-09-05 --complete
 ```
 
 It saves MP4/WebM, screenshots and run metadata under `output/recordings/`.
+To verify all five wings on Fast, with the app idle:
+
+```bash
+uv run python scripts/verify_week_playback.py
+```
+
+This checks 168 hourly steps per wing, Pause/Reload/Resume, seven-day step counts and
+earlier-day review.
+Results are saved to `docs/data/week-playback-verification.json`.
+To recheck source coverage and morning generation (read-only):
+
+```bash
+uv run python scripts/audit_mysolark_week.py
+```
 
 ## Debug in Inspector
 
