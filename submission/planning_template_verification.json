@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-08",
+  "implementation_commit": "1a7a7ee1863ead864f5b3843def2aa7f1ee6291a",
+  "pdf": "submission/2026-09-08_DragonWings_7.1_Capstone_Planning.pdf",
+  "sha256": "2c2d4fd72a531cca4bc15ba6307828f18da90d3c5fb7fa06745bc6dac634f32f",
+  "source_sha256": "8a4f78608621d3a5a2c55287479f9f5fb62043172b2db3a9dd1d26a9e5c2fc11",
+  "pages": 6,
+  "editable_answers": 10,
+  "answer_words": 1082,
+  "checks": {
+    "canonical_and_widget_values_match_json": true,
+    "appearance_streams_present": true,
+    "source_page_content_preserved": true,
+    "existing_output_refused_without_change": true,
+    "overflow_rejected_before_output": true,
+    "all_six_pages_visually_reviewed_by_agent": true
+  },
+  "runtime_verification": {
+    "command": "make verify",
+    "backend_tests_passed": 78,
+    "playwright_tests_passed": 22
+  },
+  "limits": "No human review, public repository visibility, narrated video delivery, or new forecast accuracy benchmark claimed."
+}
