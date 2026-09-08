@@ -36,6 +36,13 @@ Original scrape and actual save times are retained. Graph state, evidence and pu
 preserve the wing/time selection. Replay uses generic guidance and cannot update live feedback;
 live feedback stays with its wing. Fixed floors are retrospectively calibrated.
 
+Start/Pause/Resume schedules historical steps sequentially in the foreground service process.
+The `simulations` table stores the selected wing, bounded window, cadence and progress;
+each step calls the existing LangGraph with a deterministic episode ID. Replay after an
+interruption reuses that thread and its canonical publication. Pause finishes a step, while
+server restart requires explicit Resume. No multi-worker queue is included. The UI polls
+progress; Results opens fixed Inspector records while the simulator continues in the background.
+
 The minimal forecast uses current PV power times synthetic hourly factors and constant
 measured load. Available kW is nonnegative solar surplus, capped only when a cap is configured;
 kWh integrates each interval. Battery-discharge budget is zero. No future voltage guarantee

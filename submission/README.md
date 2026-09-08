@@ -11,6 +11,7 @@ the content and scripts that produced them.
 | 90-second pitch | [PowerPoint](artifacts/DragonWings_90_Second_Pitch.pptx), [PDF](artifacts/DragonWings_90_Second_Pitch.pdf) |
 | Speaking preparation | [Main script](artifacts/DragonWings_Presentation_Plan_and_Script.docx), [faculty Q&A](artifacts/DragonWings_Faculty_Showcase_Preparation.docx) |
 | App walkthroughs | [2:30 MP4](artifacts/DragonWings_App_Walkthrough_short.mp4), [9:00 MP4](artifacts/DragonWings_App_Walkthrough_full.mp4), [narration guide](artifacts/Narration_Guide.md) |
+| Simulator demo | [33-second MP4](artifacts/DragonWings_Simulator_Demo.mp4), [first forecast](examples/simulator/first-forecast.png) |
 | Video submission | [Link document](artifacts/DragonWings_Video_Link_Submission.docx), awaiting hosted URLs |
 
 The app walkthroughs are silent browser recordings. Add your narration before using them
@@ -140,3 +141,22 @@ instead of substituting invented numbers. New live readings can change values an
 Slides and video use the same episode. Review each regenerated artifact before copying it
 into `submission/artifacts/`. The existing full submission files and 2:30/9:00 videos are
 versioned PR16 snapshots; this companion demonstrates the current two-page UI.
+
+## Simulator walkthrough
+
+The silent PR20 clip shows Start, automatic clock/forecast updates, Pause, Results, all six
+Inspector tabs, and Resume using DW 1.21's real recorded MySolArk data. It runs at one-hour
+replay increments; output forecasts still contain twelve hourly intervals. This is a short
+feature demonstration, not the required narrated 8–10-minute presentation.
+[Verification](artifacts/Simulator_Recording_Verification.json) records its duration/hash;
+[run evidence](../docs/data/simulator-run-verification.json) includes its saved results and
+a separate completed three-step DW 1.25 replay at 15-minute increments.
+
+With the app running and any existing simulator paused, regenerate using Playwright/FFmpeg:
+
+```bash
+uv run --locked python scripts/record_simulator_demo.py --wing 1.21 --step 60
+```
+
+Use `--step 15` for quarter-hour playback. Review the printed output folder, then copy its
+selected MP4/screenshot into the versioned paths above and refresh the verification receipt.

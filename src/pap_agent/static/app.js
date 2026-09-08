@@ -1,5 +1,7 @@
 const byId = (id) => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[role="tab"]')];
+const simulationId = new URLSearchParams(location.search).get("simulation");
+const simulationQuery = simulationId ? `simulation=${encodeURIComponent(simulationId)}` : "";
 let currentScenario = document.body.dataset.defaultSource;
 let currentSelection = {wing:"1.24", replay_at:null};
 let currentPublication = null;
@@ -72,10 +74,11 @@ function inspectList(id, rows, empty) {
 
 function clearSelection(title = "No run selected. Run PAP to begin.") {
   currentPublication = null;
-  history.replaceState(null, "", location.pathname);
+  history.replaceState(null, "", location.pathname + (simulationQuery ? "?" + simulationQuery : ""));
   byId("published-profile").hidden = true;
   byId("view-output").hidden = true;
-  byId("forecast-link").href = "/";
+  byId("forecast-link").href = "/" + (simulationQuery ? "?" + simulationQuery : "");
+  byId("forecast-link").textContent = simulationId ? "Back to simulation" : "Forecast";
   byId("run-status").textContent = title;
   byId("run-meta").replaceChildren();
   byId("next-step").textContent = "Run PAP to create a result and inspect its complete workflow.";
@@ -117,7 +120,7 @@ function renderCalculation(result) {
 async function renderSelectedRun(episode, publication = null) {
   clearSelection("Loading completed run…");
   const link = document.createElement("a");
-  link.href = `?episode=${encodeURIComponent(episode.episode_id)}`;
+  link.href = `?episode=${encodeURIComponent(episode.episode_id)}${simulationQuery ? "&" + simulationQuery : ""}`;
   link.textContent = `Run ${episode.episode_id}`;
   byId("run-meta").append(link);
   history.replaceState(null, "", link.href);
@@ -163,7 +166,8 @@ function renderPublication(publication) {
   if (publication.feedback) byId("outcome-feedback").textContent = JSON.stringify(publication.feedback, null, 2);
   byId("published-profile").hidden = false;
   byId("view-output").hidden = false;
-  byId("view-output").href = byId("forecast-link").href = `/?episode=${encodeURIComponent(publication.episode_id)}`;
+  byId("view-output").href = `/?episode=${encodeURIComponent(publication.episode_id)}`;
+  byId("forecast-link").href = simulationQuery ? "/?" + simulationQuery : byId("view-output").href;
   byId("publication-status").textContent = publication.status;
   const intervals = publication.profile?.intervals ?? [];
   const energy = intervals.reduce((sum, row) => sum + row.energy_kwh, 0);
@@ -433,6 +437,8 @@ async function restoreRun() {
       const response = await readApi(`/api/v1/episodes/${encodeURIComponent(selected)}`);
       if (response.status === 200) await renderSelectedRun(response.body);
       else clearSelection("Saved run was not found. Run PAP to begin.");
+    } else if (simulationId) {
+      clearSelection("Simulation continues in the background. Open a completed step to inspect it.");
     } else {
       const response = await readApi("/api/v1/pap/latest");
       if (response.status === 200 && response.body) {

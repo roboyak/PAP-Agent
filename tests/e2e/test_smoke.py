@@ -446,7 +446,7 @@ def test_wing_replay_steps_and_inspector(browser, live_service, database_url, wi
             page.get_by_role("button", name="Next replay time").click()
             expect(page.locator("#replay-time")).to_have_value("2026-08-30T12:15")
             with page.expect_response("**/api/v1/pap/run") as response:
-                page.get_by_role("button", name="Run PAP", exact=True).click()
+                page.get_by_role("button", name="Run once", exact=True).click()
             episode = response.value.json()
             assert episode["selection"] == {"wing": "1.21", "replay_at": "2026-08-30T19:15:00Z"}
             expect(page.locator("#publication-status")).to_have_text("Historical replay")

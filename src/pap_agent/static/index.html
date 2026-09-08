@@ -14,7 +14,7 @@
 </nav>
 <main>
   <header class="page-heading">
-    <div><h1>Power availability</h1><p>A twelve-hour view of additional solar power.</p></div>
+    <div><h1>Power availability</h1><p>Watch PAP turn recorded sunlight into a power forecast.</p></div>
     <span class="badge">Read only / evaluation</span>
   </header>
   <section class="run-controls" aria-label="Source and run controls">
@@ -22,14 +22,20 @@
     <div id="wing-control"><label for="wing">Wing</label><select id="wing"><option value="1.21">DW 1.21</option><option value="1.22">DW 1.22</option><option value="1.23">DW 1.23</option><option value="1.24" selected>DW 1.24</option><option value="1.25">DW 1.25</option></select></div>
     <div id="window-control"><label for="time-window">Run from</label><select id="time-window"><option value="live">Latest scrape</option><option value="week">Aug 30–Sep 6, 2026</option></select></div>
     <div id="replay-controls" hidden>
-      <div><label for="replay-time">Replay time / Pacific</label><input id="replay-time" type="datetime-local" min="2026-08-30T00:00" max="2026-09-05T23:00" step="3600" value="2026-08-30T12:00"></div>
+      <div><label for="replay-time">Start time / Pacific</label><input id="replay-time" type="datetime-local" min="2026-08-30T00:00" max="2026-09-05T23:00" step="3600" value="2026-08-30T00:00"></div>
       <div><span class="control-label">Step by</span><div class="step-options" role="group" aria-label="Replay increment"><button type="button" id="step-hour" aria-pressed="true">1 hour</button><button type="button" id="step-quarter" aria-pressed="false">15 min</button></div></div>
       <div class="step-navigation"><button id="previous-time" aria-label="Previous replay time">←</button><button id="next-time" aria-label="Next replay time">→</button></div>
     </div>
+    <button id="start-simulation" class="primary" hidden>Start simulation</button>
     <button id="run-workflow" class="primary" disabled>Run PAP</button>
     <p id="run-progress" role="status" hidden></p>
   </section>
   <p id="selection-note" class="small">Reads the selected wing's latest persisted scrape.</p>
+  <section id="simulator" class="simulator" aria-label="Simulation progress" hidden>
+    <div class="simulation-clock"><span id="simulation-status" class="badge">Ready</span><strong id="simulation-time">—</strong><span>Pacific / simulated time</span></div>
+    <div class="simulation-progress"><div><strong id="simulation-count">0 steps</strong><span id="simulation-summary">Read data → forecast → advance clock</span></div><progress id="simulation-progress" value="0" max="1" aria-label="Simulation completion"></progress><p id="simulation-explanation">Press Start. Each step runs PAP automatically through the end of the week.</p></div>
+    <div class="simulator-controls"><button id="pause-simulation" hidden>Pause</button><button id="resume-simulation" hidden>Resume</button><button id="simulation-history" disabled>Results</button></div>
+  </section>
   <div class="forecast-layout">
     <aside class="source-rail" aria-label="Source facts and assumptions">
       <section>
@@ -54,7 +60,7 @@
       <section id="empty-result" class="empty-result">
         <div class="empty-diagram" aria-hidden="true"><span>Source</span><b>→</b><span>Agent</span><b>→</b><span>Profile</span></div>
         <h2>See the power available beyond the existing load.</h2>
-        <p>Choose a telemetry source and run PAP. Your result will show an hourly profile, its assumptions and the agent's guidance.</p>
+        <p>Choose the recorded week and press Start simulation. PAP reads each time step and updates the forecast here. For a single reading, use Run once.</p>
       </section>
       <p id="request-error" role="alert" hidden></p>
       <section id="published-profile" hidden aria-labelledby="output-heading">
@@ -70,8 +76,8 @@
           <div class="chart-heading"><h3>Hourly solar surplus</h3><span>Additional power / kW</span></div>
           <div id="forecast-chart" class="forecast-chart"></div>
           <p id="chart-period" class="small"></p>
-          <p class="small chart-note">Zero means no additional solar power is allocated. The energy total is spread across twelve hours.</p>
           <details id="hourly-details"><summary>View the hourly numbers</summary>
+            <p class="small chart-note">Zero means no additional solar power is allocated. The energy total is spread across twelve hours.</p>
             <table><thead><tr><th>Hour starting (UTC)</th><th>Extra kW</th><th>Energy kWh</th></tr></thead><tbody id="profile-intervals"></tbody></table>
           </details>
           </div>
@@ -96,5 +102,10 @@
   </div>
   <footer><span>DragonWings / capstone MVP</span><span>Saved evaluations retain their original source time.</span><a href="/docs">API documentation</a></footer>
 </main>
+<dialog id="results-dialog" aria-labelledby="results-heading">
+  <div class="result-heading"><h2 id="results-heading">Simulation results</h2><button id="close-results" autofocus>Close</button></div>
+  <p class="small">Each row is a separate twelve-hour forecast. First-hour power is shown below; overlapping forecasts are not added together.</p>
+  <div class="results-scroll"><table><thead><tr><th>Replay time / Pacific</th><th>Result</th><th>First hour / kW</th><th>Confidence</th><th>Details</th></tr></thead><tbody id="simulation-results"></tbody></table></div>
+</dialog>
 </body>
 </html>

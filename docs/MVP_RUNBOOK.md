@@ -31,7 +31,8 @@ only the service port. The bundled PAP password is for this local development cl
 | test | Sunny fixture | Tests explicitly select deterministic doubles |
 
 Set `PAP_PROFILE` before starting. Forecast selects DW 1.21–1.25 and either latest data or
-one time in August 30–September 6, with 1-hour/15-minute stepping; see [howto](../howto.md).
+August 30–September 6 replay, with 1-hour/15-minute steps; see [howto](../howto.md).
+Start simulation advances the selected wing automatically; Run once reads one snapshot.
 Tests set `AGENT_BACKEND=test` and `EMBEDDING_BACKEND=test`; those results are labeled
 test doubles, never real model measurements.
 
@@ -60,8 +61,10 @@ Weather is synthetic, battery discharge is budgeted as zero, and live equipment 
 4. Index memory to include new outcomes. Compare agent off / on to inspect one paired run.
 5. For a repeatable synthetic case, load sunny, run, evaluate cloudy, then run/compare again.
 
-Historical replay evaluates one selected snapshot, uses generic guidance and disables outcome
-feedback. Live feedback and memory remain separate by wing. Replay reuses retrospective floors.
+Historical replay uses generic guidance and disables outcome feedback. Live feedback and
+memory remain separate by wing. Replay reuses retrospective floors. The simulator saves
+each step's PAP and its progress in PostgreSQL. Pause finishes the active step, and Resume
+continues the same run. Results links any step to Inspector without stopping the background run.
 
 `ENABLE_INTERPRETATION_AGENT=false` is the default. Set it true before startup to add the
 third interpretation role to normal Run PAP requests. Comparison explicitly tests both.
@@ -82,6 +85,8 @@ inputs and the configured model provider. All demo outcomes remain labeled synth
 The demo prints IDs and exits; inspect persistent records via API or the console.
 
 `make run` is the foreground process strategy for this small CLI MVP. Ctrl-C stops FastAPI;
+use one process, not multiple Uvicorn workers. A stopped/restarted simulator is paused until
+explicit Resume; its deterministic episode IDs reuse saved work without duplicate PAPs.
 MCP subprocesses are scoped to each acquisition. `make db-down` stops only this PAP cluster.
 No login agent is installed, so disabling means stopping these processes. Keep `.cache/postgres`
 when removing/replacing code; it contains the local data. Logs go to the service terminal and

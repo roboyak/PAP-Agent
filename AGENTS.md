@@ -14,8 +14,9 @@ exhaustive edge-case work. Work one PR lesson at a time. Lessons are one terse l
 PR body and commit message rather than a separate essay. Use native PostgreSQL commands,
 not Docker. Build the reference-style monitoring UI from scratch, without Gradio.
 Use DW 1.21–1.25's persisted MySolArk scrapes with real timestamps through read-only adapters.
-Select the latest scrape or one historical time in August 30–September 6, 2026 (Pacific,
-end excluded), with 1-hour/15-minute UI steps. Each wing has a fixed observed-minimum voltage
+Select the latest scrape or replay August 30–September 6, 2026 (Pacific, end excluded), with
+1-hour/15-minute steps. Start/Pause/Resume advances one selected wing automatically; Run once
+retains single-snapshot use. Each wing has a fixed observed-minimum voltage
 floor. Battery voltage is the battery-state input and SOC is not an MVP requirement. In PR09, make the third
 interpretation agent opt-in with `ENABLE_INTERPRETATION_AGENT=false` for A/B comparison.
 

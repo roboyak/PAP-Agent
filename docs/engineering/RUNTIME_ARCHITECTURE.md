@@ -51,6 +51,12 @@ Execution snapshots for durable resume/HITL/debugging.
 
 A checkpoint never replaces a canonical domain record.
 
+The optional historical simulator schedules these same LangGraph episodes sequentially in
+one FastAPI process. `simulations` stores parameters/status/progress; deterministic episode
+IDs resume interrupted steps through the existing PostgreSQL checkpointer. Result summaries
+are read from canonical publications. Pause finishes a step; server restart requires explicit
+resume. No queue service or multi-worker deployment is part of this MVP.
+
 ## Agent nodes
 
 Use LangChain agents only for:
