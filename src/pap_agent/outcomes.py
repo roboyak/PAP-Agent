@@ -10,6 +10,7 @@ from langsmith import tracing_context
 from sqlalchemy import text
 from typing_extensions import TypedDict
 
+from pap_agent.calibration import calibration
 from pap_agent.database import Database
 from pap_agent.domain import ForecastInterval, TelemetrySnapshot
 from pap_agent.evidence import acquire
@@ -20,15 +21,6 @@ from pap_agent.store import get_calculation, get_publication
 class EvaluationState(TypedDict):
     publication_id: str
     outcome_id: str
-
-
-def calibration(database: Database, source_kind: str, forecast_version: str) -> dict | None:
-    with database.session() as session:
-        return session.execute(
-            text("""SELECT payload FROM calibration_records
-            WHERE source_kind = :source AND forecast_version = :version"""),
-            {"source": source_kind, "version": forecast_version},
-        ).scalar_one_or_none()
 
 
 def evaluate_sample(database: Database, publication: dict, sample: TelemetrySnapshot) -> dict:
@@ -94,22 +86,8 @@ def evaluate_sample(database: Database, publication: dict, sample: TelemetrySnap
                 "payload": json.dumps(metrics),
             },
         )
-        summary = dict(
-            session.execute(
-                text("""SELECT count(*) AS samples,
-            avg(solar_bias_kw) AS mean_solar_bias_kw FROM outcome_metrics
-            WHERE source_kind = :source AND forecast_version = :version"""),
-                {"source": source, "version": version},
-            )
-            .mappings()
-            .one()
-        )
-        summary["confidence"] = "low" if summary["mean_solar_bias_kw"] > 0.25 else "reduced"
-        summary["guidance"] = (
-            "Lower confidence; re-evaluate solar before adding load"
-            if summary["mean_solar_bias_kw"] > 0.25
-            else "No overestimation signal yet"
-        )
+    summary = calibration(database, source, version)
+    with database.session() as session:
         session.execute(
             text("""INSERT INTO calibration_records
             VALUES (:source, :version, CAST(:payload AS jsonb))

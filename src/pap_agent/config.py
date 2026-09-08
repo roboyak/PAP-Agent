@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import AwareDatetime, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None
     retrieval_min_score: float = Field(default=0.3, ge=-1, le=1)
+    calibration_bias_limit_kw: float = Field(default=0.25, ge=0, allow_inf_nan=False)
+    calibration_drift_limit_kw: float = Field(default=0.25, ge=0, allow_inf_nan=False)
+    calibration_window_samples: int = Field(default=20, ge=2, le=200)
+    calibration_review_days: int = Field(default=7, ge=1, le=365)
+    calibration_reviewed_at: AwareDatetime | None = None
     pap_profile: Literal["test", "development", "macmini-replay"] = "development"
     enable_langsmith: bool = False
     langsmith_api_key: SecretStr | None = None

@@ -13,12 +13,12 @@ from langsmith import tracing_context
 from typing_extensions import TypedDict
 
 from pap_agent.agents import Advice, call_agent, validated_advice
+from pap_agent.calibration import calibration
 from pap_agent.config import Settings
 from pap_agent.core import Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.evidence import Evidence, acquire
 from pap_agent.memory import select_context
-from pap_agent.outcomes import calibration
 from pap_agent.publisher import publish
 from pap_agent.reasoning import get_record, save_record
 from pap_agent.search import build_search
@@ -129,7 +129,7 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
                 evidence.selection.feedback_scope(evidence.scenario.telemetry.data_mode),
                 result["forecast_version"],
             )
-            ambiguous = bool(feedback and feedback["mean_solar_bias_kw"] > 0.25)
+            ambiguous = bool(feedback and feedback["escalate"])
             record = {
                 "id": record_id,
                 "episode_id": state["episode_id"],
@@ -137,12 +137,11 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
                 "mode": "selective_tot" if ambiguous else "linear",
                 "feedback": feedback,
                 "evidence_id": state["evidence_id"],
-                "reason": "Observed solar overestimation: persistence vs refresh guidance"
+                "reason": feedback["guidance"]
                 if ambiguous
                 else "Historical replay uses generic guidance only; no later outcomes"
                 if evidence.selection.replay_at
                 else "No grounded ambiguity signal",
-                "demo_threshold_kw": 0.25,
             }
             save_record(database, record)
         return {
@@ -245,6 +244,7 @@ def build_graph(database: Database, checkpointer, interrupt_after=None):
             interpretation_id=state.get("interpretation_id"),
             retrieval_id=state.get("retrieval_id"),
             search_id=state.get("search_id"),
+            assessment_id=state.get("assessment_id"),
         )
         logging.getLogger("uvicorn.error").info(
             json.dumps(

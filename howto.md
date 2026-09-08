@@ -70,6 +70,12 @@ retrievable. Manual memory search does not change the selected run.
 Inspector keeps the chosen wing/time. Replay uses generic guidance and disables outcome
 feedback; live feedback stays with its wing.
 
+For calibration, open **Memory → Current calibration maintenance → Check current calibration**.
+It shows recent errors, threshold settings and whether review is due. The saved-run summary
+stays fixed. Collect fresh outcomes and re-tune ENV settings when conditions change; restart
+after changing them. [Maintenance procedure and CLI](docs/CALIBRATION_MAINTENANCE.md).
+ECE is unavailable for qualitative confidence; the drift signal compares recent error means.
+
 For a reproducible demo, load the sunny fixture in Inspector. **Compare agent off / on**
 uses one snapshot for both modes. Provider switches require restarting the app:
 

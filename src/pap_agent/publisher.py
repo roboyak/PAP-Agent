@@ -7,11 +7,11 @@ from uuid import UUID, uuid5
 from pydantic import AwareDatetime, BaseModel, Field
 
 from pap_agent.agents import validated_advice
+from pap_agent.calibration import calibration
 from pap_agent.core import Calculation, validate_candidate
 from pap_agent.database import Database
 from pap_agent.domain import PAP, Scenario
 from pap_agent.evidence import Evidence
-from pap_agent.outcomes import calibration
 from pap_agent.reasoning import get_record
 from pap_agent.selection import RunSelection
 from pap_agent.store import get_calculation, get_evidence, get_publication, save_publication
@@ -44,6 +44,7 @@ def publish(
     interpretation_id=None,
     retrieval_id=None,
     search_id=None,
+    assessment_id=None,
 ) -> PublishedPAP:
     publication_id = uuid5(episode_id, "publication")
     stored = get_publication(database, publication_id)
@@ -83,10 +84,15 @@ def publish(
                 result.reason = "; ".join(errors)
             else:
                 result.status, result.profile = "valid", calculation.pap
-                result.feedback = calibration(
-                    database,
-                    evidence.selection.feedback_scope(scenario.telemetry.data_mode),
-                    calculation.forecast_version,
+                assessment = get_record(database, assessment_id) if assessment_id else None
+                result.feedback = (
+                    assessment["feedback"]
+                    if assessment
+                    else calibration(
+                        database,
+                        evidence.selection.feedback_scope(scenario.telemetry.data_mode),
+                        calculation.forecast_version,
+                    )
                 )
                 if result.feedback:
                     result.profile.confidence = result.feedback["confidence"]

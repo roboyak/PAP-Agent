@@ -10,12 +10,14 @@ from pydantic import BaseModel, Field
 from pap_agent.domain import PAP, ForecastInterval, PowerAvailabilityInterval, Scenario
 from pap_agent.evidence import Evidence
 
+FORECAST_VERSION = "solar-persistence-demo-v1"
+
 
 class Calculation(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     evidence_id: UUID
     status: Literal["valid", "withheld"] = "withheld"
-    forecast_version: str = "solar-persistence-demo-v1"
+    forecast_version: str = FORECAST_VERSION
     forecast: list[ForecastInterval] = Field(default_factory=list)
     pap: PAP | None = None
     validation: list[str] = Field(default_factory=list)

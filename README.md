@@ -68,6 +68,11 @@ has `data_mode=live` (real origin); `selection.replay_at` distinguishes its hist
 | Trace | Graph nodes, IDs, reasoning mode, branches, pruning, scores and stop reasons |
 | Health | Database, migrations, vectors, checkpoint, source and model readiness |
 
+**Memory → Current calibration maintenance** checks recent point-power errors, configurable
+escalation thresholds and review dates. Runs with outcome feedback keep the policy and outcome IDs used for
+its decision. [Calibration maintenance](docs/CALIBRATION_MAINTENANCE.md) explains the ENV knobs
+and read-only candidate preview. Confidence stays qualitative; ECE is explicitly unavailable.
+
 The UI uses plain HTML/CSS/JavaScript. Its sand palette, monospaced type and outlined
 diagram blocks follow the [BRC Forecast design reference](https://brcforecast.corbett.vc/system).
 Inspector retains the original six-tab monitoring structure. Reset view clears browser state; published records remain in PostgreSQL.

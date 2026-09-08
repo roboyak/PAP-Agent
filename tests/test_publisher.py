@@ -7,7 +7,9 @@ from pap_agent.publisher import publish
 from pap_agent.store import save_calculation
 
 
-def test_publisher_rechecks_t6_and_is_idempotent(database):
+def test_publisher_rechecks_t6_and_is_idempotent(database, monkeypatch):
+    monkeypatch.setenv("CALIBRATION_BIAS_LIMIT_KW", "100")
+    monkeypatch.setenv("CALIBRATION_DRIFT_LIMIT_KW", "100")
     evidence = asyncio.run(acquire(database, "sunny"))
     calculation = calculate(evidence)
     calculation.pap.intervals[0].available_kw = 100

@@ -15,7 +15,7 @@ const runRequest = () => ({scenario:currentScenario, ...currentSelection});
 selectionLabel();
 
 for (const id of ["model-context", "agent-comparison", "evidence-context", "calculation-result",
-  "run-memory-results", "memory-results", "outcome-feedback", "tool-calls", "agent-activity", "graph-trace", "readiness-result"]) {
+  "run-memory-results", "memory-results", "outcome-feedback", "tool-calls", "agent-activity", "graph-trace", "readiness-result", "calibration-details"]) {
   const raw = byId(id), details = document.createElement("details"), label = document.createElement("summary");
   details.className = "raw-data";
   details.id = `details-${id}`;
@@ -40,6 +40,7 @@ function endAction() {
   byId("run-progress").hidden = true;
   actionButtons.forEach(button => { button.disabled = false; });
   byId("evaluate-outcome").disabled = currentPublication?.status !== "valid" || !!currentPublication?.selection?.replay_at;
+  byId("check-calibration").disabled = !!currentSelection.replay_at;
 }
 
 function action(id, callback) {
@@ -93,6 +94,9 @@ function clearSelection(title = "No run selected. Run PAP to begin.") {
   byId("reasoning-mode").textContent = "Not run";
   byId("reasoning-summary").textContent = "No workflow selected.";
   byId("comparison-summary").textContent = byId("agent-comparison").textContent = "No comparison selected.";
+  byId("run-calibration-summary").textContent = "No calibration selected.";
+  byId("calibration-summary").replaceChildren();
+  byId("calibration-details").textContent = "Not checked.";
 }
 
 function renderEvidence(evidence) {
@@ -164,6 +168,13 @@ function renderPublication(publication) {
   byId("evaluate-outcome").textContent = publication.selection?.replay_at ? "Replay / feedback disabled" : publication.evidence?.telemetry.data_mode === "synthetic"
     ? "Evaluate cloudy demo" : "Evaluate latest reading";
   if (publication.feedback) byId("outcome-feedback").textContent = JSON.stringify(publication.feedback, null, 2);
+  const feedback = publication.feedback;
+  byId("run-calibration-summary").textContent = publication.selection?.replay_at
+    ? "Historical replay: outcome calibration is isolated; no later observations are used."
+    : feedback?.policy_id
+      ? `${feedback.policy_id} · ${feedback.samples} recent outcomes · ${feedback.guidance}. ${feedback.review_required ? "Threshold review needed at run time." : "No review alarm at run time."}`
+      : feedback ? "Legacy outcome feedback; this run predates versioned calibration maintenance."
+      : "No measured outcome feedback influenced this run. ECE is unavailable for qualitative confidence labels.";
   byId("published-profile").hidden = false;
   byId("view-output").hidden = false;
   byId("view-output").href = `/?episode=${encodeURIComponent(publication.episode_id)}`;
@@ -456,11 +467,32 @@ action("evaluate-outcome", async () => {
   byId("evaluate-outcome").disabled = true;
   const response = await readApi(`/api/v1/pap/${currentPublication.id}/evaluate`, {});
   byId("outcome-feedback").textContent = JSON.stringify(response.body, null, 2);
+  if (response.status === 200) renderCalibration(response.body.calibration);
   appendMessage("Outcome evaluation", response.status === 200
     ? `${response.body.calibration.guidance}. Point power comparison; ${response.body.calibration.samples} samples. Future confidence only.`
     : response.body.detail ?? "Evaluation unavailable.");
   selectTab(byId("tab-memory"));
   byId("evaluate-outcome").disabled = false;
+});
+
+function renderCalibration(report) {
+  const kw = value => value === null ? "unavailable" : `${Number(value).toFixed(3)} kW`;
+  inspectList("calibration-summary", [
+    [report.review_required ? "Threshold review needed" : "No review alarm", report.guidance],
+    ["Recent observed errors", `${report.samples}/${report.policy.window_samples} recent outcomes; ${report.comparison_samples}/${report.policy.window_samples} preceding outcomes. Mean solar overestimation: ${kw(report.mean_solar_bias_kw)}. Change in error: ${kw(report.error_drift_kw)}.`],
+    ["Escalation thresholds", `Overestimation > ${report.policy.bias_limit_kw} kW or absolute error change > ${report.policy.drift_limit_kw} kW. ${report.policy_id}. T5/T6 limits are unchanged.`],
+    ["Maintenance", `Review due: ${report.review_due_at ?? "no review date configured"}. ${report.stale ? "Live feedback expired. " : ""}Re-tune ENV settings after reviewing fresh outcomes; then restart. A review date alone does not change measured alarms.`],
+    ["Metric scope", "ECE unavailable: confidence is qualitative. Error drift is a change in observed forecast errors, not a formal distribution-shift test."],
+  ], "No calibration feedback.");
+  byId("calibration-details").textContent = JSON.stringify(report, null, 2);
+}
+
+action("check-calibration", async () => {
+  if (currentSelection.replay_at) return;
+  const scope = currentScenario === "sunny" ? "synthetic" : "live";
+  const response = await readApi(`/api/v1/calibration?source_kind=${scope}&wing=${encodeURIComponent(currentSelection.wing)}`);
+  if (response.status === 200) renderCalibration(response.body);
+  else showFailure("Calibration unavailable. Check service health, then try again.");
 });
 
 action("index-memory", async () => {

@@ -17,6 +17,11 @@ def deterministic_models(monkeypatch):
     monkeypatch.setenv("ENABLE_INTERPRETATION_AGENT", "false")
     monkeypatch.setenv("PAP_PROFILE", "test")
     monkeypatch.setenv("ENABLE_LANGSMITH", "false")
+    monkeypatch.setenv("CALIBRATION_BIAS_LIMIT_KW", "0.25")
+    monkeypatch.setenv("CALIBRATION_DRIFT_LIMIT_KW", "0.25")
+    monkeypatch.setenv("CALIBRATION_WINDOW_SAMPLES", "20")
+    monkeypatch.setenv("CALIBRATION_REVIEW_DAYS", "7")
+    monkeypatch.setenv("CALIBRATION_REVIEWED_AT", "1970-01-01T00:00:00Z")
 
 
 @pytest.fixture
