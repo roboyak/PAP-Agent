@@ -70,11 +70,30 @@ lower it from future minima. Continue calculations in voltage; do not derive an 
 PR01–12 implement the native CLI service, real read-only MySolArk adapter, deterministic
 PAP, durable graph, observed outcomes, local pgvector memory, optional interpretation and
 bounded generator/critic search. The final runbook documents foreground startup instead of
-adding a daemon manager. Weather remains synthetic and battery energy is budgeted as zero.
+adding a daemon manager. At PR12, weather remained synthetic and battery energy was budgeted as zero.
 The three-role comparison measures identical-evidence latency/call counts and exposes advice
 for review; the observed real-model pair did not establish a quality improvement. The fixed
 305.2 V floor and optional-third-role default remain unchanged. LangSmith is summary-only,
 optional and disabled; no remote tracing was exercised during the build.
+
+## PR25: stored Open-Meteo weather
+
+Replace synthetic weather on new MySolArk runs with stored rows in the same read-only
+source database. All five wings have Open-Meteo observations across the replay week.
+Replay selects the nearest observation at/before each interval start within 90 minutes;
+this uses historical actuals across the horizon, not an as-of forecast backtest. Live uses
+12 complete, current UTC-hour capacity-factor rows (updated within 24 hours), otherwise
+tries observations without reading future actuals. An incomplete weather horizon withholds
+at T3. Never silently substitute the fixture. Sunny stays synthetic.
+
+Retain the conservative 0..1 ratio: interval irradiance/reference irradiance for observations,
+or interval CF/reference CF for stored forecasts; zero reference gives zero throughout.
+This cannot amplify morning PV or recover sunrise from a zero reading. T5/T6, voltage
+floors and any configured extra-power cap remain authoritative. No battery discharge is
+allocated. Source/model timestamps stay visible; new weather variants use distinct scenario
+keys. Forecast version `solar-persistence-stored-weather-v1` separates new calibration and
+outcome retrieval from prior synthetic-weather feedback. Existing synthetic episodes, evidence, outcomes, submission snapshots and
+`docs/data/WEEK_PLAYBACK.md` numbers are preserved. See [PR25](pr/PR-25.md).
 
 ## PR19: wing selection and snapshot replay
 

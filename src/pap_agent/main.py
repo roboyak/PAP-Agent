@@ -13,7 +13,7 @@ from pap_agent import __version__
 from pap_agent.calibration import calibration_report
 from pap_agent.comparison import compare_agents
 from pap_agent.config import Settings
-from pap_agent.core import FORECAST_VERSION, Calculation, calculate
+from pap_agent.core import FORECAST_VERSION, STORED_WEATHER_VERSION, Calculation, calculate
 from pap_agent.database import Database
 from pap_agent.domain import Scenario
 from pap_agent.evidence import Evidence, acquire
@@ -130,7 +130,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return calibration_report(
             app.state.database,
             RunSelection(wing=wing).feedback_scope(source_kind),
-            FORECAST_VERSION,
+            FORECAST_VERSION if source_kind == "synthetic" else STORED_WEATHER_VERSION,
         )
 
     def simulator() -> Simulator:

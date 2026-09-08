@@ -24,9 +24,16 @@ def get_current_telemetry(
 
 
 @server.tool(annotations=READ_ONLY)
-def get_solar_forecast(starts_at: AwareDatetime) -> SourceResult:
-    """Read twelve synthetic hourly solar factors. This is not a live weather forecast."""
-    return weather_source(starts_at)
+def get_solar_forecast(
+    starts_at: AwareDatetime,
+    scenario: Literal["sunny", "mysolark"] = "sunny",
+    wing: Wing = "1.24",
+    replay_at: AwareDatetime | None = None,
+) -> SourceResult:
+    """Read stored weather for one wing's twelve-hour horizon; sunny alone is synthetic."""
+    return weather_source(
+        RunSelection(wing=wing, replay_at=replay_at), starts_at, scenario=scenario
+    )
 
 
 if __name__ == "__main__":

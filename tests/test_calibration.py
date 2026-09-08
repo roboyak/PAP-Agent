@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from pap_agent.calibration import calibration_report
-from pap_agent.core import FORECAST_VERSION
+from pap_agent.core import FORECAST_VERSION, STORED_WEATHER_VERSION
 from pap_agent.domain import TelemetrySnapshot
 from pap_agent.outcomes import evaluate_publication, evaluate_sample
 from pap_agent.reasoning import get_record
@@ -55,14 +55,13 @@ def test_live_feedback_expires_and_stays_with_its_wing(database, wing_history):
     sample.solar_power_kw = 0
     evaluate_sample(database, publication, sample)
     now = sample.observed_at + timedelta(minutes=1)
-    fresh = calibration_report(database, "live:1.21", FORECAST_VERSION, now=now)
+    version = STORED_WEATHER_VERSION
+    fresh = calibration_report(database, "live:1.21", version, now=now)
     assert fresh["samples"] == 1 and fresh["escalate"]
     assert fresh["drift_status"] == "insufficient_data"
-    assert calibration_report(database, "live:1.22", FORECAST_VERSION, now=now)["samples"] == 0
+    assert calibration_report(database, "live:1.22", version, now=now)["samples"] == 0
     assert calibration_report(database, "live:1.21", "other-version", now=now)["samples"] == 0
-    expired = calibration_report(
-        database, "live:1.21", FORECAST_VERSION, now=now + timedelta(days=8)
-    )
+    expired = calibration_report(database, "live:1.21", version, now=now + timedelta(days=8))
     assert expired["stale"] and expired["review_required"]
     assert expired["mean_solar_bias_kw"] is None and not expired["escalate"]
     assert expired["confidence"] == "low"

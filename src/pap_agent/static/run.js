@@ -240,6 +240,10 @@ function render(publication) {
   selectedPublication = publication;
   const valid = publication.status === "valid", profile = publication.profile;
   const evidence = publication.evidence, telemetry = evidence?.telemetry;
+  const weather = [...new Set((evidence?.weather ?? []).map(row => row.source))].join(" + ");
+  byId("forecast-limit").textContent = weather
+    ? `${weather}. No morning boost; cannot predict sunrise from zero.`
+    : "Weather unavailable; inspect this run for the reason.";
   const query = `?episode=${encodeURIComponent(publication.episode_id)}${simulation ? "&" + simulationQuery() : ""}`;
   history.replaceState(null, "", "/" + query);
   byId("inspector-link").href = byId("view-inspector").href = "/inspector" + query;

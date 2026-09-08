@@ -38,7 +38,12 @@ def test_simulator_start_pause_inspect_resume(browser, live_service, database_ur
                 expect(page.locator(selector)).to_be_in_viewport(ratio=1)
             assert page.evaluate("document.documentElement.scrollHeight <= innerHeight")
             page.get_by_role("button", name="Future estimate", exact=True).click()
-            expect(page.locator("#forecast-limit")).to_contain_text("does not predict sunrise")
+            expect(page.locator("#forecast-limit")).to_contain_text(
+                "cannot predict sunrise from zero"
+            )
+            expect(page.locator("#forecast-limit")).to_contain_text(
+                "Open-Meteo stored observations"
+            )
             expect(page.locator("#forecast-chart")).to_be_in_viewport(ratio=1)
             page.get_by_role("button", name="Recorded day", exact=True).click()
             page.reload()

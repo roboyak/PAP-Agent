@@ -64,6 +64,12 @@ policies, automatic tuning and scheduled notifications are deferred. The review 
 configured metadata, not proof that a human reviewed a policy; changing that date alone
 does not clear measured error signals.
 
+Current live calibration uses `solar-persistence-stored-weather-v1`. Previous runs using
+synthetic weather keep their original `solar-persistence-demo-v1` outcomes and saved
+feedback, but those outcomes cannot trigger escalation or enter outcome memory for the new
+predictor. The sunny demo continues to use its original version. New live runs initially
+have no matching outcomes until fresh feedback is collected.
+
 ## Metric limits
 
 ECE is unavailable: this MVP publishes qualitative confidence labels, not probabilities.
@@ -74,4 +80,5 @@ a defined prediction event, numeric probabilities and suitable held-out outcomes
 Error drift is a maintenance proxy for changing conditions, not a formal distribution-shift
 test. Good calibration on one data distribution does not establish reliability after a
 shift. [Ovadia et al., 2019](https://arxiv.org/abs/1906.02530).
-Synthetic weather, overlapping point forecasts and small samples limit the current evidence.
+Earlier synthetic weather, conservative stored-weather ratios, overlapping point forecasts
+and small samples limit the current evidence.

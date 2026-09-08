@@ -55,7 +55,9 @@ device identifiers are copied into PAP responses.
 `BATTERY_FLOOR_V=305.2` is DW 1.24's fixed user-approved observed minimum. Other wings use
 their [fixed scanned floors](../README.md#voltage-and-available-power). These represent the user's
 approximately 30% reserve convention; the service does not derive SOC or battery capacity.
-Weather is synthetic, battery discharge is budgeted as zero, and live equipment cap is unknown.
+MySolArk weather comes from stored Open-Meteo observations/forecast hours; missing or stale
+weather withholds the run. Sunny and older saved episodes retain synthetic weather.
+Battery discharge is budgeted as zero, and live equipment cap is unknown.
 
 ## A short walkthrough
 

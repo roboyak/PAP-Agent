@@ -7,6 +7,7 @@ from mcp import MCPError
 from sqlalchemy import text
 
 from pap_agent.evidence import acquire, validate_sources
+from pap_agent.selection import RunSelection
 from pap_agent.sources import telemetry_source, weather_source
 
 
@@ -46,6 +47,6 @@ def test_real_stdio_mcp_and_persisted_source_read(database, source_database):
 
 def test_t3_rejects_stale_evidence():
     telemetry = telemetry_source("sunny")
-    weather = weather_source(telemetry.source_time)
+    weather = weather_source(RunSelection(), telemetry.source_time, scenario="sunny")
     with pytest.raises(ValueError, match="stale"):
         validate_sources(telemetry, weather, telemetry.source_time + timedelta(minutes=6))

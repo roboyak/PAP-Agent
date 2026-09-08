@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from pap_agent.config import Settings
+from pap_agent.core import STORED_WEATHER_VERSION
 from pap_agent.evidence import acquire
 from pap_agent.main import create_app
 from pap_agent.outcomes import calibration, evaluate_publication
@@ -30,6 +31,8 @@ def test_read_all_wings_at_recorded_time(database, wing_history):
             assert evidence.scenario.telemetry.solar_power_kw == pytest.approx(2.1 + index * 0.1)
             assert evidence.scenario.policy.min_battery_voltage_v == floor
             assert evidence.calls[0]["arguments"]["wing"] == wing
+            assert evidence.calls[1]["arguments"]["wing"] == wing
+            assert evidence.calls[1]["result"]["source"] == "Open-Meteo stored observations"
             assert evidence.calls[0]["result"]["clock"] == "replay"
             if wing == "1.24":
                 stamp = evidence.scenario.telemetry.observed_at.isoformat()
@@ -92,7 +95,7 @@ def test_latest_outcome_uses_selected_wing_and_separate_feedback(database, wing_
         feedback = await evaluate_publication(database, UUID(result["publication_id"]))
         assert feedback["outcome"]["sample"]["source"].startswith("DW 1.21 ")
         assert feedback["calibration"]["samples"] == 1
-        version = "solar-persistence-demo-v1"
+        version = STORED_WEATHER_VERSION
         assert calibration(database, "live:1.21", version)["mean_solar_bias_kw"] == 1.2
         assert calibration(database, "live:1.22", version) is None
         assert calibration(database, "live", version) is None
