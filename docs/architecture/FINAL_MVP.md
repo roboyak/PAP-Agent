@@ -50,7 +50,13 @@ or real equipment-capability claim is made. Live equipment cap remains unconfigu
 
 T8 compares newer point-power samples with forecasts; it does not claim measured hourly energy.
 Raw outcomes, metrics and source/version-specific confidence summaries are separate records.
-A demonstration solar-overestimation threshold of 0.25 kW triggers ambiguity. T9 stores
+A configurable demonstration solar-overestimation threshold (default 0.25 kW) checks recent
+outcomes; two complete adjacent windows also flag changes in mean error. Live escalation statistics
+expire at the configured review cadence, and Inspector shows when threshold review is due.
+An assessment with outcome feedback records its policy/settings/outcome IDs; publication and resume preserve that
+snapshot. These signals affect confidence/reasoning, never T5/T6 limits. ECE is unavailable;
+error drift is a maintenance proxy, not a formal distribution-shift test. See
+[maintenance](../CALIBRATION_MAINTENANCE.md). T9 stores
 768-dimensional local embeddings in pgvector, retrieves five, filters/version-checks and
 selects at most three. Cosine scores and critic rubric scores are not probabilities.
 

@@ -40,3 +40,9 @@ Keep distinct:
 5. LangChain agent quality;
 6. ToT search;
 7. final PAP behavior.
+
+Calibration maintenance records the settings hash, recent/prior outcome IDs and sample counts,
+error means, drift availability, escalation signals and configured review date. The saved
+run's assessment remains fixed; Inspector's current-maintenance check is labeled separately.
+Review age and live feedback expiry are explicit. Qualitative confidence has no ECE value;
+error-mean drift is not presented as a formal distribution-shift test.

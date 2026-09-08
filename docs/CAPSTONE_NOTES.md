@@ -95,3 +95,13 @@ one selected wing through the remaining recorded week in 15/60-minute steps. Eac
 the existing durable PAP workflow and retains its own Inspector record. PostgreSQL stores
 progress; browser navigation does not stop the runner. Restart leaves it paused for Resume.
 The simple single-process runner adds no hardware control, physics model or accuracy claim.
+
+## PR21: checkpoint 6.1 calibration maintenance
+
+Grader feedback praised deterministic T5/T6 authority and warned that ECE/distribution-shift
+alarms need continuing threshold re-tuning as conditions change. The MVP has qualitative
+confidence, so ECE remains unavailable. PR21 replaces lifetime-average/hard-coded escalation
+with recent outcome windows, configurable bias/error-drift thresholds, live-feedback expiry,
+a review-due reminder and policy snapshots retained through resume/publication. A read-only
+CLI previews candidate ENV settings. T5/T6 constraints remain authoritative. See
+[maintenance](CALIBRATION_MAINTENANCE.md) for the operator procedure and metric limits.

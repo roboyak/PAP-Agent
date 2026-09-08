@@ -1,0 +1,45 @@
+{
+  "automated": true,
+  "backend_tests": 55,
+  "playwright_tests": 19,
+  "live_ui_verified": true,
+  "report": {
+    "source_kind": "live",
+    "forecast_version": "solar-persistence-demo-v1",
+    "evaluated_at": "2026-09-08T01:40:21.173604+00:00",
+    "policy_id": "point-error-v2-99055f9cad3e",
+    "policy": {
+      "bias_limit_kw": 0.25,
+      "drift_limit_kw": 0.25,
+      "window_samples": 20,
+      "review_days": 7,
+      "reviewed_at": null
+    },
+    "samples": 1,
+    "comparison_samples": 0,
+    "outcome_ids": [
+      "d210a720-531d-5235-9f06-e27d79f79d9d"
+    ],
+    "mean_solar_bias_kw": 0.4099999999999999,
+    "prior_mean_solar_bias_kw": null,
+    "mean_availability_error_kw": 0.07599999999999985,
+    "error_drift_kw": null,
+    "drift_status": "insufficient_data",
+    "last_observed_at": "2026-09-07T13:56:10.777330-07:00",
+    "stale": false,
+    "signals": [
+      "solar_overestimation"
+    ],
+    "escalate": true,
+    "confidence": "low",
+    "guidance": "Recent solar overestimation; review thresholds and refresh solar evidence",
+    "review_due_at": null,
+    "review_due": true,
+    "review_required": true,
+    "ece": {
+      "status": "unavailable",
+      "reason": "Qualitative labels; probability calibration is unavailable."
+    },
+    "distribution_shift": "Error-mean drift proxy only; not a formal distribution-shift test."
+  }
+}

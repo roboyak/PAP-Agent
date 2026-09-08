@@ -88,6 +88,14 @@
       <section id="memory" role="tabpanel" aria-labelledby="tab-memory" tabindex="0" hidden>
         <h2>Long-term memory</h2>
         <p class="muted">Stored knowledge and the records selected for a run.</p>
+        <h3>Calibration used by this run</h3>
+        <p id="run-calibration-summary">No calibration selected.</p>
+        <details><summary>Current calibration maintenance</summary>
+          <p class="session-note">Check recent errors and whether escalation thresholds need review. This live check does not rewrite the selected run.</p>
+          <div class="controls"><button id="check-calibration">Check current calibration</button></div>
+          <ul id="calibration-summary" class="inspection-list"><li>Not checked.</li></ul>
+          <pre id="calibration-details">Not checked.</pre>
+        </details>
         <h3>Memory used by this run</h3>
         <ul id="run-memory-summary" class="inspection-list"><li>No retrieval for this run.</li></ul>
         <pre id="run-memory-results">No retrieval for this run.</pre>
