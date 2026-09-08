@@ -32,7 +32,11 @@ only the service port. The bundled PAP password is for this local development cl
 
 Set `PAP_PROFILE` before starting. Forecast selects DW 1.21–1.25 and either latest data or
 August 30–September 6 replay, with 1-hour/15-minute steps; see [howto](../howto.md).
+Start/end day selectors default to all seven days, including the selected end day.
 Start simulation advances the selected wing automatically; Run once reads one snapshot.
+Chart day reviews completed days; Follow playback returns to the advancing day.
+Playback speed changes the pause between steps: Fast 0 seconds, Normal 1, Slow 3.
+It can change while running; every PAP step still executes, with processing time additional.
 Tests set `AGENT_BACKEND=test` and `EMBEDDING_BACKEND=test`; those results are labeled
 test doubles, never real model measurements.
 

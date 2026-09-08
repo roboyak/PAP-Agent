@@ -24,7 +24,7 @@ from pap_agent.publisher import PublishedPAP
 from pap_agent.reasoning import episode_records
 from pap_agent.runtime import readiness
 from pap_agent.selection import RunSelection, Wing
-from pap_agent.simulator import SimulationRequest, Simulator
+from pap_agent.simulator import PlaybackSpeed, SimulationRequest, Simulator
 from pap_agent.simulator import get as get_simulation
 from pap_agent.simulator import view as simulation_view
 from pap_agent.store import (
@@ -173,6 +173,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             run = simulator().resume(selected_simulation(run_id))
         except ValueError as exc:
             raise HTTPException(409, str(exc)) from None
+        return simulation_view(app.state.database, run)
+
+    @app.post("/api/v1/simulations/{run_id}/speed")
+    async def simulation_speed(run_id: UUID, request: PlaybackSpeed) -> dict:
+        run = simulator().speed(selected_simulation(run_id), request)
         return simulation_view(app.state.database, run)
 
     @app.post("/api/v1/memory/index")

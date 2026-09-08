@@ -12,6 +12,7 @@ the content and scripts that produced them.
 | Speaking preparation | [Main script](artifacts/DragonWings_Presentation_Plan_and_Script.docx), [faculty Q&A](artifacts/DragonWings_Faculty_Showcase_Preparation.docx) |
 | App walkthroughs | [2:30 MP4](artifacts/DragonWings_App_Walkthrough_short.mp4), [9:00 MP4](artifacts/DragonWings_App_Walkthrough_full.mp4), [narration guide](artifacts/Narration_Guide.md) |
 | Simulator demo | [33-second MP4](artifacts/DragonWings_Simulator_Demo.mp4), [first forecast](examples/simulator/first-forecast.png) |
+| Recorded week | [Seven-day playback MP4](artifacts/DragonWings_Recorded_Week_Demo.mp4), [first day](examples/recorded-week/first-day.png), [verification](artifacts/Recorded_Week_Verification.json) |
 | Video submission | [Link document](artifacts/DragonWings_Video_Link_Submission.docx), awaiting hosted URLs |
 
 The app walkthroughs are silent browser recordings. Add your narration before using them
@@ -160,3 +161,25 @@ uv run --locked python scripts/record_simulator_demo.py --wing 1.21 --step 60
 
 Use `--step 15` for quarter-hour playback. Review the printed output folder, then copy its
 selected MP4/screenshot into the versioned paths above and refresh the verification receipt.
+
+## Recorded power story (PR22)
+
+The latest silent demo replays DW 1.24, August 30–September 5, through all seven days.
+It shows actual solar generation, ongoing site usage and leftover solar in Pacific time,
+with explicit start/end dates, a separate Future estimate view and completed-day review.
+The 5:08 clip uses Normal speed and predates the Fast / Normal / Slow selector.
+The [current UI screenshot](examples/recorded-week/fast-playback.png) shows the speed selector
+after DW 1.24 completed all 168 hourly steps on Fast.
+The future baseline still does not model sunrise or sunset. Add your own narration when
+using the clip in the capstone presentation; this is not the required narrated 8–10-minute video.
+
+```bash
+uv run python scripts/record_simulator_demo.py \
+  --wing 1.24 --start 2026-08-30T00:00 --end-day 2026-09-05 --complete
+```
+
+The recorder writes a fresh folder under `output/recordings/`. The versioned receipt records
+that folder, duration, hash and real completed-step counts. Older clips/decks remain their
+original snapshots. [Source coverage and morning solar](../docs/data/MYSOLARK_WEEK.md).
+[All-five-wing Fast playback verification](../docs/data/WEEK_PLAYBACK.md) records 840 completed
+hourly steps with Pause/Reload/Resume on every wing.

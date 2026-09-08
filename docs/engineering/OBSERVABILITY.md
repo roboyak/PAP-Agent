@@ -1,5 +1,10 @@
 # Observability
 
+The main Recorded day view explains actual solar, site use and leftover solar from completed
+publication evidence in Pacific time. Missing/stale samples are gaps, never zero-filled;
+future hours stay blank. Future estimate is a separate baseline view. Inspector retains
+all six tabs and the fixed episode behind either view; raw records keep their original timestamps.
+
 ## Required local observability
 The Mac mini must remain diagnosable with LangSmith disabled.
 

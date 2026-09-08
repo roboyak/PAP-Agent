@@ -105,3 +105,19 @@ with recent outcome windows, configurable bias/error-drift thresholds, live-feed
 a review-due reminder and policy snapshots retained through resume/publication. A read-only
 CLI previews candidate ENV settings. T5/T6 constraints remain authoritative. See
 [maintenance](CALIBRATION_MAINTENANCE.md) for the operator procedure and metric limits.
+
+## PR22: a recorded power story
+
+User review found the noon-start, solar-surplus forecast confusing. A read-only audit of
+all five MySolArk wings found morning generation on all 35 wing-days, with source gaps;
+no UTC/Pacific timestamp rewrite was needed. Playback retains a full-week default with explicit start/end days and shows
+actual solar, site use and leftover solar in Pacific time, with a separate Future estimate.
+Night/load and missing-data states have plain explanations. The forecast remains the same
+current-PV/synthetic-weather baseline and explicitly does not model sunrise or sunset.
+A chart-day selector reviews completed days without rerunning them. The recorder and source
+audit are reusable scripts.
+
+The user requested adjustable speed and verification across all five wings. Fast/Normal/Slow
+controls only the pause between completed steps (0/1/3 seconds); each existing PAP workflow
+still runs. The real-week verification script checks every wing through 168 hourly steps,
+including Pause/Reload/Resume, saved speed and earlier-day review.

@@ -16,7 +16,11 @@ from pap_agent.selection import REPLAY_END, REPLAY_START, RunSelection, Wing
 from pap_agent.workflow import run_episode
 
 
-class SimulationRequest(BaseModel):
+class PlaybackSpeed(BaseModel):
+    delay_seconds: Literal[0, 1, 3] = 1
+
+
+class SimulationRequest(PlaybackSpeed):
     wing: Wing = "1.24"
     starts_at: AwareDatetime = Field(default=REPLAY_START, ge=REPLAY_START, lt=REPLAY_END)
     ends_at: AwareDatetime = Field(default=REPLAY_END, gt=REPLAY_START, le=REPLAY_END)
@@ -76,7 +80,11 @@ def view(database: Database, run: Simulation) -> dict:
                 payload->'selection'->>'replay_at' AS replay_at,
                 payload->>'status' AS status, payload->>'reason' AS reason,
                 payload->'profile'->>'confidence' AS confidence,
-                (payload->'profile'->'intervals'->0->>'available_kw')::float AS available_kw
+                (payload->'profile'->'intervals'->0->>'available_kw')::float AS available_kw,
+                payload->'evidence'->'telemetry'->>'observed_at' AS observed_at,
+                (payload->>'observed_age_seconds')::float AS observed_age_seconds,
+                (payload->'evidence'->'telemetry'->>'solar_power_kw')::float AS solar_kw,
+                (payload->'evidence'->'telemetry'->>'load_power_kw')::float AS load_kw
             FROM pap_publications WHERE id = ANY(:ids)
             ORDER BY payload->'selection'->>'replay_at'"""),
                 {"ids": ids},
@@ -141,6 +149,11 @@ class Simulator:
             self.task = asyncio.create_task(self.run(run.id))
         return run
 
+    def speed(self, run: Simulation, request: PlaybackSpeed) -> Simulation:
+        run.delay_seconds = request.delay_seconds
+        save(self.database, run)
+        return run
+
     async def run(self, run_id: UUID) -> None:
         try:
             while True:
@@ -168,7 +181,7 @@ class Simulator:
                 save(self.database, run)
                 if run.status != "running":
                     return
-                await asyncio.sleep(1)  # A short visual beat, not real-time 15/60-minute waiting.
+                await asyncio.sleep(run.delay_seconds)  # Display pace; every PAP step still runs.
         except asyncio.CancelledError:
             run = get(self.database, run_id)
             if run.status in {"running", "pausing"}:

@@ -1,0 +1,151 @@
+{
+  "checked_at": "2026-09-08T02:13:40.056950+00:00",
+  "status": "complete",
+  "runs": [
+    {
+      "wing": "1.21",
+      "id": "230bef04-9274-41fa-b5c6-f095cdcba972",
+      "status": "completed",
+      "starts_at": "2026-08-30T07:00:00Z",
+      "ends_at": "2026-09-06T07:00:00Z",
+      "step_minutes": 60,
+      "delay_seconds": 0,
+      "completed_steps": 168,
+      "total_steps": 168,
+      "url": "http://127.0.0.1:8000/?simulation=230bef04-9274-41fa-b5c6-f095cdcba972",
+      "day_steps": {
+        "2026-08-30": 24,
+        "2026-08-31": 24,
+        "2026-09-01": 24,
+        "2026-09-02": 24,
+        "2026-09-03": 24,
+        "2026-09-04": 24,
+        "2026-09-05": 24
+      },
+      "outcomes": {
+        "valid": 160,
+        "withheld": 8
+      },
+      "pause_reload_resume_verified": true,
+      "earlier_day_review_verified": true,
+      "elapsed_seconds": 132.6,
+      "browser_errors": []
+    },
+    {
+      "wing": "1.22",
+      "id": "7cc0edb7-6618-4cb4-bd86-45b1611f2f66",
+      "status": "completed",
+      "starts_at": "2026-08-30T07:00:00Z",
+      "ends_at": "2026-09-06T07:00:00Z",
+      "step_minutes": 60,
+      "delay_seconds": 0,
+      "completed_steps": 168,
+      "total_steps": 168,
+      "url": "http://127.0.0.1:8000/?simulation=7cc0edb7-6618-4cb4-bd86-45b1611f2f66",
+      "day_steps": {
+        "2026-08-30": 24,
+        "2026-08-31": 24,
+        "2026-09-01": 24,
+        "2026-09-02": 24,
+        "2026-09-03": 24,
+        "2026-09-04": 24,
+        "2026-09-05": 24
+      },
+      "outcomes": {
+        "valid": 158,
+        "withheld": 10
+      },
+      "pause_reload_resume_verified": true,
+      "earlier_day_review_verified": true,
+      "elapsed_seconds": 146.8,
+      "browser_errors": []
+    },
+    {
+      "wing": "1.23",
+      "id": "79d3654a-eadb-4fcb-ae22-a598eabc8b30",
+      "status": "completed",
+      "starts_at": "2026-08-30T07:00:00Z",
+      "ends_at": "2026-09-06T07:00:00Z",
+      "step_minutes": 60,
+      "delay_seconds": 0,
+      "completed_steps": 168,
+      "total_steps": 168,
+      "url": "http://127.0.0.1:8000/?simulation=79d3654a-eadb-4fcb-ae22-a598eabc8b30",
+      "day_steps": {
+        "2026-08-30": 24,
+        "2026-08-31": 24,
+        "2026-09-01": 24,
+        "2026-09-02": 24,
+        "2026-09-03": 24,
+        "2026-09-04": 24,
+        "2026-09-05": 24
+      },
+      "outcomes": {
+        "valid": 162,
+        "withheld": 6
+      },
+      "pause_reload_resume_verified": true,
+      "earlier_day_review_verified": true,
+      "elapsed_seconds": 116.8,
+      "browser_errors": []
+    },
+    {
+      "wing": "1.24",
+      "id": "fd921d84-ef9a-4c3b-9dc7-c417080b28b0",
+      "status": "completed",
+      "starts_at": "2026-08-30T07:00:00Z",
+      "ends_at": "2026-09-06T07:00:00Z",
+      "step_minutes": 60,
+      "delay_seconds": 0,
+      "completed_steps": 168,
+      "total_steps": 168,
+      "url": "http://127.0.0.1:8000/?simulation=fd921d84-ef9a-4c3b-9dc7-c417080b28b0",
+      "day_steps": {
+        "2026-08-30": 24,
+        "2026-08-31": 24,
+        "2026-09-01": 24,
+        "2026-09-02": 24,
+        "2026-09-03": 24,
+        "2026-09-04": 24,
+        "2026-09-05": 24
+      },
+      "outcomes": {
+        "valid": 162,
+        "withheld": 6
+      },
+      "pause_reload_resume_verified": true,
+      "earlier_day_review_verified": true,
+      "elapsed_seconds": 114.3,
+      "browser_errors": []
+    },
+    {
+      "wing": "1.25",
+      "id": "db41da4e-a6bc-42b0-9c38-b018ae79c52a",
+      "status": "completed",
+      "starts_at": "2026-08-30T07:00:00Z",
+      "ends_at": "2026-09-06T07:00:00Z",
+      "step_minutes": 60,
+      "delay_seconds": 0,
+      "completed_steps": 168,
+      "total_steps": 168,
+      "url": "http://127.0.0.1:8000/?simulation=db41da4e-a6bc-42b0-9c38-b018ae79c52a",
+      "day_steps": {
+        "2026-08-30": 24,
+        "2026-08-31": 24,
+        "2026-09-01": 24,
+        "2026-09-02": 24,
+        "2026-09-03": 24,
+        "2026-09-04": 24,
+        "2026-09-05": 24
+      },
+      "outcomes": {
+        "valid": 162,
+        "withheld": 6
+      },
+      "pause_reload_resume_verified": true,
+      "earlier_day_review_verified": true,
+      "elapsed_seconds": 126.4,
+      "browser_errors": []
+    }
+  ]
+}
