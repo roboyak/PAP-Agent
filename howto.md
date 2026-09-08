@@ -34,6 +34,8 @@ Start with **Trace** to find where the workflow stopped, then inspect that step:
 
 Expand **Inspect raw details** for the original records. The run URL preserves the
 same episode across Forecast and Inspector. **Reset view** clears the view only.
+On desktop, the main forecast fits one screen. Inspector keeps its six tabs visible
+while details scroll; expand **Session activity** for prior actions.
 **Evaluate latest reading** records feedback; **Index memory** makes eligible feedback
 retrievable. Manual memory search does not change the selected run.
 

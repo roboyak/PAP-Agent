@@ -328,6 +328,13 @@ def test_live_pending_run_locks_source_actions(browser, live_service, database, 
             )
             expect(page.locator("#run-progress")).to_be_hidden()
             expect(page.get_by_role("button", name="Load sunny fixture")).to_be_enabled()
+            page.unroute("**/api/v1/pap/run")
+            page.route("**/api/v1/pap/run", lambda route: route.abort())
+            page.get_by_role("button", name="Run PAP", exact=True).click()
+            expect(page.locator("#run-status")).to_have_text("Run unavailable.")
+            expect(page.locator("#action-notice")).to_be_in_viewport(ratio=1)
+            expect(page.locator("#action-notice")).to_contain_text("Request failed")
+            expect(page.locator(".session-history")).not_to_have_attribute("open", "")
         finally:
             page.close()
 
@@ -385,12 +392,31 @@ def test_live_forecast_and_inspector_share_run(
                 float(page.locator("#power-value").inner_text())
                 == publication["profile"]["intervals"][0]["available_kw"]
             )
+            for width, height in [(1366, 768), (1440, 900), (1920, 1080)]:
+                page.set_viewport_size({"width": width, "height": height})
+                for selector in (
+                    "#run-workflow",
+                    "#forecast-chart",
+                    "#agent-guidance",
+                    "#view-inspector",
+                    ".assumptions",
+                ):
+                    expect(page.locator(selector)).to_be_in_viewport(ratio=1)
+                assert page.evaluate("document.documentElement.scrollHeight <= innerHeight")
             page.get_by_text("View the hourly numbers", exact=True).click()
             expect(page.locator("#profile-intervals tr")).to_have_count(12)
             page.get_by_role("link", name="Inspect this run", exact=True).click()
             assert page.url == f"{url}/inspector?episode={episode['episode_id']}"
             expect(page.locator("#graph-trace")).to_contain_text(episode["episode_id"])
             expect(page.get_by_role("tab")).to_have_count(6)
+            page.set_viewport_size({"width": 1366, "height": 768})
+            page.locator("#details-model-context summary").click()
+            page.get_by_role("tabpanel").evaluate(
+                "panel => { panel.scrollTop = panel.scrollHeight; }"
+            )
+            expect(page.get_by_role("tablist")).to_be_in_viewport(ratio=1)
+            expect(page.locator("#run-workflow")).to_be_in_viewport(ratio=1)
+            assert page.evaluate("document.documentElement.scrollHeight <= innerHeight")
             page.get_by_role("link", name="Forecast", exact=True).click()
             expect(page.locator("#publication-status")).to_have_text("Published evaluation")
             assert page.url == f"{url}/?episode={episode['episode_id']}"

@@ -92,3 +92,43 @@ footer a { color: #575745; text-underline-offset: 3px; }
 @media(max-width:780px) { .site-nav { padding-left:16px; } .brand { font-size:16px; } .brand span { font-size:9px; } .site-nav>div>a { padding:0 15px; font-size:12px; } }
 
 .run-overview p { max-width:none; }
+
+.session-history { margin-top:16px; }
+.session-history .conversation { margin-top:10px; }
+.run-help > summary { font-size:11px; }
+@media (min-width:1100px) and (min-height:700px) {
+  .site-nav { min-height:56px; padding-left:20px; }
+  .brand { font-size:18px; }
+  main { width:100%; max-width:1840px; height:calc(100dvh - 56px); padding:16px 20px 10px;
+    display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:12px; }
+  main > header { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 24px; }
+  h1 { font-size:24px; }
+  main > header > p { margin:0; font-size:11px; }
+  .status-row { grid-column:2; grid-row:1/3; margin:0; font-size:11px; justify-content:flex-end; gap:12px; }
+  .run-overview { margin:0; padding:10px 14px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:3px 16px; }
+  .run-overview h2 { margin:0; font-size:11px; font-weight:400; }
+  .run-overview p { margin:0; }
+  #run-status { grid-column:1; font-size:14px; }
+  #run-meta { grid-column:1; font-size:11px; }
+  #view-output { grid-column:2; grid-row:1/4; align-self:center; padding:8px 12px; border:1px solid #77745c; font-size:11px; text-decoration:none; }
+  .run-help, #run-progress { grid-column:1/-1; }
+  .run-help p { margin-top:5px; font-size:11px; }
+  .workspace { min-height:0; grid-template-columns:280px minmax(0,1fr); gap:16px; align-items:stretch; }
+  .session { min-height:0; overflow:auto; overscroll-behavior:contain; padding-right:4px; }
+  .session h2 { font-size:14px; margin-bottom:10px; }
+  .session .controls { margin-top:0; gap:8px; }
+  .session-note { font-size:11px; }
+  #published-profile { margin-top:16px; padding-top:14px; }
+  #profile-summary { font-size:12px; }
+  #evaluate-outcome { font-size:11px; margin-top:12px; }
+  .session-history { margin-top:14px; }
+  .session-history > summary { font-size:11px; }
+  .conversation { height:150px; padding:12px; }
+  .inspector { min-height:0; display:flex; flex-direction:column; }
+  [role="tablist"] { flex-shrink:0; }
+  [role="tab"] { padding:12px 17px; }
+  [role="tabpanel"] { min-height:0; max-height:none; flex:1; padding:20px; scrollbar-gutter:stable; overscroll-behavior:contain; }
+  footer { margin:0; padding-top:8px; font-size:10px; }
+}
+
+#action-notice { padding:10px; border:1px solid #763d31; background:#c2a69a; color:#25251b; font-size:11px; overflow-wrap:anywhere; }
